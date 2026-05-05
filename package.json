@@ -1,0 +1,33 @@
+{
+	"name": "steve-obrien",
+	"version": "1.0.0",
+	"description": "I'm Steve O'Brien, Engineer, Full Stack Software developer, Founder and CEO of [New Icon](https://newicon.net).",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "vite-ssg build && node scripts/generate-seo-files.mjs",
+		"preview": "vite preview"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/steve-obrien/steve-obrien.git"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/steve-obrien/steve-obrien/issues"
+	},
+	"homepage": "https://github.com/steve-obrien/steve-obrien#readme",
+	"dependencies": {
+		"vite-ssg": "^28.3.0",
+		"vue": "^3.5.33",
+		"vue-router": "^4.6.4"
+	},
+	"devDependencies": {
+		"@tailwindcss/vite": "^4.2.4",
+		"@vitejs/plugin-vue": "^6.0.6",
+		"tailwindcss": "^4.2.4",
+		"vite": "^8.0.10"
+	}
+}

@@ -1,20 +1,25 @@
-### Hi there 👋
+## Steve O'Brien Personal Site
 
-I'm Steve O'Brien, Engineer, Full Stack Software developer, Founder and CEO of [New Icon](https://newicon.net).
+Static personal website built with Vue 3, Vite SSG, and Tailwind CSS v4.
 
-[Steve O'Brien on Linkedin](https://www.linkedin.com/in/stevenaobrien/)
+### Local development
 
-<!--
-**steve-obrien/steve-obrien** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+```bash
+npm install
+npm run dev
+```
 
-Here are some ideas to get you started:
+### Build static output
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+```bash
+npm run build
+```
+
+Build artifacts are generated in `dist/`.
+The build also generates `dist/sitemap.xml` and `dist/robots.txt`.
+
+### Deploy to GitHub Pages
+
+Push to `main` to trigger `.github/workflows/deploy.yml`.
+The workflow builds the site and deploys the static `dist/` artifacts to GitHub Pages.
+GitHub Pages also serves `public/404.html` as the custom not found page.
