@@ -1,5 +1,9 @@
 ### Hi there 👋
 
+I'm Steve O'Brien, Engineer, Full Stack Software developer, Founder and CEO of [New Icon](https://newicon.net).
+
+[Steve O'Brien on Linkedin](https://www.linkedin.com/in/stevenaobrien/)
+
 <!--
 **steve-obrien/steve-obrien** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 
