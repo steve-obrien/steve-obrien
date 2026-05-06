@@ -6,6 +6,7 @@ const distDir = path.join(rootDir, 'dist');
 const cnamePath = path.join(rootDir, 'CNAME');
 const routesFilePath = path.join(rootDir, 'src', 'routes.js');
 const pagesDirPath = path.join(rootDir, 'src', 'pages');
+const siteName = "Steve O'Brien";
 
 const readSiteUrl = async () => {
 	try {
@@ -95,6 +96,73 @@ const buildRobots = (siteUrl) => {
 	].join('\n');
 };
 
+const getPageMeta = (routePath) => {
+	if (routePath === '/') {
+		return {
+			title: `About | ${siteName}`,
+			description: 'About Steve O’Brien: engineer, founder, and builder of practical AI and software systems.',
+		};
+	}
+
+	if (routePath === '/projects') {
+		return {
+			title: `Projects | ${siteName}`,
+			description: 'Selected projects and products by Steve O’Brien, including software, experiments, and open work.',
+		};
+	}
+
+	if (routePath === '/experiments') {
+		return {
+			title: `Experiments | ${siteName}`,
+			description: 'Current experiments and prototypes Steve is exploring across AI, developer tools, and product design.',
+		};
+	}
+
+	if (routePath === '/ideas') {
+		return {
+			title: `Ideas | ${siteName}`,
+			description: 'Notes and early ideas Steve is thinking through before they become concrete projects.',
+		};
+	}
+
+	const sectionName = routePath.replace(/^\//, '').replace(/-/g, ' ');
+	const humanLabel = sectionName.charAt(0).toUpperCase() + sectionName.slice(1);
+	return {
+		title: `${humanLabel} | ${siteName}`,
+		description: `${humanLabel} by ${siteName}.`,
+	};
+};
+
+const injectMetaIntoPage = async (siteUrl, routePath) => {
+	const fileName = routePath === '/' ? 'index.html' : `${routePath.replace(/^\//, '')}.html`;
+	const filePath = path.join(distDir, fileName);
+	const canonicalUrl = routePath === '/' ? siteUrl : `${siteUrl}${routePath}`;
+	const { title, description } = getPageMeta(routePath);
+
+	let html = await readFile(filePath, 'utf8');
+	html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${title}</title>`);
+	html = html.replace(/<meta name="description"[\s\S]*?>/gi, '');
+	html = html.replace(/<meta property="og:[^"]+"[\s\S]*?>/gi, '');
+	html = html.replace(/<meta name="twitter:[^"]+"[\s\S]*?>/gi, '');
+	html = html.replace(/<link rel="canonical"[\s\S]*?>/gi, '');
+
+	const metaBlock = [
+		`<meta name="description" content="${description}">`,
+		`<link rel="canonical" href="${canonicalUrl}">`,
+		'<meta property="og:type" content="website">',
+		`<meta property="og:site_name" content="${siteName}">`,
+		`<meta property="og:title" content="${title}">`,
+		`<meta property="og:description" content="${description}">`,
+		`<meta property="og:url" content="${canonicalUrl}">`,
+		'<meta name="twitter:card" content="summary">',
+		`<meta name="twitter:title" content="${title}">`,
+		`<meta name="twitter:description" content="${description}">`,
+	].join('\n\t\t');
+
+	html = html.replace('</head>', `\t\t${metaBlock}\n\t</head>`);
+	await writeFile(filePath, html, 'utf8');
+};
+
 const main = async () => {
 	await mkdir(distDir, { recursive: true });
 	const siteUrl = await readSiteUrl();
@@ -102,8 +170,9 @@ const main = async () => {
 
 	await writeFile(path.join(distDir, 'sitemap.xml'), `${buildSitemap(siteUrl, routes)}\n`, 'utf8');
 	await writeFile(path.join(distDir, 'robots.txt'), `${buildRobots(siteUrl)}\n`, 'utf8');
+	await Promise.all(routes.map((routePath) => injectMetaIntoPage(siteUrl, routePath)));
 
-	console.log(`Generated sitemap.xml and robots.txt for ${siteUrl} (${routes.length} routes)`);
+	console.log(`Generated sitemap.xml, robots.txt, and page metadata for ${siteUrl} (${routes.length} routes)`);
 };
 
 await main();

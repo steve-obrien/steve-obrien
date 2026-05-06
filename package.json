@@ -1,7 +1,7 @@
 {
 	"name": "steve-obrien",
 	"version": "1.0.0",
-	"description": "I'm Steve O'Brien, Engineer, Full Stack Software developer, Founder and CEO of [New Icon](https://newicon.net).",
+	"description": "I'm Steve O'Brien, Engineer, Full Stack Software developer, Founder of [New Icon](https://newicon.net).",
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
