@@ -33,12 +33,29 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 
 const route = useRoute();
 
 const isOpen = ref(false);
+
+const closeMenuAtDesktop = (event) => {
+	if (event.matches) {
+		isOpen.value = false;
+	}
+};
+
+onMounted(() => {
+	// encapsulate browser specific code in onMounted
+	const mdBreakpoint = window.matchMedia('(min-width: 768px)');
+	mdBreakpoint.addEventListener('change', closeMenuAtDesktop);
+	closeMenuAtDesktop(mdBreakpoint);
+});
+
+onBeforeUnmount(() => {
+	mdBreakpoint?.removeEventListener('change', closeMenuAtDesktop);
+});
 
 const links = [
 	{ to: '/', label: 'About' },
@@ -46,5 +63,4 @@ const links = [
 	{ to: '/projects', label: 'Projects' },
 	{ to: '/ideas', label: 'Ideas' },
 ];
-window.isOpen = isOpen;
 </script>

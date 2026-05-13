@@ -1,7 +1,7 @@
 <template>
 	<section class="space-y-8">
 		<p class="text-xs font-semibold uppercase tracking-[0.18em] text-skin-muted">About</p>
-		<h1 class="text-4xl tracking-tight sm:text-5xl font-bold ">Steve O'Brien</h1>
+		<h1 class="text-4xl tracking-tight sm:text-5xl font-bold uppercase">Steve O'Brien</h1>
 		<p class="max-w-3xl text-lg leading-relaxed text-skin-primary">
 			Engineer. Builder. Systems thinker. <br/>
 			Exploring the future of intelligence, software, and human capability.
