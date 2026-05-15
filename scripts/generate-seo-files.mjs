@@ -1,3 +1,4 @@
+// This is a crappy AI gen script - ideally replace with something better.
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -164,7 +165,13 @@ const injectMetaIntoPage = async (siteUrl, routePath) => {
 	const canonicalUrl = routePath === '/' ? siteUrl : `${siteUrl}${routePath}`;
 	const { title, description } = getPageMeta(routePath);
 
-	let html = await readFile(filePath, 'utf8');
+	let html;
+	try {
+		html = await readFile(filePath, 'utf8');
+	} catch (err) {
+		// If file does not exist, skip to next without throwing
+		return;
+	}
 	html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${title}</title>`);
 	html = html.replace(/<meta name="description"[\s\S]*?>/gi, '');
 	html = html.replace(/<meta property="og:[^"]+"[\s\S]*?>/gi, '');
