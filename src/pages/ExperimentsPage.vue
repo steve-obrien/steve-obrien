@@ -1,24 +1,15 @@
 <script setup>
 const experiments = [
 	{
-		title: 'Realtime Tools',
+		title: 'Realtime AI Tools',
 		description: 'Prototyping low-latency interfaces for collaborative software.',
 		status: 'Active',
-	},
-	{
-		title: 'AI-Augmented Docs',
-		description: 'Exploring documentation that adapts to user intent.',
-		status: 'Exploring',
-	},
-	{
-		title: 'Design Tokens Lab',
-		description: 'Testing scalable systems for clean, accessible UI themes.',
-		status: 'Paused',
 	},
 ];
 </script>
 
 <template>
+	<SteveLayout>
 	<section class="space-y-8">
 		<div class="space-y-3">
 			<p class="text-xs font-semibold uppercase tracking-[0.18em] text-skin-muted">Experiments</p>
@@ -45,4 +36,5 @@ const experiments = [
 			</article>
 		</div>
 	</section>
+	</SteveLayout>
 </template>

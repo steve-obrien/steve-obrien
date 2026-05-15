@@ -38,7 +38,8 @@ const loadRoutesFromRoutesFile = async () => {
 	const routePaths = matches
 		.map((match) => match[1]?.trim())
 		.filter(Boolean)
-		.filter((routePath) => routePath.startsWith('/'));
+		.filter((routePath) => routePath.startsWith('/'))
+		.filter((routePath) => !routePath.includes(':') && !routePath.includes('*'));
 
 	return [...new Set(routePaths)];
 };
@@ -50,17 +51,41 @@ const loadRoutesFromPagesDirectory = async () => {
 	return [...new Set(routePaths)];
 };
 
-const loadRoutes = async () => {
-	try {
-		const routes = await loadRoutesFromRoutesFile();
-		if (routes.length > 0) {
-			return routes;
+const loadRoutesFromNestedPageVue = async () => {
+	const routePaths = [];
+
+	const walk = async (dir, relSegments) => {
+		const entries = await readdir(dir, { withFileTypes: true });
+		for (const ent of entries) {
+			if (ent.name.startsWith('.')) continue;
+			const full = path.join(dir, ent.name);
+			if (ent.isDirectory()) {
+				await walk(full, [...relSegments, ent.name]);
+			} else if (ent.name === 'Page.vue' && relSegments.length > 0) {
+				const inner = relSegments.join('/');
+				routePaths.push(inner === 'index' ? '/' : `/${inner}`);
+			}
 		}
+	};
+
+	await walk(pagesDirPath, []);
+	return [...new Set(routePaths)];
+};
+
+const loadRoutes = async () => {
+	let fromRoutesFile = [];
+	try {
+		fromRoutesFile = await loadRoutesFromRoutesFile();
 	} catch {
-		// Fall back to inferring route paths from page component filenames.
+		fromRoutesFile = [];
 	}
 
-	return loadRoutesFromPagesDirectory();
+	if (fromRoutesFile.length === 0) {
+		fromRoutesFile = await loadRoutesFromPagesDirectory();
+	}
+
+	const fromNestedPages = await loadRoutesFromNestedPageVue();
+	return [...new Set([...fromRoutesFile, ...fromNestedPages])];
 };
 
 const buildSitemap = (siteUrl, routes) => {

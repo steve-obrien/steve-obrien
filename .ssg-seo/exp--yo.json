@@ -1,0 +1,21 @@
+{
+	"routePath": "/exp/yo",
+	"entries": [
+		{
+			"tagName": "title",
+			"content": "Yo | Steve O'Brien"
+		},
+		{
+			"tagName": "description",
+			"content": "Scratch experiments and notes under /exp/yo."
+		},
+		{
+			"tagName": "og:title",
+			"content": "Yo | Steve O'Brien"
+		},
+		{
+			"tagName": "og:description",
+			"content": "Scratch experiments and notes under /exp/yo."
+		}
+	]
+}

@@ -19,6 +19,7 @@ const projects = [
 </script>
 
 <template>
+	<SteveLayout>
 	<section class="space-y-8">
 		<div class="space-y-3">
 			<p class="text-xs font-semibold uppercase tracking-[0.18em] text-skin-muted">Projects</p>
@@ -41,4 +42,5 @@ const projects = [
 			</a>
 		</div>
 	</section>
+	</SteveLayout>
 </template>

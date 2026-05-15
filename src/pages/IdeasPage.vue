@@ -19,6 +19,7 @@ const experiments = [
 </script>
 
 <template>
+	<SteveLayout>
 	<section class="space-y-8">
 		<div class="space-y-3">
 			<p class="text-xs font-semibold uppercase tracking-[0.18em] text-skin-muted">Experiments</p>
@@ -45,4 +46,5 @@ const experiments = [
 			</article>
 		</div>
 	</section>
+	</SteveLayout>
 </template>

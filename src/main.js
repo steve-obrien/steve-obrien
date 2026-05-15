@@ -1,5 +1,6 @@
 import { ViteSSG } from 'vite-ssg';
 import App from './App.vue';
+import SteveLayout from './pages/SteveLayout.vue';
 import './style.css';
 import { routes } from './routes';
 
@@ -19,7 +20,9 @@ const getInitialTheme = () => {
 export const createApp = ViteSSG(
 	App,
 	{ routes },
-	({ isClient }) => {
+	({ app, isClient }) => {
+		app.component('SteveLayout', SteveLayout);
+
 		if (!isClient) {
 			return;
 		}

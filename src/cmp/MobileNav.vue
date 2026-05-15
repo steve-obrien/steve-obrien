@@ -46,9 +46,11 @@ const closeMenuAtDesktop = (event) => {
 	}
 };
 
+let mdBreakpoint = null;
+
 onMounted(() => {
 	// encapsulate browser specific code in onMounted
-	const mdBreakpoint = window.matchMedia('(min-width: 768px)');
+	mdBreakpoint = window.matchMedia('(min-width: 768px)');
 	mdBreakpoint.addEventListener('change', closeMenuAtDesktop);
 	closeMenuAtDesktop(mdBreakpoint);
 });
