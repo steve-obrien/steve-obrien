@@ -164,31 +164,44 @@
 			<p class="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">Join the waitlist</p>
 			<h2 class="mt-4 text-4xl font-semibold tracking-tight md:text-5xl">Be first to hear when the course opens.</h2>
 			<p class="mx-auto mt-6 max-w-2xl text-lg leading-8 text-zinc-700">
-				Join the early list and help shape the first version. Tell me what you want to build and I’ll use that to shape the course projects.
+				Join the early list and help shape the first version.
 			</p>
+			<!-- 
+			Vue templates do NOT support placing <script> tags directly in the template body for external scripts.
+			Instead, load the external script programmatically using the onMounted lifecycle hook.
+			-->
+			<!-- ConvertKit embed -->
+			<form action="https://app.kit.com/forms/9457604/subscriptions" class="mt-10 rounded-[2rem] border border-zinc-200 bg-white p-4 shadow-xl shadow-zinc-900/5" method="post" data-sv-form="9457604" data-uid="34070917df" data-format="inline" data-version="5" data-options="{&quot;settings&quot;:{&quot;after_subscribe&quot;:{&quot;action&quot;:&quot;message&quot;,&quot;success_message&quot;:&quot;Success! Now check your email to confirm your subscription.&quot;,&quot;redirect_url&quot;:&quot;&quot;},&quot;analytics&quot;:{&quot;google&quot;:null,&quot;fathom&quot;:null,&quot;facebook&quot;:null,&quot;segment&quot;:null,&quot;pinterest&quot;:null,&quot;sparkloop&quot;:null,&quot;googletagmanager&quot;:null},&quot;modal&quot;:{&quot;trigger&quot;:&quot;timer&quot;,&quot;scroll_percentage&quot;:null,&quot;timer&quot;:5,&quot;devices&quot;:&quot;all&quot;,&quot;show_once_every&quot;:15},&quot;powered_by&quot;:{&quot;show&quot;:true,&quot;url&quot;:&quot;https://kit.com/features/forms?utm_campaign=poweredby&amp;utm_content=form&amp;utm_medium=referral&amp;utm_source=dynamic&quot;},&quot;recaptcha&quot;:{&quot;enabled&quot;:false},&quot;return_visitor&quot;:{&quot;action&quot;:&quot;show&quot;,&quot;custom_content&quot;:&quot;&quot;},&quot;slide_in&quot;:{&quot;display_in&quot;:&quot;bottom_right&quot;,&quot;trigger&quot;:&quot;timer&quot;,&quot;scroll_percentage&quot;:null,&quot;timer&quot;:5,&quot;devices&quot;:&quot;all&quot;,&quot;show_once_every&quot;:15},&quot;sticky_bar&quot;:{&quot;display_in&quot;:&quot;top&quot;,&quot;trigger&quot;:&quot;timer&quot;,&quot;scroll_percentage&quot;:null,&quot;timer&quot;:5,&quot;devices&quot;:&quot;all&quot;,&quot;show_once_every&quot;:15}},&quot;version&quot;:&quot;5&quot;}" min-width="400 500 600 700 800">
+				<div data-style="full" style="--border-radius: 0px;">
+					<div class="formkit-container">
+						<div data-element="content" class="pb-2">
+							<p>Subscribe below and we’ll notify you when the product is released.</p>
+						</div>
+						<ul class="formkit-alert formkit-alert-error" data-element="errors" data-group="alert"></ul>
 
-			<form class="mt-10 rounded-[2rem] border border-zinc-200 bg-white p-4 shadow-xl shadow-zinc-900/5" @submit.prevent="submitForm">
-				<div class="grid gap-3 sm:grid-cols-[1fr_auto]">
-					<input
-					v-model="email"
-					type="email"
-					required
-					placeholder="Your email address"
-					class="w-full rounded-full border border-zinc-200 bg-zinc-50 px-5 py-4 text-base outline-none transition focus:border-zinc-900 focus:bg-white" />
-					<button type="submit" class="rounded-full bg-zinc-950 px-7 py-4 text-sm font-semibold text-white transition hover:bg-zinc-800">
-						Join waitlist
-					</button>
+						<div class="grid gap-3 sm:grid-cols-[1fr_auto]">
+							<div class="formkit-field">
+								<input class="w-full rounded-full border border-zinc-200 bg-zinc-50 px-5 py-4 text-base outline-none transition focus:border-zinc-900 focus:bg-white" name="email_address" aria-label="Email Address" placeholder="Email Address" required="" type="email" >
+							</div>
+							<button data-element="submit" class="rounded-full cursor-pointer bg-zinc-950 px-7 py-4 text-sm font-semibold text-white transition hover:bg-zinc-800">
+								<div class="formkit-spinner">
+									<div></div>
+									<div></div>
+									<div></div>
+								</div><span class="">Join waitlist</span>
+							</button>
+						</div>
+
+						<div data-element="fields" class="seva-fields formkit-fields">
+							
+							<input class="mt-3 w-full rounded-3xl border border-zinc-200 bg-zinc-50 px-5 py-4 text-base outline-none transition focus:border-zinc-900 focus:bg-white"" aria-label="Optional: Want would you like to build?" name="fields[want-to-build]" placeholder="Optional: Want would you like to build?" type="text" >
+							
+						</div>
+						<div class="formkit-disclaimer" data-element="disclaimer" style="color: rgb(203, 203, 203);">We respect your privacy. Unsubscribe at any time.</div>
+					</div>
 				</div>
-
-				<textarea
-				v-model="idea"
-				placeholder="Optional: what would you like to build?"
-				class="mt-3 min-h-28 w-full rounded-3xl border border-zinc-200 bg-zinc-50 px-5 py-4 text-base outline-none transition focus:border-zinc-900 focus:bg-white"></textarea>
-
-				<p v-if="submitted" class="mt-4 text-sm font-medium text-zinc-700">
-					You’re on the list. I’ll share updates when the first version is ready.
-				</p>
 			</form>
+			
 		</section>
 
 		<section id="faq" class="mx-auto max-w-4xl px-6 pb-24 lg:px-8">
@@ -222,42 +235,59 @@ function submitForm() {
 	email.value = ''
 	idea.value = ''
 }
-</script>
 
-<script>
-export default {
-	components: {
-		Card: {
-			props: ['title', 'text'],
-			template: `
-		  <article class="rounded-[2rem] border border-white/10 bg-white/5 p-6">
-			<h3 class="text-lg font-semibold text-white">{{ title }}</h3>
-			<p class="mt-3 text-sm leading-6 text-zinc-400">{{ text }}</p>
-		  </article>
-		`,
-		},
-		Module: {
-			props: ['number', 'title', 'text'],
-			template: `
-		  <article class="rounded-[2rem] border border-zinc-200 bg-white p-7 shadow-lg shadow-zinc-900/5">
-			<p class="text-sm font-semibold text-zinc-400">{{ number }}</p>
-			<h3 class="mt-8 text-2xl font-semibold tracking-tight">{{ title }}</h3>
-			<p class="mt-4 leading-7 text-zinc-600">{{ text }}</p>
-		  </article>
-		`,
-		},
-		Faq: {
-			props: ['question', 'answer'],
-			template: `
-		  <details class="group py-6">
-			<summary class="flex cursor-pointer list-none items-center justify-between gap-6 text-left text-lg font-semibold">
-			  {{ question }}
-			  <span class="text-2xl leading-none transition group-open:rotate-45">+</span>
-			</summary>
-			<p class="mt-4 max-w-3xl leading-7 text-zinc-600">{{ answer }}</p>
-		  </details>
-		`,
-		},
+import { onMounted } from 'vue'
+onMounted(() => {
+	const s = document.createElement('script');
+	s.async = true;
+	s.src = 'https://f.convertkit.com/ckjs/ck.5.js';
+	document.body.appendChild(s);
+});
+
+import { defineComponent } from 'vue'
+
+const Card = defineComponent({
+	props: {
+		title: String,
+		text: String,
 	},
-}
+	template: `
+    <article class="rounded-[2rem] border border-white/10 bg-white/5 p-6">
+      <h3 class="text-lg font-semibold text-white">{{ title }}</h3>
+      <p class="mt-3 text-sm leading-6 text-zinc-400">{{ text }}</p>
+    </article>
+  `,
+})
+
+const Module = defineComponent({
+	props: {
+		number: String,
+		title: String,
+		text: String,
+	},
+	template: `
+    <article class="rounded-[2rem] border border-zinc-200 bg-white p-7 shadow-lg shadow-zinc-900/5">
+      <p class="text-sm font-semibold text-zinc-400">{{ number }}</p>
+      <h3 class="mt-8 text-2xl font-semibold tracking-tight">{{ title }}</h3>
+      <p class="mt-4 leading-7 text-zinc-600">{{ text }}</p>
+    </article>
+  `,
+})
+
+const Faq = defineComponent({
+	props: {
+		question: String,
+		answer: String,
+	},
+	template: `
+    <details class="group py-6">
+      <summary class="flex cursor-pointer list-none items-center justify-between gap-6 text-left text-lg font-semibold">
+        {{ question }}
+        <span class="text-2xl leading-none transition group-open:rotate-45">+</span>
+      </summary>
+      <p class="mt-4 max-w-3xl leading-7 text-zinc-600">{{ answer }}</p>
+    </details>
+  `,
+})
+
 </script>

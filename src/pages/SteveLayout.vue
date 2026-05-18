@@ -1,13 +1,8 @@
 <script setup>
 import { RouterLink, useRoute } from 'vue-router';
-import BtnLightDarkMode from '../cmp/BtnLightDarkMode.vue';
-import meImg from '../assets/me.jpeg';
-import sigImg from '../assets/sig.png';
-import MobileNav from '../cmp/MobileNav.vue';
 import SocialLinks from '../cmp/SocialLinks.vue';
 import { onMounted } from 'vue';
 import { useTheme } from '../composable/useTheme';
-import { links } from '../composable/navigationLinks';
 import Navbar from '../cmp/Navbar.vue';
 
 const { initTheme } = useTheme();
@@ -18,12 +13,20 @@ onMounted(() => {
 });
 
 const route = useRoute();
+
+const props = defineProps({
+	bgClass: {
+		type: String,
+		default: 'bg-skin-background',
+	},
+});
+
 </script>
 
 <template>
-	<div class="min-h-screen bg-skin-background text-skin-primary transition-colors duration-200">
+	<div class="min-h-screen text-skin-primary transition-colors duration-200" :class="bgClass">
 		<Navbar></Navbar>
-		<main class="mx-auto w-full bg-white dark:bg-black max-w-6xl px-6 pb-14 ">
+		<main class="mx-auto w-full max-w-6xl px-6 pb-14 ">
 			<slot />
 		</main>
 		<footer class="mx-auto w-full max-w-6xl space-y-4 px-6 py-8">

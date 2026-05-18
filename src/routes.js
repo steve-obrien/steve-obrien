@@ -39,7 +39,7 @@ const fileBasedRoutes = Object.entries(pageRouteModules)
 const manualRoutes = [
 	{ path: '/', component: AboutPage, meta: { title: 'About' } },
 	{ path: '/experiments', component: ExperimentsPage, meta: { title: 'Experiments' } },
-	// { path: '/projects', component: ProjectsPage, meta: { title: 'Projects' } },
+	{ path: '/projects', component: ProjectsPage, meta: { title: 'Projects' } },
 	{ path: '/ideas', component: IdeasPage, meta: { title: 'Ideas' } },
 ];
 
