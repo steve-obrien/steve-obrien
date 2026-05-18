@@ -1,12 +1,11 @@
 // This is a crappy AI gen script - ideally replace with something better.
-import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { loadStaticRoutes } from './lib/load-routes.mjs';
 
 const rootDir = process.cwd();
 const distDir = path.join(rootDir, 'dist');
 const cnamePath = path.join(rootDir, 'CNAME');
-const routesFilePath = path.join(rootDir, 'src', 'routes.js');
-const pagesDirPath = path.join(rootDir, 'src', 'pages');
 const siteName = "Steve O'Brien";
 
 const readSiteUrl = async () => {
@@ -19,74 +18,6 @@ const readSiteUrl = async () => {
 	} catch {
 		return 'https://steve-obrien.com';
 	}
-};
-
-const toPathFromPageFile = (fileName) => {
-	const baseName = fileName.replace(/\.vue$/i, '');
-	if (baseName === 'AboutPage') {
-		return '/';
-	}
-	const slug = baseName
-		.replace(/Page$/i, '')
-		.replace(/([a-z0-9])([A-Z])/g, '$1-$2')
-		.toLowerCase();
-	return `/${slug}`;
-};
-
-const loadRoutesFromRoutesFile = async () => {
-	const routesFile = await readFile(routesFilePath, 'utf8');
-	const matches = [...routesFile.matchAll(/path:\s*['"`]([^'"`]+)['"`]/g)];
-	const routePaths = matches
-		.map((match) => match[1]?.trim())
-		.filter(Boolean)
-		.filter((routePath) => routePath.startsWith('/'))
-		.filter((routePath) => !routePath.includes(':') && !routePath.includes('*'));
-
-	return [...new Set(routePaths)];
-};
-
-const loadRoutesFromPagesDirectory = async () => {
-	const files = await readdir(pagesDirPath);
-	const pageFiles = files.filter((file) => file.endsWith('.vue'));
-	const routePaths = pageFiles.map(toPathFromPageFile);
-	return [...new Set(routePaths)];
-};
-
-const loadRoutesFromNestedPageVue = async () => {
-	const routePaths = [];
-
-	const walk = async (dir, relSegments) => {
-		const entries = await readdir(dir, { withFileTypes: true });
-		for (const ent of entries) {
-			if (ent.name.startsWith('.')) continue;
-			const full = path.join(dir, ent.name);
-			if (ent.isDirectory()) {
-				await walk(full, [...relSegments, ent.name]);
-			} else if (ent.name === 'Page.vue' && relSegments.length > 0) {
-				const inner = relSegments.join('/');
-				routePaths.push(inner === 'index' ? '/' : `/${inner}`);
-			}
-		}
-	};
-
-	await walk(pagesDirPath, []);
-	return [...new Set(routePaths)];
-};
-
-const loadRoutes = async () => {
-	let fromRoutesFile = [];
-	try {
-		fromRoutesFile = await loadRoutesFromRoutesFile();
-	} catch {
-		fromRoutesFile = [];
-	}
-
-	if (fromRoutesFile.length === 0) {
-		fromRoutesFile = await loadRoutesFromPagesDirectory();
-	}
-
-	const fromNestedPages = await loadRoutesFromNestedPageVue();
-	return [...new Set([...fromRoutesFile, ...fromNestedPages])];
 };
 
 const buildSitemap = (siteUrl, routes) => {
@@ -168,8 +99,7 @@ const injectMetaIntoPage = async (siteUrl, routePath) => {
 	let html;
 	try {
 		html = await readFile(filePath, 'utf8');
-	} catch (err) {
-		// If file does not exist, skip to next without throwing
+	} catch {
 		return;
 	}
 	html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${title}</title>`);
@@ -198,7 +128,7 @@ const injectMetaIntoPage = async (siteUrl, routePath) => {
 const main = async () => {
 	await mkdir(distDir, { recursive: true });
 	const siteUrl = await readSiteUrl();
-	const routes = await loadRoutes();
+	const routes = await loadStaticRoutes();
 
 	await writeFile(path.join(distDir, 'sitemap.xml'), `${buildSitemap(siteUrl, routes)}\n`, 'utf8');
 	await writeFile(path.join(distDir, 'robots.txt'), `${buildRobots(siteUrl)}\n`, 'utf8');

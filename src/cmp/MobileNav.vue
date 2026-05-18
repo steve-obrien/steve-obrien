@@ -35,6 +35,7 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
+import { links } from '../composable/navigationLinks';
 
 const route = useRoute();
 
@@ -59,10 +60,5 @@ onBeforeUnmount(() => {
 	mdBreakpoint?.removeEventListener('change', closeMenuAtDesktop);
 });
 
-const links = [
-	{ to: '/', label: 'About' },
-	{ to: '/experiments', label: 'Experiments' },
-	{ to: '/projects', label: 'Projects' },
-	{ to: '/ideas', label: 'Ideas' },
-];
+
 </script>
