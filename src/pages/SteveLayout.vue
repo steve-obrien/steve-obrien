@@ -8,7 +8,6 @@ import Navbar from '../cmp/Navbar.vue';
 const { initTheme } = useTheme();
 
 onMounted(() => {
-	console.log('init theme')
 	initTheme();
 });
 

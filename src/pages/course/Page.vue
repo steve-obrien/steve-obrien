@@ -166,16 +166,12 @@
 			<p class="mx-auto mt-6 max-w-2xl text-lg leading-8 text-zinc-700">
 				Join the early list and help shape the first version.
 			</p>
-			<!-- 
-			Vue templates do NOT support placing <script> tags directly in the template body for external scripts.
-			Instead, load the external script programmatically using the onMounted lifecycle hook.
-			-->
 			<!-- ConvertKit embed -->
-			<form action="https://app.kit.com/forms/9457604/subscriptions" class="mt-10 rounded-[2rem] border border-zinc-200 bg-white p-4 shadow-xl shadow-zinc-900/5" method="post" data-sv-form="9457604" data-uid="34070917df" data-format="inline" data-version="5" data-options="{&quot;settings&quot;:{&quot;after_subscribe&quot;:{&quot;action&quot;:&quot;message&quot;,&quot;success_message&quot;:&quot;Success! Now check your email to confirm your subscription.&quot;,&quot;redirect_url&quot;:&quot;&quot;},&quot;analytics&quot;:{&quot;google&quot;:null,&quot;fathom&quot;:null,&quot;facebook&quot;:null,&quot;segment&quot;:null,&quot;pinterest&quot;:null,&quot;sparkloop&quot;:null,&quot;googletagmanager&quot;:null},&quot;modal&quot;:{&quot;trigger&quot;:&quot;timer&quot;,&quot;scroll_percentage&quot;:null,&quot;timer&quot;:5,&quot;devices&quot;:&quot;all&quot;,&quot;show_once_every&quot;:15},&quot;powered_by&quot;:{&quot;show&quot;:true,&quot;url&quot;:&quot;https://kit.com/features/forms?utm_campaign=poweredby&amp;utm_content=form&amp;utm_medium=referral&amp;utm_source=dynamic&quot;},&quot;recaptcha&quot;:{&quot;enabled&quot;:false},&quot;return_visitor&quot;:{&quot;action&quot;:&quot;show&quot;,&quot;custom_content&quot;:&quot;&quot;},&quot;slide_in&quot;:{&quot;display_in&quot;:&quot;bottom_right&quot;,&quot;trigger&quot;:&quot;timer&quot;,&quot;scroll_percentage&quot;:null,&quot;timer&quot;:5,&quot;devices&quot;:&quot;all&quot;,&quot;show_once_every&quot;:15},&quot;sticky_bar&quot;:{&quot;display_in&quot;:&quot;top&quot;,&quot;trigger&quot;:&quot;timer&quot;,&quot;scroll_percentage&quot;:null,&quot;timer&quot;:5,&quot;devices&quot;:&quot;all&quot;,&quot;show_once_every&quot;:15}},&quot;version&quot;:&quot;5&quot;}" min-width="400 500 600 700 800">
+			<form action="https://app.kit.com/forms/9457604/subscriptions" class="mt-10 rounded-4xl border border-zinc-200 bg-white p-4 shadow-xl shadow-zinc-900/5" method="post" data-sv-form="9457604" data-uid="34070917df" data-format="inline" data-version="5" data-options="{&quot;settings&quot;:{&quot;after_subscribe&quot;:{&quot;action&quot;:&quot;message&quot;,&quot;success_message&quot;:&quot;Success! Now check your email to confirm your subscription.&quot;,&quot;redirect_url&quot;:&quot;&quot;},&quot;analytics&quot;:{&quot;google&quot;:null,&quot;fathom&quot;:null,&quot;facebook&quot;:null,&quot;segment&quot;:null,&quot;pinterest&quot;:null,&quot;sparkloop&quot;:null,&quot;googletagmanager&quot;:null},&quot;modal&quot;:{&quot;trigger&quot;:&quot;timer&quot;,&quot;scroll_percentage&quot;:null,&quot;timer&quot;:5,&quot;devices&quot;:&quot;all&quot;,&quot;show_once_every&quot;:15},&quot;powered_by&quot;:{&quot;show&quot;:true,&quot;url&quot;:&quot;https://kit.com/features/forms?utm_campaign=poweredby&amp;utm_content=form&amp;utm_medium=referral&amp;utm_source=dynamic&quot;},&quot;recaptcha&quot;:{&quot;enabled&quot;:false},&quot;return_visitor&quot;:{&quot;action&quot;:&quot;show&quot;,&quot;custom_content&quot;:&quot;&quot;},&quot;slide_in&quot;:{&quot;display_in&quot;:&quot;bottom_right&quot;,&quot;trigger&quot;:&quot;timer&quot;,&quot;scroll_percentage&quot;:null,&quot;timer&quot;:5,&quot;devices&quot;:&quot;all&quot;,&quot;show_once_every&quot;:15},&quot;sticky_bar&quot;:{&quot;display_in&quot;:&quot;top&quot;,&quot;trigger&quot;:&quot;timer&quot;,&quot;scroll_percentage&quot;:null,&quot;timer&quot;:5,&quot;devices&quot;:&quot;all&quot;,&quot;show_once_every&quot;:15}},&quot;version&quot;:&quot;5&quot;}" min-width="400 500 600 700 800">
 				<div data-style="full" style="--border-radius: 0px;">
 					<div class="formkit-container">
 						<div data-element="content" class="pb-2">
-							<p>Subscribe below and we’ll notify you when the product is released.</p>
+							<p>Subscribe below and we'll notify you when the product is released.</p>
 						</div>
 						<ul class="formkit-alert formkit-alert-error" data-element="errors" data-group="alert"></ul>
 
@@ -194,10 +190,10 @@
 
 						<div data-element="fields" class="seva-fields formkit-fields">
 							
-							<input class="mt-3 w-full rounded-3xl border border-zinc-200 bg-zinc-50 px-5 py-4 text-base outline-none transition focus:border-zinc-900 focus:bg-white"" aria-label="Optional: Want would you like to build?" name="fields[want-to-build]" placeholder="Optional: Want would you like to build?" type="text" >
+							<input class="mt-3 w-full rounded-3xl border border-zinc-200 bg-zinc-50 px-5 py-4 text-base outline-none transition focus:border-zinc-900 focus:bg-white" aria-label="Optional: Want would you like to build?" name="fields[want-to-build]" placeholder="Optional: Want would you like to build?" type="text" >
 							
 						</div>
-						<div class="formkit-disclaimer" data-element="disclaimer" style="color: rgb(203, 203, 203);">We respect your privacy. Unsubscribe at any time.</div>
+						<div class="formkit-disclaimer" data-element="disclaimer">We respect your privacy. Unsubscribe at any time.</div>
 					</div>
 				</div>
 			</form>
