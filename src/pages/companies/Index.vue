@@ -38,7 +38,7 @@ const projects = [
 				</p>
 			</div>
 			<div class="space-y-4 grid grid-cols-1 md:grid-cols-2 gap-8">
-				<a href="https://flex-digital.net" target="flexdigital" rel="noopener noreferrer" class="shadow-xl ring-1 ring-zinc-100 mr-6 block w-full bg-black dark:bg-black dark:ring-zinc-900 rounded-2xl overflow-hidden border-white cursor-pointer relative transform hover:scale-[1.03] group duration-300 ease-in-out hover:shadow-2xl" style="backface-visibility:hidden; -webkit-backface-visibility:hidden;  ">
+				<a href="https://flex-digital.net" target="flexdigital" rel="noopener noreferrer" class="shadow-xl ring-1 ring-zinc-700 mr-6 block w-full bg-black dark:bg-black  rounded-2xl overflow-hidden border-white cursor-pointer relative transform hover:scale-[1.03] group duration-300 ease-in-out hover:shadow-2xl" style="backface-visibility:hidden; -webkit-backface-visibility:hidden;  ">
 					<div class="p-7 relative top-0 z-20 left-0 right-0 v-stack h-full">
 						<div class="bg-black p-5 aspect-4/3 w-full flex items-center justify-center">
 							<img :src="flexLogo" alt="Flex Digital" class="w-full h-auto " />
