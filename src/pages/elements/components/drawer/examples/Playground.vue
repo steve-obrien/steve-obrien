@@ -9,7 +9,7 @@ import { ElDrawer } from '@elements/vue';
 const data = reactive({
 	side: 'right',
 	title: 'Drawer',
-	width: 'max-w-sm',
+	width: 'var(--container-sm)',
 	static: false,
 	modelValue: false,
 });

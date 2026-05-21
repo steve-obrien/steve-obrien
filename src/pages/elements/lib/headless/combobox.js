@@ -59,7 +59,7 @@ export class ElementCombobox extends ElementBase {
 		if (this._list) this._wireList();
 
 		this.on(this._input, 'input', () => this._filter(this._input.value));
-		this.on(this._input, 'focus', () => this._setOpen(true));
+		this.on(this._input, 'focus', () => this._filter(this._input.value));
 		this.on(this._input, 'keydown', (e) => this._onKey(e));
 	}
 
@@ -129,6 +129,11 @@ export class ElementCombobox extends ElementBase {
 			opt.hidden = !match;
 			if (match && firstVisible === -1) firstVisible = i;
 		});
+		if (firstVisible < 0) {
+			this._setOpen(false);
+			this._setActive(-1);
+			return;
+		}
 		this._setOpen(true);
 		this._setActive(firstVisible);
 	}
