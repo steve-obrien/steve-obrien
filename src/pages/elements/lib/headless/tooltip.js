@@ -1,4 +1,40 @@
-import { ElementBase, defineElement, uid } from './base.js';
+import { ElementBase, defineElement, isBrowser, uid } from './base.js';
+
+const STYLE_ID = 'element-tooltip-styles';
+
+function ensureTooltipStyles() {
+	if (!isBrowser || document.getElementById(STYLE_ID)) return;
+	const style = document.createElement('style');
+	style.id = STYLE_ID;
+	style.textContent = `
+element-tooltip {
+	position: relative;
+	display: inline-flex;
+}
+[data-el-tooltip] {
+	position: absolute;
+	z-index: 50;
+	padding: 0.375rem 0.625rem;
+	border-radius: 0.5rem;
+	font-size: 0.75rem;
+	line-height: 1rem;
+	font-weight: 500;
+	background: rgb(var(--primary));
+	color: rgb(var(--inverse));
+	box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.25);
+	white-space: nowrap;
+	pointer-events: none;
+}
+[data-el-tooltip][hidden] { display: none; }
+[data-el-tooltip][data-placement="top"] { bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); }
+[data-el-tooltip][data-placement="bottom"] { top: calc(100% + 6px); left: 50%; transform: translateX(-50%); }
+[data-el-tooltip][data-placement="left"] { right: calc(100% + 6px); top: 50%; transform: translateY(-50%); }
+[data-el-tooltip][data-placement="right"] { left: calc(100% + 6px); top: 50%; transform: translateY(-50%); }
+`;
+	document.head.appendChild(style);
+}
+
+ensureTooltipStyles();
 
 // <element-tooltip text="…" placement="top|bottom|left|right" delay="150">
 //   <button>trigger</button>
@@ -31,7 +67,9 @@ export class ElementTooltip extends ElementBase {
 	};
 
 	connectedCallback() {
-		this._trigger = this.firstElementChild;
+		if (this._bubble) return;
+
+		this._trigger = [...this.children].find((el) => el.getAttribute('role') !== 'tooltip');
 		if (!this._trigger) return;
 
 		const id = uid('tip');

@@ -1,6 +1,28 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue';
 
+defineOptions({
+	__doc: {
+		name: 'Dialog',
+		tag: '<ElDialog>',
+		description: 'A modal built on the native HTML <dialog> element — top-layer rendering, native stacking, scroll lock, and backdrop styling without z-index hacks.',
+		slots: [
+			{ name: 'trigger', description: 'Optional. Element that opens the dialog when clicked — omit when using v-model, a template ref, or commandfor on an external button.' },
+			{ name: '(default)', description: 'Dialog body — rendered inside the card below the title and description.' },
+			{ name: 'footer', description: 'Action buttons. Add `data-close` on a control to dismiss the dialog.' },
+		],
+		events: [
+			{ name: 'update:modelValue', payload: '(open: boolean)', description: 'Emitted when the dialog opens or closes.' },
+			{ name: 'close', description: 'Emitted when the dialog is dismissed.' },
+		],
+		keyboard: [
+			{ keys: 'Esc', action: 'Closes the topmost open dialog unless `static` is set.' },
+			{ keys: 'Tab / Shift+Tab', action: 'Focus stays within the dialog while open (native top-layer).' },
+			{ keys: 'Click backdrop', action: 'Dismisses the dialog unless `static` is set.' },
+		],
+	},
+});
+
 const props = defineProps({
 	modelValue: {
 		type: Boolean,
@@ -17,10 +39,21 @@ const props = defineProps({
 		default: '',
 		_edit: { description: 'Supporting copy under the heading.' },
 	},
+	static: {
+		type: Boolean,
+		default: false,
+		_edit: { description: 'Modal cannot be dismissed by backdrop click or Esc — use footer actions with data-close or v-model.' },
+	},
 });
 const emit = defineEmits(['update:modelValue', 'close']);
 
 const root = ref(null);
+
+function setOpen(v) {
+	if (!root.value) return;
+	if (v) root.value.open();
+	else root.value.close();
+}
 
 onMounted(async () => {
 	await import('../headless/dialog.js');
@@ -29,11 +62,16 @@ onMounted(async () => {
 		emit('update:modelValue', false);
 		emit('close');
 	});
-	if (props.modelValue) root.value.open = true;
+	if (props.modelValue) setOpen(true);
 });
 
-watch(() => props.modelValue, (v) => {
-	if (root.value) root.value.open = v;
+watch(() => props.modelValue, setOpen);
+
+defineExpose({
+	open: () => setOpen(true),
+	close: () => setOpen(false),
+	toggle: () => root.value?.toggle(),
+	get element() { return root.value; },
 });
 </script>
 
@@ -43,9 +81,12 @@ watch(() => props.modelValue, (v) => {
 		just hand it a trigger slot and the dialog body — no <dialog> tag in
 		Vue templates.
 	-->
-	<element-dialog ref="root">
-		<slot name="trigger" />
-		<div class="rounded-2xl border border-skin-border bg-skin-background p-6 shadow-2xl shadow-black/30 ring-1 ring-black/[0.04] outline-none w-[min(92vw,28rem)]">
+	<element-dialog ref="root" :static="static || null">
+		<!-- Vue does not forward slot= onto component roots; anchor trigger for element-dialog -->
+		<span slot="trigger" class="contents">
+			<slot name="trigger" />
+		</span>
+		<div class="rounded-2xl border border-skin-border bg-skin-background p-6 shadow-2xl shadow-black/30 ring-1 ring-black/4 outline-none w-[min(92vw,28rem)]">
 			<div v-if="title || description" class="space-y-2">
 				<h2 v-if="title" class="text-lg font-semibold tracking-tight text-skin-primary">{{ title }}</h2>
 				<p v-if="description" class="text-sm text-skin-secondary">{{ description }}</p>

@@ -5,6 +5,7 @@ import DocPage from '../../_layout/DocPage.vue';
 import DocSection from '../../_layout/DocSection.vue';
 import CodeBlock from '../../_layout/CodeBlock.vue';
 import Demo from '../../_layout/Demo.vue';
+import Playground from '../../_layout/docs/Playground.vue';
 import PropsTable from '../../_layout/PropsTable.vue';
 import { ElColorInput } from '../../lib/vue';
 
@@ -39,6 +40,15 @@ const props = [
 			tagline="Native colour picker paired with a hex text field — both bound to the same value."
 			tag="<ElColorInput>"
 		>
+			<DocSection eyebrow="Playground" title="Try every prop live">
+				<Playground
+					:inspect="ElColorInput"
+					:initial="{ label: 'Brand colour', description: 'Used for accents and links.', modelValue: '#3b82f6' }"
+					title="Color input playground"
+					description="Edit props in the inspector — picker and hex field share the same value."
+				/>
+			</DocSection>
+
 			<DocSection eyebrow="Demo" title="Live preview">
 				<Demo>
 					<div class="w-full max-w-sm space-y-3">

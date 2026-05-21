@@ -5,6 +5,7 @@ import DocPage from '../../_layout/DocPage.vue';
 import DocSection from '../../_layout/DocSection.vue';
 import CodeBlock from '../../_layout/CodeBlock.vue';
 import Demo from '../../_layout/Demo.vue';
+import Playground from '../../_layout/docs/Playground.vue';
 import PropsTable from '../../_layout/PropsTable.vue';
 import { ElSelectInput } from '../../lib/vue';
 
@@ -41,6 +42,15 @@ const props = [
 			tagline="A pill-style segmented selector. Compact, keyboard-friendly, ideal for short option lists."
 			tag="<ElSelectInput>"
 		>
+			<DocSection eyebrow="Playground" title="Try every prop live">
+				<Playground
+					:inspect="ElSelectInput"
+					:initial="{ label: 'Size', description: 'Three balanced sizes.', options: ['sm', 'md', 'lg'], modelValue: 'md' }"
+					title="Select input playground"
+					description="Edit props in the inspector — options array and selected value update live."
+				/>
+			</DocSection>
+
 			<DocSection eyebrow="Demo" title="Live preview">
 				<Demo>
 					<div class="w-full max-w-sm">

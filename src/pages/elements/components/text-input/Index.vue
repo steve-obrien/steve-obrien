@@ -5,6 +5,7 @@ import DocPage from '../../_layout/DocPage.vue';
 import DocSection from '../../_layout/DocSection.vue';
 import CodeBlock from '../../_layout/CodeBlock.vue';
 import Demo from '../../_layout/Demo.vue';
+import Playground from '../../_layout/docs/Playground.vue';
 import PropsTable from '../../_layout/PropsTable.vue';
 import { ElTextInput } from '../../lib/vue';
 
@@ -42,6 +43,15 @@ const props = [
 			tagline="A labelled single-line text field, wrapped in ElField so the label and description are uniform across forms."
 			tag="<ElTextInput>"
 		>
+			<DocSection eyebrow="Playground" title="Try every prop live">
+				<Playground
+					:inspect="ElTextInput"
+					:initial="{ label: 'Display name', description: 'Shown on your profile.', placeholder: 'Your name' }"
+					title="Text input playground"
+					description="Edit props in the inspector — label, description, placeholder, and disabled state update live."
+				/>
+			</DocSection>
+
 			<DocSection eyebrow="Demo" title="Live preview">
 				<Demo>
 					<div class="w-full max-w-sm">

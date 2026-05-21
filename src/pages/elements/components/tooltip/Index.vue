@@ -4,6 +4,7 @@ import DocPage from '../../_layout/DocPage.vue';
 import DocSection from '../../_layout/DocSection.vue';
 import CodeBlock from '../../_layout/CodeBlock.vue';
 import Demo from '../../_layout/Demo.vue';
+import Playground from '../../_layout/docs/Playground.vue';
 import PropsTable from '../../_layout/PropsTable.vue';
 import { ElTooltip, ElButton } from '../../lib/vue';
 
@@ -31,6 +32,17 @@ const props = [
 <template>
 	<ElementsLayout>
 		<DocPage name="Tooltip" tagline="Lightweight, accessible tooltip wired through aria-describedby — fires on hover and focus." tag="<element-tooltip>">
+			<DocSection eyebrow="Playground" title="Try every prop live">
+				<Playground
+					:inspect="ElTooltip"
+					:initial="{ text: 'Tooltip text', placement: 'top' }"
+					title="Tooltip playground"
+					description="Edit props in the inspector — hover or focus the trigger to preview placement and delay."
+				>
+					<ElButton variant="secondary">Hover me</ElButton>
+				</Playground>
+			</DocSection>
+
 			<DocSection eyebrow="Demo" title="Live preview">
 				<Demo>
 					<div class="flex flex-wrap items-center gap-6">

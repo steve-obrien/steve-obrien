@@ -5,6 +5,7 @@ import DocPage from '../../_layout/DocPage.vue';
 import DocSection from '../../_layout/DocSection.vue';
 import CodeBlock from '../../_layout/CodeBlock.vue';
 import Demo from '../../_layout/Demo.vue';
+import Playground from '../../_layout/docs/Playground.vue';
 import PropsTable from '../../_layout/PropsTable.vue';
 import { ElNumberInput } from '../../lib/vue';
 
@@ -42,6 +43,15 @@ const props = [
 			tagline="A labelled number field with native min / max / step support."
 			tag="<ElNumberInput>"
 		>
+			<DocSection eyebrow="Playground" title="Try every prop live">
+				<Playground
+					:inspect="ElNumberInput"
+					:initial="{ label: 'Quantity', description: 'Items per order.', min: 1, max: 99, step: 1, modelValue: 1 }"
+					title="Number input playground"
+					description="Edit props in the inspector — min, max, step, and label update live."
+				/>
+			</DocSection>
+
 			<DocSection eyebrow="Demo" title="Live preview">
 				<Demo>
 					<div class="w-full max-w-sm">

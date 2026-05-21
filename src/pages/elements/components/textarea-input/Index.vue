@@ -5,6 +5,7 @@ import DocPage from '../../_layout/DocPage.vue';
 import DocSection from '../../_layout/DocSection.vue';
 import CodeBlock from '../../_layout/CodeBlock.vue';
 import Demo from '../../_layout/Demo.vue';
+import Playground from '../../_layout/docs/Playground.vue';
 import PropsTable from '../../_layout/PropsTable.vue';
 import { ElTextareaInput } from '../../lib/vue';
 
@@ -42,6 +43,15 @@ const props = [
 			tagline="Multi-line text input with the same label/description chrome as the rest of the form components."
 			tag="<ElTextareaInput>"
 		>
+			<DocSection eyebrow="Playground" title="Try every prop live">
+				<Playground
+					:inspect="ElTextareaInput"
+					:initial="{ label: 'Bio', description: 'A short public summary.', placeholder: 'Tell us about yourself…', rows: 4 }"
+					title="Textarea playground"
+					description="Edit props in the inspector — label, rows, and placeholder update live."
+				/>
+			</DocSection>
+
 			<DocSection eyebrow="Demo" title="Live preview">
 				<Demo>
 					<div class="w-full max-w-sm">

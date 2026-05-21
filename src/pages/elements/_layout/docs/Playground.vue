@@ -1,48 +1,114 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, reactive, ref, useSlots } from 'vue';
 import CodePanel from './CodePanel.vue';
 import InspectorField from '../inspector/InspectorField.vue';
 import { inferSchema } from '../inspector/useInspector.js';
 
-// A playground is just like an <Example>, but the rendered SFC carries a
-// reactive `data` object (via defineExpose). The wrapper layers an inspector
-// over it — schema inferred from a target Elements component — and exposes
-// a Source / Data tab pair so consumers can see either the SFC they would
-// write OR the live state being bound to the component.
+// Two modes, one component:
 //
-//   import PlaygroundDrawer from './examples/PlaygroundDrawer.vue';
-//   import PlaygroundDrawerSrc from './examples/PlaygroundDrawer.vue?raw';
+// 1. Auto (the simple case) — give it only an `:inspect` component:
 //
-//   <Playground
-//     :component="PlaygroundDrawer"
-//     :source="PlaygroundDrawerSrc"
-//     :inspect="ElDrawer"
-//     filename="PlaygroundDrawer.vue"
-//   />
+//    <Playground :inspect="ElDrawer" />
 //
-// The playground SFC owns the data declaration — same shape a consumer
-// would write — and defineExpose({ data }) lets the wrapper introspect it.
+//    The wrapper seeds a reactive `data` object from defineProps defaults,
+//    binds it to the live component, and synthesises source from the
+//    canonical `__doc.tag` + the current data. Slots passed to <Playground>
+//    are forwarded to the rendered component.
+//
+// 2. SFC (for cases that need trigger slots, event wiring, etc.) — supply
+//    a `:component` SFC that exposes its own `data` via defineExpose:
+//
+//    <Playground :inspect="ElDrawer" :component="PlaygroundDrawer"
+//                :source="PlaygroundDrawerSrc" />
+//
+//    The SFC is rendered as-is; its source string is shown verbatim. The
+//    wrapper still drives the inspector against the same `data` object.
 const props = defineProps({
-	component: { required: true },           // the playground SFC
-	source: { type: String, default: '' },   // ?raw source of the same SFC
-	inspect: { required: true },             // the Elements component to infer prop schema from
+	inspect: { required: true },
+	component: { type: null, default: null },
+	source: { type: String, default: '' },
 	title: { type: String, default: 'Playground' },
 	description: { type: String, default: '' },
 	filename: { type: String, default: 'Playground.vue' },
+	/** Merged over defineProps defaults — for required props (tabs, items, options, …). */
+	initial: { type: Object, default: () => ({}) },
 });
 
+const slots = useSlots();
+const useSfc = computed(() => !!props.component);
+
+// ---------------------------------------------------------------------------
+// Auto-mode data — seeded from the inspected component's defineProps defaults.
+function seed() {
+	const out = {};
+	const defs = props.inspect.props || {};
+	for (const [key, def] of Object.entries(defs)) {
+		if (key === 'class' || key === 'modelModifiers') continue;
+		const d = def && typeof def === 'object' ? def.default : undefined;
+		out[key] = typeof d === 'function' ? d() : d;
+	}
+	return Object.assign(out, props.initial);
+}
+const autoData = reactive(seed());
+
+// ---------------------------------------------------------------------------
+// SFC-mode data — picked up from `defineExpose({ data })` after mount.
 const playgroundRef = ref(null);
-const data = ref(null);
+const sfcData = ref(null);
 onMounted(() => {
-	// `defineExpose({ data })` in the playground SFC puts `data` on the proxy.
-	data.value = playgroundRef.value?.data || null;
+	if (useSfc.value) sfcData.value = playgroundRef.value?.data || null;
 });
+
+// Whichever mode we're in, `data` is the live reactive props object.
+const data = computed(() => (useSfc.value ? sfcData.value : autoData));
 
 const schema = computed(() => {
 	if (!data.value) return [];
 	return inferSchema({ component: props.inspect, props: data.value, children: [] })
 		.filter((f) => f.key !== 'class');
 });
+
+function onUpdateModelValue(v) {
+	if (data.value && 'modelValue' in data.value) data.value.modelValue = v;
+}
+
+// ---------------------------------------------------------------------------
+// Source generation (auto mode only — SFC mode shows the raw ?raw string).
+//
+// Safe because the tag name comes from `inspect.__doc.tag` (canonical, set by
+// the component author) and the data inside `reactive(...)` is JSON.stringify
+// of the live state. There is no guesswork.
+const componentTag = computed(() => {
+	const tag = props.inspect.__doc?.tag;
+	if (tag) return tag.replace(/^</, '').replace(/>$/, '');
+	return props.inspect.name || props.inspect.__name || 'Component';
+});
+
+const autoSource = computed(() => {
+	if (!data.value) return '';
+	const tag = componentTag.value;
+	const hasModel = 'modelValue' in data.value;
+	const literal = JSON.stringify(data.value, null, 2)
+		.split('\n')
+		.map((l, i) => (i === 0 ? l : '\t' + l))
+		.join('\n');
+	const handler = hasModel ? '\n\t\t@update:modelValue="data.modelValue = $event"' : '';
+	return `<script setup>
+import { reactive } from 'vue';
+import { ${tag} } from '@elements/vue';
+
+const data = reactive(${literal});
+</${'script'}>
+
+<template>
+\t<${tag}
+\t\tv-bind="data"${handler}
+\t/>
+</template>`;
+});
+
+// ---------------------------------------------------------------------------
+// Tabs
 
 const tab = ref('source');
 const tabs = [
@@ -51,9 +117,15 @@ const tabs = [
 ];
 
 const dataJson = computed(() => (data.value ? JSON.stringify(data.value, null, 2) : ''));
-const codeSource = computed(() => (tab.value === 'data' ? dataJson.value : props.source));
+const codeSource = computed(() => {
+	if (tab.value === 'data') return dataJson.value;
+	return useSfc.value ? props.source : autoSource.value;
+});
 const codeLang = computed(() => (tab.value === 'data' ? 'json' : 'vue'));
-const codeFilename = computed(() => (tab.value === 'data' ? 'data' : props.filename));
+const codeFilename = computed(() => {
+	if (tab.value === 'data') return 'data';
+	return useSfc.value ? props.filename : 'Playground.vue';
+});
 </script>
 
 <template>
@@ -65,8 +137,21 @@ const codeFilename = computed(() => (tab.value === 'data' ? 'data' : props.filen
 
 		<div class="grid w-full grid-cols-1 items-start gap-6 bg-gradient-to-br from-skin-surface/40 via-skin-background to-skin-surface/30 p-10 sm:grid-cols-[1fr_240px]">
 			<div class="flex items-center justify-center">
-				<component :is="component" ref="playgroundRef" />
+				<!-- SFC mode: render the playground SFC; it owns the data + slots. -->
+				<component v-if="useSfc" :is="component" ref="playgroundRef" />
+				<!-- Auto mode: render the inspected component, forwarding every parent slot. -->
+				<component
+					v-else
+					:is="inspect"
+					v-bind="autoData"
+					@update:modelValue="onUpdateModelValue"
+				>
+					<template v-for="(_, name) in slots" :key="name" #[name]="slotProps">
+						<slot :name="name" v-bind="slotProps || {}" />
+					</template>
+				</component>
 			</div>
+
 			<aside class="space-y-4 text-left">
 				<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-skin-muted">Properties</p>
 				<template v-if="data">
@@ -81,7 +166,6 @@ const codeFilename = computed(() => (tab.value === 'data' ? 'data' : props.filen
 			</aside>
 		</div>
 
-		<!-- Tab switcher for the code panel below. -->
 		<div class="flex items-center gap-1 border-t border-skin-border bg-skin-surface/40 px-3 py-1.5">
 			<button
 				v-for="t in tabs"

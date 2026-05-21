@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref, useId } from 'vue';
+import { onMounted, ref } from 'vue';
 
 defineOptions({
 	__doc: {
@@ -17,8 +17,6 @@ defineOptions({
 		],
 	},
 });
-
-const panelId = `el-popover-${useId()}`;
 
 const props = defineProps({
 	align: {
@@ -45,58 +43,22 @@ const props = defineProps({
 const emit = defineEmits(['open', 'close']);
 
 const root = ref(null);
-const triggerEl = ref(null);
-const panelStyle = ref({ position: 'fixed', top: 0, left: 0, margin: 0 });
-
-function updatePosition() {
-	if (!triggerEl.value || typeof window === 'undefined') return;
-	const r = triggerEl.value.getBoundingClientRect();
-	const top = `${r.bottom + props.offset}px`;
-	let placement;
-	if (props.align === 'right') {
-		placement = { left: 'auto', right: `${window.innerWidth - r.right}px` };
-	} else if (props.align === 'center') {
-		placement = { left: `${r.left + r.width / 2}px`, transform: 'translateX(-50%)' };
-	} else {
-		placement = { left: `${r.left}px`, right: 'auto' };
-	}
-	panelStyle.value = { position: 'fixed', top, margin: 0, ...placement };
-}
-
-let scrollHandler = null;
-let resizeHandler = null;
-function attachReflow() {
-	scrollHandler = () => updatePosition();
-	resizeHandler = () => updatePosition();
-	window.addEventListener('scroll', scrollHandler, { capture: true, passive: true });
-	window.addEventListener('resize', resizeHandler);
-}
-function detachReflow() {
-	if (scrollHandler) window.removeEventListener('scroll', scrollHandler, { capture: true });
-	if (resizeHandler) window.removeEventListener('resize', resizeHandler);
-	scrollHandler = resizeHandler = null;
-}
 
 onMounted(async () => {
 	await import('../headless/popover.js');
-	root.value?.addEventListener('el:open', () => {
-		updatePosition();
-		attachReflow();
-		emit('open');
-	});
-	root.value?.addEventListener('el:close', () => {
-		detachReflow();
-		emit('close');
-	});
+	root.value?.addEventListener('el:open', () => emit('open'));
+	root.value?.addEventListener('el:close', () => emit('close'));
 });
-
-onBeforeUnmount(detachReflow);
 </script>
 
 <template>
-	<element-popover ref="root" class="relative inline-block">
+	<element-popover
+		ref="root"
+		:align="align"
+		:offset="offset"
+		class="relative inline-block"
+	>
 		<button
-			ref="triggerEl"
 			slot="trigger"
 			type="button"
 			class="inline-flex h-10 items-center gap-2 rounded-full bg-skin-surface px-4 text-sm font-medium text-skin-primary ring-1 ring-skin-border transition hover:bg-skin-border/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-skin-primary/60"
@@ -104,9 +66,7 @@ onBeforeUnmount(detachReflow);
 			<slot name="trigger">{{ label }}</slot>
 		</button>
 		<div
-			:id="panelId"
 			slot="panel"
-			:style="panelStyle"
 			class="el-popover-panel rounded-2xl border border-skin-border bg-skin-background p-4 text-sm text-skin-primary shadow-2xl shadow-black/10 ring-1 ring-black/[0.04] outline-none dark:shadow-black/40"
 			:class="width"
 		>
@@ -114,13 +74,3 @@ onBeforeUnmount(detachReflow);
 		</div>
 	</element-popover>
 </template>
-
-<style>
-/* Reset the user-agent popover defaults so our inline coords win. */
-.el-popover-panel {
-	margin: 0;
-}
-.el-popover-panel:not(:popover-open) {
-	display: none;
-}
-</style>

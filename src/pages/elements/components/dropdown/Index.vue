@@ -3,6 +3,7 @@ import ElementsLayout from '../../_layout/ElementsLayout.vue';
 import DocPage from '../../_layout/DocPage.vue';
 import DocSection from '../../_layout/DocSection.vue';
 import Example from '../../_layout/docs/Example.vue';
+import Playground from '../../_layout/docs/Playground.vue';
 import ComponentProps from '../../_layout/docs/ComponentProps.vue';
 import ComponentSlots from '../../_layout/docs/ComponentSlots.vue';
 import ComponentEvents from '../../_layout/docs/ComponentEvents.vue';
@@ -19,11 +20,26 @@ import Actions from './examples/Actions.vue';
 import ActionsSrc from './examples/Actions.vue?raw';
 
 const doc = ElDropdown.__doc;
+
+const playgroundItems = [
+	{ label: 'First option', value: 'a' },
+	{ label: 'Second option', value: 'b' },
+	{ label: 'Third option', value: 'c' },
+];
 </script>
 
 <template>
 	<ElementsLayout>
 		<DocPage :name="doc.name" :tagline="doc.description" :tag="doc.tag">
+			<DocSection eyebrow="Playground" title="Try every prop live">
+				<Playground
+					:inspect="ElDropdown"
+					:initial="{ items: playgroundItems, label: 'Choose…' }"
+					title="Dropdown playground"
+					description="Edit props in the inspector — open the menu to preview item labels and alignment."
+				/>
+			</DocSection>
+
 			<DocSection eyebrow="Demo" title="Basic">
 				<Example
 					:source="BasicSrc"

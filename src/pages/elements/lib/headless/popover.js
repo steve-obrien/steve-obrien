@@ -1,4 +1,13 @@
-import { ElementBase, defineElement, uid } from './base.js';
+import { ElementBase, defineElement } from './base.js';
+import {
+	attachPopoverReflow,
+	bindPopoverToggle,
+	closePopoverPanel,
+	isPopoverOpen,
+	openPopoverPanel,
+	positionPopoverPanel,
+	preparePopoverPanel,
+} from './popover-panel.js';
 
 // <element-popover>
 //   <button slot="trigger">Open</button>
@@ -9,7 +18,7 @@ import { ElementBase, defineElement, uid } from './base.js';
 // top-layer promotion, light-dismiss, and Esc — we just wire the trigger and
 // surface our usual el:open / el:close events.
 export class ElementPopover extends ElementBase {
-	static get observedAttributes() { return ['open']; }
+	static get observedAttributes() { return ['open', 'align', 'offset']; }
 
 	static __doc = {
 		name: 'element-popover',
@@ -20,6 +29,8 @@ export class ElementPopover extends ElementBase {
 		],
 		attributes: [
 			{ name: 'open', type: 'boolean', description: 'Reflects open state.' },
+			{ name: 'align', type: "'left' | 'right' | 'center'", description: 'Horizontal alignment under the trigger (default left).' },
+			{ name: 'offset', type: 'number', description: 'Gap in pixels between trigger and panel (default 8).' },
 			{ name: 'data-panel-id', type: 'string', description: 'Id of an external (teleported) panel element.' },
 		],
 		events: [
@@ -42,7 +53,25 @@ export class ElementPopover extends ElementBase {
 	constructor() {
 		super();
 		this._open = false;
-		this._onToggle = this._onToggle.bind(this);
+		this._unbindToggle = null;
+		this._reflowOff = null;
+	}
+
+	_positionOpts() {
+		return {
+			align: this.getAttribute('align') || 'left',
+			offset: Number(this.getAttribute('offset') || 8),
+		};
+	}
+
+	_bindReflow() {
+		this._reflowOff?.();
+		this._reflowOff = attachPopoverReflow(this._panel, this._trigger, this._positionOpts());
+	}
+
+	_unbindReflow() {
+		this._reflowOff?.();
+		this._reflowOff = null;
 	}
 
 	connectedCallback() {
@@ -60,16 +89,14 @@ export class ElementPopover extends ElementBase {
 	}
 
 	_preparePanel() {
-		const id = uid('pop');
-		this._panel.id = this._panel.id || `${id}-panel`;
-		if (!this._panel.hasAttribute('popover')) {
-			this._panel.setAttribute('popover', 'auto');
+		if (!this._panel.classList.contains('el-popover-panel')) {
+			this._panel.classList.add('el-popover-panel');
 		}
-		this._trigger.setAttribute('aria-controls', this._panel.id);
-		this._panel.addEventListener('toggle', this._onToggle);
+		preparePopoverPanel(this._panel, this._trigger);
+		this._unbindToggle?.();
+		this._unbindToggle = bindPopoverToggle(this._panel, (open) => this._syncOpen(open, true));
 	}
 
-	// Slot child first; teleported panels referenced by `data-panel-id`.
 	_resolvePanel() {
 		const inner = this.querySelector('[slot="panel"], [data-panel]');
 		if (inner) return inner;
@@ -85,13 +112,41 @@ export class ElementPopover extends ElementBase {
 		return this._panel;
 	}
 
-	_onToggle(e) {
-		const next = e.newState === 'open';
-		if (next === this._open) return;
+	_placePanel() {
+		positionPopoverPanel(this._panel, this._trigger, this._positionOpts());
+	}
+
+	_syncOpen(next, fromPopover = false) {
+		if (!this._ensurePanel()) return;
+		if (next && this._open) {
+			this._placePanel();
+			return;
+		}
+		if (!next && !this._open) return;
+
+		if (next) {
+			if (!fromPopover) {
+				openPopoverPanel(this._panel, this._trigger, this._positionOpts());
+			} else {
+				this._placePanel();
+			}
+			this._bindReflow();
+		} else {
+			this._unbindReflow();
+			if (!fromPopover) closePopoverPanel(this._panel);
+		}
+
 		this._open = next;
 		this.setBoolAttr('open', next);
 		this._trigger?.setAttribute('aria-expanded', String(next));
 		this.emit(next ? 'el:open' : 'el:close');
+	}
+
+	attributeChangedCallback(name) {
+		if (!this._open || !this._panel || !this._trigger) return;
+		if (name === 'align' || name === 'offset') {
+			positionPopoverPanel(this._panel, this._trigger, this._positionOpts());
+		}
 	}
 
 	get open() { return this._open; }
@@ -99,18 +154,18 @@ export class ElementPopover extends ElementBase {
 		const next = !!value;
 		if (next === this._open) return;
 		if (!this._ensurePanel()) return;
-		if (next) this._panel.showPopover?.();
-		else this._panel.hidePopover?.();
+		this._syncOpen(next, false);
 	}
 
 	toggle() {
 		if (!this._ensurePanel()) return;
-		if (this._panel.matches(':popover-open')) this._panel.hidePopover();
-		else this._panel.showPopover();
+		this._syncOpen(!isPopoverOpen(this._panel), false);
 	}
 
 	disconnectedCallback() {
-		this._panel?.removeEventListener('toggle', this._onToggle);
+		this._unbindToggle?.();
+		this._unbindToggle = null;
+		this._unbindReflow();
 		super.disconnectedCallback();
 	}
 }

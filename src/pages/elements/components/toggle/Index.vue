@@ -4,6 +4,7 @@ import DocPage from '../../_layout/DocPage.vue';
 import DocSection from '../../_layout/DocSection.vue';
 import CodeBlock from '../../_layout/CodeBlock.vue';
 import Demo from '../../_layout/Demo.vue';
+import Playground from '../../_layout/docs/Playground.vue';
 import PropsTable from '../../_layout/PropsTable.vue';
 import { ElToggle } from '../../lib/vue';
 import { ref } from 'vue';
@@ -43,6 +44,15 @@ const keys = [
 <template>
 	<ElementsLayout>
 		<DocPage name="Toggle" tagline="Accessible switch with role=switch, keyboard support, and a smooth thumb animation." tag="<element-toggle>">
+			<DocSection eyebrow="Playground" title="Try every prop live">
+				<Playground
+					:inspect="ElToggle"
+					:initial="{ label: 'Notifications', modelValue: true }"
+					title="Toggle playground"
+					description="Edit props in the inspector — the live switch and synthesised source stay in sync."
+				/>
+			</DocSection>
+
 			<DocSection eyebrow="Demo" title="Live preview">
 				<Demo>
 					<div class="flex w-full max-w-sm flex-col gap-4">

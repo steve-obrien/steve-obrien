@@ -3,8 +3,16 @@
 // passed here for the live preview — one source of truth.
 
 const MODULE_LOADERS = {
-	'@elements/headless/drawer.js': () => import('../../lib/headless/drawer.js'),
 	'@elements/headless': () => import('../../lib/headless/index.js'),
+	'@elements/headless/accordion.js': () => import('../../lib/headless/accordion.js'),
+	'@elements/headless/combobox.js': () => import('../../lib/headless/combobox.js'),
+	'@elements/headless/dialog.js': () => import('../../lib/headless/dialog.js'),
+	'@elements/headless/drawer.js': () => import('../../lib/headless/drawer.js'),
+	'@elements/headless/dropdown.js': () => import('../../lib/headless/dropdown.js'),
+	'@elements/headless/popover.js': () => import('../../lib/headless/popover.js'),
+	'@elements/headless/tabs.js': () => import('../../lib/headless/tabs.js'),
+	'@elements/headless/toggle.js': () => import('../../lib/headless/toggle.js'),
+	'@elements/headless/tooltip.js': () => import('../../lib/headless/tooltip.js'),
 };
 
 const IMPORT_RE = /^\s*import\s+['"]([^'"]+)['"]\s*;?\s*$/gm;

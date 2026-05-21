@@ -4,6 +4,7 @@ import DocPage from '../../_layout/DocPage.vue';
 import DocSection from '../../_layout/DocSection.vue';
 import CodeBlock from '../../_layout/CodeBlock.vue';
 import Demo from '../../_layout/Demo.vue';
+import Playground from '../../_layout/docs/Playground.vue';
 import PropsTable from '../../_layout/PropsTable.vue';
 import { ElAccordion } from '../../lib/vue';
 
@@ -47,6 +48,15 @@ const props = [
 <template>
 	<ElementsLayout>
 		<DocPage name="Accordion" tagline="Disclosure panels with ARIA region/expanded wiring, single or multiple open, and clean transitions." tag="<element-accordion>">
+			<DocSection eyebrow="Playground" title="Try every prop live">
+				<Playground
+					:inspect="ElAccordion"
+					:initial="{ items }"
+					title="Accordion playground"
+					description="Edit props in the inspector — expand sections to preview items and the multiple mode."
+				/>
+			</DocSection>
+
 			<DocSection eyebrow="Demo" title="Live preview">
 				<Demo>
 					<div class="w-full max-w-lg">

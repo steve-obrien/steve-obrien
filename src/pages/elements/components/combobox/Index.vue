@@ -4,6 +4,7 @@ import DocPage from '../../_layout/DocPage.vue';
 import DocSection from '../../_layout/DocSection.vue';
 import CodeBlock from '../../_layout/CodeBlock.vue';
 import Demo from '../../_layout/Demo.vue';
+import Playground from '../../_layout/docs/Playground.vue';
 import PropsTable from '../../_layout/PropsTable.vue';
 import { ElCombobox } from '../../lib/vue';
 import { ref } from 'vue';
@@ -57,6 +58,15 @@ const keys = [
 <template>
 	<ElementsLayout>
 		<DocPage name="Combobox" tagline="Type-ahead select with managed activedescendant, keyboard navigation, and outside-click dismiss." tag="<element-combobox>">
+			<DocSection eyebrow="Playground" title="Try every prop live">
+				<Playground
+					:inspect="ElCombobox"
+					:initial="{ options: fruits, placeholder: 'Pick a fruit' }"
+					title="Combobox playground"
+					description="Edit props in the inspector — type to filter options and preview placeholder and disabled state."
+				/>
+			</DocSection>
+
 			<DocSection eyebrow="Demo" title="Live preview">
 				<Demo>
 					<div class="flex w-full max-w-sm flex-col items-stretch gap-2">

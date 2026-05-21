@@ -3,6 +3,7 @@ import ElementsLayout from '../../_layout/ElementsLayout.vue';
 import DocPage from '../../_layout/DocPage.vue';
 import DocSection from '../../_layout/DocSection.vue';
 import Example from '../../_layout/docs/Example.vue';
+import Playground from '../../_layout/docs/Playground.vue';
 import ComponentProps from '../../_layout/docs/ComponentProps.vue';
 import ComponentSlots from '../../_layout/docs/ComponentSlots.vue';
 import ComponentKeyboard from '../../_layout/docs/ComponentKeyboard.vue';
@@ -21,6 +22,17 @@ const doc = ElPopover.__doc;
 <template>
 	<ElementsLayout>
 		<DocPage :name="doc.name" :tagline="doc.description" :tag="doc.tag">
+			<DocSection eyebrow="Playground" title="Try every prop live">
+				<Playground
+					:inspect="ElPopover"
+					title="Popover playground"
+					description="Edit props in the inspector — the live panel and source/data tabs stay in sync."
+				>
+					<template #trigger>Quick facts</template>
+					<p class="text-sm text-skin-secondary">Popover body content.</p>
+				</Playground>
+			</DocSection>
+
 			<DocSection eyebrow="Demo" title="Quick info">
 				<Example
 					:source="QuickSrc"
@@ -28,7 +40,7 @@ const doc = ElPopover.__doc;
 					description="The simplest case — a button that opens a panel with text content."
 				>
 					<Quick />
-				</Example>
+				</Example>	
 			</DocSection>
 
 			<DocSection eyebrow="Demo" title="Settings panel">

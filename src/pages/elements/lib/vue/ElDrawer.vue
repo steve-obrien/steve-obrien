@@ -107,7 +107,9 @@ defineExpose({
 
 <template>
 	<element-drawer ref="root" :side="side" :static="static || null" :style="hostStyle">
-		<slot name="trigger" />
+		<span slot="trigger" class="contents">
+			<slot name="trigger" />
+		</span>
 		<div
 			class="flex h-full flex-col bg-zinc-50/95 ring-1 ring-zinc-900/5 backdrop-blur-sm dark:bg-zinc-900/95 dark:ring-white/10"
 		>

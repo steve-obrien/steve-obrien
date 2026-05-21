@@ -6,6 +6,7 @@ import DocPage from '../../_layout/DocPage.vue';
 import DocSection from '../../_layout/DocSection.vue';
 import CodeBlock from '../../_layout/CodeBlock.vue';
 import Demo from '../../_layout/Demo.vue';
+import Playground from '../../_layout/docs/Playground.vue';
 import PropsTable from '../../_layout/PropsTable.vue';
 import { ElListInput, ElDropdown } from '../../lib/vue';
 
@@ -56,6 +57,22 @@ const props = [
 			tagline="A friendly editor for arrays of label/value items — add, reorder, remove inline. Works as a form input and as an inspector editor."
 			tag="<ElListInput>"
 		>
+			<DocSection eyebrow="Playground" title="Try every prop live">
+				<Playground
+					:inspect="ElListInput"
+					:initial="{
+						label: 'Dropdown items',
+						description: 'Label/value pairs passed to ElDropdown.',
+						modelValue: [
+							{ label: 'Apple', value: 'apple' },
+							{ label: 'Banana', value: 'banana' },
+						],
+					}"
+					title="List input playground"
+					description="Edit props in the inspector — add, reorder, and remove items inline."
+				/>
+			</DocSection>
+
 			<DocSection eyebrow="Demo" title="Live preview">
 				<Demo>
 					<div class="grid w-full max-w-2xl gap-6 sm:grid-cols-2">

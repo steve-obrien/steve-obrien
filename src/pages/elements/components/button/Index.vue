@@ -2,66 +2,32 @@
 import ElementsLayout from '../../_layout/ElementsLayout.vue';
 import DocPage from '../../_layout/DocPage.vue';
 import DocSection from '../../_layout/DocSection.vue';
-import CodeBlock from '../../_layout/CodeBlock.vue';
-import Demo from '../../_layout/Demo.vue';
-import PropsTable from '../../_layout/PropsTable.vue';
+import Playground from '../../_layout/docs/Playground.vue';
+import ComponentProps from '../../_layout/docs/ComponentProps.vue';
+import ComponentSlots from '../../_layout/docs/ComponentSlots.vue';
 import { ElButton } from '../../lib/vue';
-import { ref } from 'vue';
 
-const loading = ref(false);
-
-const usageVue = `<script setup>
-import { ElButton } from '@elements/vue';
-<\/script>
-
-<template>
-  <ElButton variant="primary" size="md">Get started</ElButton>
-  <ElButton variant="secondary">Cancel</ElButton>
-  <ElButton variant="ghost" size="sm">Skip</ElButton>
-  <ElButton variant="danger" loading>Deleting</ElButton>
-</template>`;
-
-const props = [
-	{ name: 'variant', type: "'primary' | 'secondary' | 'ghost' | 'danger'", default: 'primary', description: 'Visual style.' },
-	{ name: 'size', type: "'sm' | 'md' | 'lg'", default: 'md', description: 'Size preset.' },
-	{ name: 'loading', type: 'boolean', default: 'false', description: 'Show spinner and block interaction.' },
-	{ name: 'disabled', type: 'boolean', default: 'false', description: 'Disabled state.' },
-	{ name: 'as', type: 'string', default: 'button', description: 'Render element / component (e.g. router-link).' },
-];
+const doc = ElButton.__doc;
 </script>
 
 <template>
 	<ElementsLayout>
-		<DocPage name="Button" tagline="The atomic call to action. Variants, sizes, loading state, and any underlying element." tag="<ElButton>">
-			<DocSection eyebrow="Demo" title="Live preview">
-				<Demo>
-					<div class="flex flex-wrap items-center gap-3">
-						<ElButton variant="primary">Primary</ElButton>
-						<ElButton variant="secondary">Secondary</ElButton>
-						<ElButton variant="ghost">Ghost</ElButton>
-						<ElButton variant="danger">Danger</ElButton>
-						<ElButton :loading="loading" @click="loading = !loading">{{ loading ? 'Working…' : 'Toggle loading' }}</ElButton>
-					</div>
-				</Demo>
+		<DocPage :name="doc.name" :tagline="doc.description" :tag="doc.tag">
+			<DocSection eyebrow="Playground" title="Try every prop live">
+				<Playground
+					:inspect="ElButton"
+					title="Button playground"
+					description="Edit any prop on the right — the rendered button and the synthesised source update together. No example SFC needed; the playground auto-builds its data from ElButton's defineProps."
+				>
+					Button
+				</Playground>
 			</DocSection>
 
-			<DocSection eyebrow="Sizes" title="Three balanced sizes">
-				<Demo>
-					<div class="flex flex-wrap items-center gap-3">
-						<ElButton size="sm">Small</ElButton>
-						<ElButton size="md">Medium</ElButton>
-						<ElButton size="lg">Large</ElButton>
-					</div>
-				</Demo>
+			<DocSection title="Reference">
+				<ComponentProps :component="ElButton" />
 			</DocSection>
 
-			<DocSection eyebrow="Usage" title="Vue">
-				<CodeBlock :code="usageVue" lang="vue" />
-			</DocSection>
-
-			<DocSection title="Props">
-				<PropsTable :rows="props" />
-			</DocSection>
+			<ComponentSlots :component="ElButton" />
 		</DocPage>
 	</ElementsLayout>
 </template>

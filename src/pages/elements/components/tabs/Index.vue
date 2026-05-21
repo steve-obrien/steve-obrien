@@ -4,6 +4,7 @@ import DocPage from '../../_layout/DocPage.vue';
 import DocSection from '../../_layout/DocSection.vue';
 import CodeBlock from '../../_layout/CodeBlock.vue';
 import Demo from '../../_layout/Demo.vue';
+import Playground from '../../_layout/docs/Playground.vue';
 import PropsTable from '../../_layout/PropsTable.vue';
 import { ElTabs } from '../../lib/vue';
 import { ref } from 'vue';
@@ -55,6 +56,19 @@ const keys = [
 <template>
 	<ElementsLayout>
 		<DocPage name="Tabs" tagline="Roving-tabindex tab list with managed ARIA, keyboard navigation, and panel linking." tag="<element-tabs>">
+			<DocSection eyebrow="Playground" title="Try every prop live">
+				<Playground
+					:inspect="ElTabs"
+					:initial="{ tabs, modelValue: active }"
+					title="Tabs playground"
+					description="Edit props in the inspector — switch tabs to preview panel slots and the active tab key."
+				>
+					<template #overview><p class="text-sm text-skin-secondary">Overview panel content.</p></template>
+					<template #pricing><p class="text-sm text-skin-secondary">Pricing panel content.</p></template>
+					<template #changelog><p class="text-sm text-skin-secondary">Changelog panel content.</p></template>
+				</Playground>
+			</DocSection>
+
 			<DocSection eyebrow="Demo" title="Live preview">
 				<Demo>
 					<div class="w-full max-w-md">

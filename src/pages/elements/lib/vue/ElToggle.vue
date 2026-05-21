@@ -37,17 +37,7 @@ watch(() => props.modelValue, (v) => {
 			ref="root"
 			:checked="modelValue || null"
 			:disabled="disabled || null"
-			class="el-toggle relative inline-flex h-6 w-11 cursor-pointer items-center rounded-full bg-skin-border transition aria-checked:bg-skin-primary"
-		>
-			<span class="el-toggle-thumb pointer-events-none ml-0.5 size-5 rounded-full bg-white shadow transition"></span>
-		</element-toggle>
+		/>
 		<span v-if="label" class="text-sm text-skin-primary">{{ label }}</span>
 	</label>
 </template>
-
-<style>
-element-toggle[aria-checked="true"] .el-toggle-thumb,
-element-toggle.el-toggle[aria-checked="true"] .el-toggle-thumb {
-	transform: translateX(1.25rem);
-}
-</style>

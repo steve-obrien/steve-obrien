@@ -1,0 +1,18 @@
+<element-accordion class="block w-full max-w-md divide-y divide-skin-border overflow-hidden rounded-2xl border border-skin-border bg-skin-background">
+	<element-accordion-item open>
+		<button slot="header" type="button" class="flex w-full items-center justify-between px-5 py-4 text-left text-sm font-medium text-skin-primary hover:bg-skin-surface">
+			Section A
+		</button>
+		<div slot="content" class="px-5 pb-5 text-sm text-skin-secondary">Lorem ipsum dolor sit amet.</div>
+	</element-accordion-item>
+	<element-accordion-item>
+		<button slot="header" type="button" class="flex w-full items-center justify-between px-5 py-4 text-left text-sm font-medium text-skin-primary hover:bg-skin-surface">
+			Section B
+		</button>
+		<div slot="content" class="px-5 pb-5 text-sm text-skin-secondary">Consectetur adipiscing elit.</div>
+	</element-accordion-item>
+</element-accordion>
+
+<script type="module">
+	import '@elements/headless/accordion.js';
+</script>

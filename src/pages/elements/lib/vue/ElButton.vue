@@ -1,6 +1,17 @@
 <script setup>
 import { computed } from 'vue';
 
+defineOptions({
+	__doc: {
+		name: 'Button',
+		tag: '<ElButton>',
+		description: 'The atomic call to action — variants, sizes, loading state, and any underlying element.',
+		slots: [
+			{ name: '(default)', description: 'Button label and/or icons.' },
+		],
+	},
+});
+
 const props = defineProps({
 	as: {
 		type: String,

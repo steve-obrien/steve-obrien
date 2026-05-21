@@ -1,0 +1,17 @@
+<element-popover>
+	<button
+		slot="trigger"
+		type="button"
+		class="inline-flex h-10 items-center rounded-full bg-skin-surface px-4 text-sm font-medium text-skin-primary ring-1 ring-skin-border hover:bg-skin-border/40"
+	>
+		More
+	</button>
+	<div slot="panel" class="max-w-xs rounded-2xl border border-skin-border bg-skin-background p-4 text-sm text-skin-secondary shadow-lg">
+		<p class="font-semibold text-skin-primary">Quick facts</p>
+		<p class="mt-2">Anything you like — text, buttons, even forms.</p>
+	</div>
+</element-popover>
+
+<script type="module">
+	import '@elements/headless/popover.js';
+</script>

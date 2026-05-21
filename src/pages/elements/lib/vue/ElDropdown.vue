@@ -1,10 +1,6 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref, useId } from 'vue';
+import { onMounted, ref, useId } from 'vue';
 
-// Documentation metadata co-located with the component. Reflected by
-// <ComponentProps> / <ComponentSlots> / <ComponentEvents> / <ComponentKeyboard>.
-// Props themselves are not duplicated here — they come from defineProps +
-// the inline `_edit` hints below.
 defineOptions({
 	__doc: {
 		name: 'Dropdown',
@@ -27,9 +23,6 @@ defineOptions({
 	},
 });
 
-// useId() is stable across SSR and unique per component instance — replaces
-// the previous module-counter approach which reset on every setup and gave
-// every dropdown the same id when multiple instances rendered on a page.
 const menuId = `el-dropdown-${useId()}`;
 
 const props = defineProps({
@@ -63,60 +56,27 @@ const props = defineProps({
 const emit = defineEmits(['select']);
 
 const root = ref(null);
-const triggerEl = ref(null);
 const isMounted = ref(false);
-const menuStyle = ref({ position: 'fixed', top: 0, left: 0, zIndex: 50, visibility: 'hidden' });
-
-function updatePosition() {
-	if (!triggerEl.value || typeof window === 'undefined') return;
-	const r = triggerEl.value.getBoundingClientRect();
-	menuStyle.value = {
-		position: 'fixed',
-		top: `${r.bottom + 4}px`,
-		left: props.align === 'right' ? 'auto' : `${r.left}px`,
-		right: props.align === 'right' ? `${window.innerWidth - r.right}px` : 'auto',
-		minWidth: `${r.width}px`,
-		zIndex: 50,
-	};
-}
-
-let scrollHandler = null;
-let resizeHandler = null;
-function attachReflow() {
-	scrollHandler = () => updatePosition();
-	resizeHandler = () => updatePosition();
-	window.addEventListener('scroll', scrollHandler, { capture: true, passive: true });
-	window.addEventListener('resize', resizeHandler);
-}
-function detachReflow() {
-	if (scrollHandler) window.removeEventListener('scroll', scrollHandler, { capture: true });
-	if (resizeHandler) window.removeEventListener('resize', resizeHandler);
-	scrollHandler = resizeHandler = null;
-}
 
 onMounted(async () => {
 	isMounted.value = true;
 	await import('../headless/dropdown.js');
 	root.value?.addEventListener('el:select', (e) => emit('select', e.detail.value));
-	root.value?.addEventListener('el:open', () => {
-		updatePosition();
-		attachReflow();
-	});
-	root.value?.addEventListener('el:close', () => {
-		detachReflow();
-	});
 });
-
-onBeforeUnmount(detachReflow);
 
 const labelOf = (item) => (item && typeof item === 'object' ? (item.label ?? item.value) : item);
 const valueOf = (item) => (item && typeof item === 'object' ? (item.value ?? item.label) : item);
 </script>
 
 <template>
-	<element-dropdown ref="root" :data-menu-id="menuId" class="relative inline-block">
+	<element-dropdown
+		ref="root"
+		:data-menu-id="menuId"
+		:align="align"
+		:offset="4"
+		class="relative inline-block"
+	>
 		<button
-			ref="triggerEl"
 			slot="trigger"
 			type="button"
 			class="inline-flex h-10 items-center gap-2 rounded-full bg-skin-surface px-4 text-sm font-medium text-skin-primary ring-1 ring-skin-border transition hover:bg-skin-border/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-skin-primary/60"
@@ -129,8 +89,7 @@ const valueOf = (item) => (item && typeof item === 'object' ? (item.value ?? ite
 		<Teleport to="body" :disabled="!isMounted">
 			<div
 				:id="menuId"
-				:style="menuStyle"
-				class="rounded-2xl border border-skin-border bg-skin-background p-1 shadow-2xl shadow-black/10 ring-1 ring-black/[0.04] dark:shadow-black/40"
+				class="el-dropdown-menu rounded-2xl border border-skin-border bg-skin-background p-1 shadow-2xl shadow-black/10 ring-1 ring-black/[0.04] dark:shadow-black/40"
 				:class="width"
 			>
 				<template v-for="(item, i) in items" :key="valueOf(item) ?? i">

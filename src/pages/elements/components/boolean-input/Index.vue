@@ -5,6 +5,7 @@ import DocPage from '../../_layout/DocPage.vue';
 import DocSection from '../../_layout/DocSection.vue';
 import CodeBlock from '../../_layout/CodeBlock.vue';
 import Demo from '../../_layout/Demo.vue';
+import Playground from '../../_layout/docs/Playground.vue';
 import PropsTable from '../../_layout/PropsTable.vue';
 import { ElBooleanInput } from '../../lib/vue';
 
@@ -39,6 +40,15 @@ const props = [
 			tagline="Switch field with a label above and an optional description below — wraps ElToggle inside ElField."
 			tag="<ElBooleanInput>"
 		>
+			<DocSection eyebrow="Playground" title="Try every prop live">
+				<Playground
+					:inspect="ElBooleanInput"
+					:initial="{ label: 'Email notifications', description: 'Product updates and security alerts.', modelValue: true }"
+					title="Boolean input playground"
+					description="Edit props in the inspector — label and description wrap the toggle field."
+				/>
+			</DocSection>
+
 			<DocSection eyebrow="Demo" title="Live preview">
 				<Demo>
 					<div class="w-full max-w-sm">
