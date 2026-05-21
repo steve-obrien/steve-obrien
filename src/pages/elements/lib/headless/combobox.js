@@ -9,6 +9,37 @@ import { ElementBase, defineElement, uid } from './base.js';
 export class ElementCombobox extends ElementBase {
 	static get observedAttributes() { return ['value', 'open']; }
 
+	static __doc = {
+		name: 'element-combobox',
+		description: 'Type-ahead select with managed activedescendant, keyboard navigation, and outside-click dismiss.',
+		slots: [
+			{ name: 'input', description: 'The text input. Gets role="combobox" and aria-controls wired automatically.' },
+			{ name: 'list', description: 'The listbox container. Each option must carry data-value.' },
+		],
+		attributes: [
+			{ name: 'value', type: 'string', description: 'Currently-selected value.' },
+			{ name: 'open', type: 'boolean', description: 'Reflects whether the list is visible.' },
+			{ name: 'data-menu-id', type: 'string', description: 'Id of an external (teleported) list element.' },
+		],
+		events: [
+			{ name: 'el:change', payload: '{ value }', description: 'Fired when an option is committed.' },
+		],
+		keyboard: [
+			{ keys: '↑ / ↓', action: 'Move active option.' },
+			{ keys: 'Enter', action: 'Commit active option.' },
+			{ keys: 'Esc', action: 'Close the list.' },
+			{ keys: 'Type', action: 'Filter the list live.' },
+		],
+		example: `<element-combobox>
+  <input slot="input" placeholder="Search…" />
+  <ul slot="list">
+    <li data-value="apple">Apple</li>
+    <li data-value="banana">Banana</li>
+    <li data-value="cherry">Cherry</li>
+  </ul>
+</element-combobox>`,
+	};
+
 	constructor() {
 		super();
 		this._active = -1;
@@ -93,7 +124,8 @@ export class ElementCombobox extends ElementBase {
 		const q = query.trim().toLowerCase();
 		let firstVisible = -1;
 		this._options.forEach((opt, i) => {
-			const match = !q || opt.textContent.toLowerCase().includes(q);
+			const haystack = `${opt.dataset.value || ''} ${opt.textContent}`.toLowerCase();
+			const match = !q || haystack.includes(q);
 			opt.hidden = !match;
 			if (match && firstVisible === -1) firstVisible = i;
 		});
@@ -143,7 +175,7 @@ export class ElementCombobox extends ElementBase {
 
 	_commit(opt) {
 		const value = opt.dataset.value ?? opt.textContent.trim();
-		this._input.value = opt.textContent.trim();
+		this._input.value = value;
 		this.setAttribute('value', value);
 		this._setOpen(false);
 		this.emit('el:change', { value });

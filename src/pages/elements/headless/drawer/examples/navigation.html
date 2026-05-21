@@ -1,0 +1,18 @@
+<element-drawer side="right" class="bg-white">
+	<button
+		slot="trigger"
+		type="button"
+		class="inline-flex h-10 items-center rounded-full bg-skin-surface px-4 text-sm font-medium text-skin-primary ring-1 ring-skin-border transition hover:bg-skin-border/40"
+	>
+		Open menu
+	</button>
+	<nav class="flex flex-col bg-zinc-50/95 text-skin-primary dark:bg-zinc-900/95">
+		<a href="#" data-close class="border-b border-skin-border px-4 py-4 text-sm font-medium hover:bg-skin-surface/60">Home</a>
+		<a href="#" data-close class="border-b border-skin-border px-4 py-4 text-sm font-medium text-skin-secondary hover:bg-skin-surface/60 hover:text-skin-primary">Projects</a>
+		<a href="#" data-close class="border-b border-skin-border px-4 py-4 text-sm font-medium text-skin-secondary hover:bg-skin-surface/60 hover:text-skin-primary">Settings</a>
+	</nav>
+</element-drawer>
+
+<script type="module">
+	import '@elements/headless/drawer.js';
+</script>

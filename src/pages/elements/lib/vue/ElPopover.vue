@@ -1,13 +1,30 @@
 <script setup>
 import { onMounted, onBeforeUnmount, ref, useId } from 'vue';
 
+defineOptions({
+	__doc: {
+		name: 'Popover',
+		tag: '<ElPopover>',
+		description: 'A floating panel anchored to a trigger. Built on the HTML Popover API so it sits in the top layer — no parent overflow, transform, or z-index can clip it.',
+		slots: [
+			{ name: 'trigger', description: 'Replaces the inner content of the trigger button.' },
+			{ name: '(default)', description: 'Popover body — text, controls, forms, anything.' },
+		],
+		keyboard: [
+			{ keys: 'Click trigger', action: 'Toggles the popover.' },
+			{ keys: 'Click outside', action: 'Light-dismiss via the native popover API.' },
+			{ keys: 'Esc', action: 'Closes the popover.' },
+		],
+	},
+});
+
 const panelId = `el-popover-${useId()}`;
 
 const props = defineProps({
 	align: {
 		type: String,
 		default: 'left',
-		_edit: { type: 'select', options: ['left', 'right', 'center'], description: 'Horizontal anchor relative to the trigger.' },
+		_edit: { options: ['left', 'right', 'center'], description: 'Horizontal anchor relative to the trigger.' },
 	},
 	offset: {
 		type: Number,

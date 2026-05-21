@@ -67,6 +67,35 @@ function getTemplate() {
 export class ElementDialog extends ElementBase {
 	static get observedAttributes() { return ['open']; }
 
+	static __doc = {
+		name: 'element-dialog',
+		description: 'Self-contained wrapper around the native HTML <dialog>. Top-layer rendering, nested stacking, ::backdrop and Esc-to-close are all native; you never write a <dialog> tag yourself.',
+		slots: [
+			{ name: 'trigger', description: 'Element that opens the dialog when clicked. Rendered outside the dialog.' },
+			{ name: '(default)', description: 'Dialog body. Anything that is not the trigger goes here.' },
+		],
+		attributes: [
+			{ name: 'open', type: 'boolean', description: 'Reflects open state. Setting it shows the dialog (showModal), removing it closes it.' },
+			{ name: 'static', type: 'boolean', description: 'Disables backdrop-click dismiss.' },
+		],
+		events: [
+			{ name: 'el:open', description: 'Fired when the dialog opens.' },
+			{ name: 'el:close', description: 'Fired when the dialog closes (Esc, .close(), or backdrop click).' },
+		],
+		keyboard: [
+			{ keys: 'Esc', action: 'Closes the topmost open dialog (native).' },
+			{ keys: 'Tab / Shift+Tab', action: 'Focus stays within the dialog while open (native top-layer).' },
+			{ keys: 'Click backdrop', action: 'Dismisses the dialog (disable with `static`).' },
+		],
+		example: `<element-dialog>
+  <button slot="trigger">Delete</button>
+  <h2>Delete project?</h2>
+  <p>This cannot be undone.</p>
+  <button data-close>Cancel</button>
+  <button data-close>Delete</button>
+</element-dialog>`,
+	};
+
 	constructor() {
 		super();
 		if (!isBrowser) return;

@@ -6,6 +6,30 @@ import { ElementBase, defineElement, uid } from './base.js';
 export class ElementTooltip extends ElementBase {
 	static get observedAttributes() { return ['text', 'placement', 'delay']; }
 
+	static __doc = {
+		name: 'element-tooltip',
+		description: 'Lightweight tooltip wired through aria-describedby. The bubble appears on hover and focus, and is injected as a sibling element.',
+		slots: [
+			{ name: '(default)', description: 'The trigger — any focusable element wrapped by the tooltip.' },
+		],
+		attributes: [
+			{ name: 'text', type: 'string', description: 'Tooltip body. Keep it short.' },
+			{ name: 'placement', type: "'top' | 'bottom' | 'left' | 'right'", description: 'Position relative to the trigger.' },
+			{ name: 'delay', type: 'number', description: 'Open delay in milliseconds (default 120).' },
+		],
+		events: [
+			{ name: 'el:show', description: 'Fired when the tooltip becomes visible.' },
+			{ name: 'el:hide', description: 'Fired when the tooltip is dismissed.' },
+		],
+		keyboard: [
+			{ keys: 'Focus trigger', action: 'Shows the tooltip.' },
+			{ keys: 'Blur trigger', action: 'Hides the tooltip.' },
+		],
+		example: `<element-tooltip text="Save your changes" placement="top" delay="120">
+  <button>Save</button>
+</element-tooltip>`,
+	};
+
 	connectedCallback() {
 		this._trigger = this.firstElementChild;
 		if (!this._trigger) return;

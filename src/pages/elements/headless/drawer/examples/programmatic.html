@@ -1,0 +1,42 @@
+<div class="flex flex-wrap items-center justify-center gap-2">
+	<button
+		type="button"
+		id="drawer-open"
+		class="inline-flex h-10 items-center rounded-full bg-skin-primary px-4 text-sm font-medium text-skin-inverse transition hover:opacity-90"
+	>
+		Open
+	</button>
+	<button
+		type="button"
+		id="drawer-close"
+		class="inline-flex h-10 items-center rounded-full bg-skin-surface px-4 text-sm font-medium text-skin-primary ring-1 ring-skin-border transition hover:bg-skin-border/40"
+	>
+		Close
+	</button>
+	<button
+		type="button"
+		id="drawer-toggle"
+		class="inline-flex h-10 items-center rounded-full px-4 text-sm font-medium text-skin-secondary transition hover:bg-skin-surface hover:text-skin-primary"
+	>
+		Toggle
+	</button>
+</div>
+
+<element-drawer id="demo-drawer" side="right">
+	<div class="bg-zinc-50/95 p-4 text-sm text-skin-secondary dark:bg-zinc-900/95">
+		<p class="font-semibold text-skin-primary">Via JavaScript</p>
+		<p class="mt-2">Call <code>show()</code>, <code>hide()</code>, or <code>toggle()</code> on the element — or set the <code>open</code> attribute.</p>
+		<button type="button" data-close class="mt-4 text-sm font-medium text-skin-primary hover:underline">Dismiss</button>
+	</div>
+</element-drawer>
+
+<script type="module">
+	import '@elements/headless/drawer.js';
+
+	// `root` is injected by the doc site preview (runHtmlExample.js).
+	// Standalone: const root = document.getElementById('your-wrapper');
+	const drawer = document.getElementById('demo-drawer');
+	document.getElementById('drawer-open').addEventListener('click', () => drawer.show());
+	document.getElementById('drawer-close').addEventListener('click', () => drawer.hide());
+	document.getElementById('drawer-toggle').addEventListener('click', () => drawer.toggle());
+</script>

@@ -92,6 +92,8 @@ const comparisonRows = [
 
 <template>
 	<ElementsLayout>
+
+
 		<section class="-mt-6 pb-16 pt-10 text-center">
 			<p class="text-xs font-semibold uppercase tracking-[0.22em] text-skin-muted">Pricing</p>
 			<h1 class="mt-3 text-5xl font-bold leading-[1.05] tracking-tight text-skin-primary sm:text-6xl">Pay once. Use forever.</h1>
@@ -121,7 +123,7 @@ const comparisonRows = [
 						<span class="text-5xl font-bold tracking-tight text-skin-primary">{{ t.priceLabel }}</span>
 					</template>
 					<template v-else>
-						<span class="text-5xl font-bold tracking-tight text-skin-primary">${{ t.price }}</span>
+						<span class="text-5xl font-bold tracking-tight text-skin-primary">£{{ t.price }}</span>
 						<span class="text-sm text-skin-secondary">once</span>
 					</template>
 				</div>

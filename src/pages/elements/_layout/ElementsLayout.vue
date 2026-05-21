@@ -3,6 +3,7 @@ import { RouterLink, useRoute } from 'vue-router';
 import { computed, onMounted } from 'vue';
 import { useTheme } from '../../../composable/useTheme';
 import BtnLightDarkMode from '../../../cmp/BtnLightDarkMode.vue';
+import { componentGroups } from './nav';
 
 const props = defineProps({
 	fullWidth: { type: Boolean, default: false },
@@ -12,52 +13,13 @@ const { initTheme } = useTheme();
 onMounted(() => initTheme());
 
 const route = useRoute();
+// Sidebar reads from nav.js — show on all elements doc pages except pricing.
 const showSidebar = computed(() => !props.fullWidth && (
-	route.path.startsWith('/elements/components')
-	|| route.path.startsWith('/elements/headless')
+	route.path.startsWith('/elements')
+	&& route.path !== '/elements/pricing'
 ));
 
-const componentGroups = [
-	{
-		label: 'Tooling',
-		items: [
-			{ to: '/elements/components/studio', label: 'Studio', tag: 'Pro' },
-			{ to: '/elements/components/playground', label: 'Playground' },
-		],
-	},
-	{
-		label: 'Elements',
-		items: [
-			{ to: '/elements/components/button', label: 'Button' },
-			{ to: '/elements/components/dropdown', label: 'Dropdown' },
-			{ to: '/elements/components/dialog', label: 'Dialog' },
-			{ to: '/elements/components/tabs', label: 'Tabs' },
-			{ to: '/elements/components/toggle', label: 'Toggle' },
-			{ to: '/elements/components/tooltip', label: 'Tooltip' },
-			{ to: '/elements/components/accordion', label: 'Accordion' },
-			{ to: '/elements/components/combobox', label: 'Combobox' },
-			{ to: '/elements/components/popover', label: 'Popover', tag: 'New' },
-		],
-	},
-	{
-		label: 'Headless',
-		items: [
-			{ to: '/elements/headless', label: 'Web components' },
-		],
-	},
-	{
-		label: 'Forms',
-		items: [
-			{ to: '/elements/components/text-input', label: 'Text input', tag: 'New' },
-			{ to: '/elements/components/textarea-input', label: 'Textarea' },
-			{ to: '/elements/components/number-input', label: 'Number input' },
-			{ to: '/elements/components/select-input', label: 'Select input' },
-			{ to: '/elements/components/boolean-input', label: 'Boolean input' },
-			{ to: '/elements/components/color-input', label: 'Color input' },
-			{ to: '/elements/components/list-input', label: 'List input' },
-		],
-	},
-];
+
 
 const topLinks = [
 	{ to: '/elements', label: 'Overview', exact: true },
@@ -69,7 +31,7 @@ const topLinks = [
 <template>
 	<div class="min-h-screen bg-skin-background text-skin-primary">
 		<header class="sticky top-0 z-30 border-b border-skin-border/60 bg-skin-background/80 backdrop-blur">
-			<div class="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-6">
+			<div class="mx-auto flex h-16 w-full items-center justify-between px-6">
 				<RouterLink to="/elements" class="flex items-center gap-2 text-skin-primary">
 					<span class="grid size-7 place-items-center rounded-lg bg-skin-primary text-skin-inverse text-xs font-bold tracking-tight">E</span>
 					<span class="font-semibold tracking-tight">elements</span>
@@ -100,7 +62,7 @@ const topLinks = [
 			</div>
 		</header>
 
-		<div :class="fullWidth ? 'w-full px-4' : 'mx-auto w-full max-w-7xl px-6'">
+		<div class="w-full px-4">
 			<div class="flex gap-12 py-10" :class="fullWidth && 'py-6'">
 				<aside v-if="showSidebar" class="hidden w-56 shrink-0 md:block">
 					<div v-for="(group, gi) in componentGroups" :key="group.label" :class="gi > 0 && 'mt-5'">
@@ -129,8 +91,10 @@ const topLinks = [
 					</div>
 				</aside>
 
-				<main class="min-w-0 flex-1">
+				<main class="min-w-0  flex-1 ">
+					<div class="mx-auto w-full max-w-4xl px-6">
 					<slot />
+					</div>
 				</main>
 			</div>
 		</div>

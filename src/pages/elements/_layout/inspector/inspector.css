@@ -8,7 +8,7 @@
 	transition: outline-color 120ms ease, box-shadow 120ms ease;
 }
 .el-stage-node[data-selected] {
-	outline: 2px solid rgb(var(--primary));
+	outline: 2px solid rgb(0 0 255);
 	outline-offset: 3px;
 }
 .el-text-node[data-selected] {

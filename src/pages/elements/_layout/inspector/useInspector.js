@@ -15,22 +15,12 @@ export function uid(prefix = 'n') {
 // Inline hints live on the component's prop definition under the `_edit` key:
 //
 //   const props = defineProps({
-//     items: { type: Array, required: true, _edit: { component: 'ElListInput' } },
+//     items: { type: Array, required: true, _edit: { editor: 'ElListInput' } },
 //   });
 //
-// Strings are used to identify editor components so generated output (e.g. ElRenderer)
-// does not pull form components into the bundle. The studio resolves the string
-// against the editor registry at render time.
-
-function inferFieldType(def) {
-	if (!def) return 'string';
-	const t = def?.type ?? def;
-	const types = Array.isArray(t) ? t : [t];
-	if (types.includes(Boolean)) return 'boolean';
-	if (types.includes(Number)) return 'number';
-	if (types.includes(Array) || types.includes(Object) || types.includes(Function)) return null;
-	return 'string';
-}
+// The `editor` is a component name (string) so production output (e.g.
+// ElRenderer) never pulls form components into the bundle. The studio
+// resolves the string through the editor registry at render time.
 
 function componentProps(component) {
 	if (!component || typeof component === 'string') return {};
@@ -40,9 +30,31 @@ function componentProps(component) {
 	return p;
 }
 
+// Default editor for a Vue prop type when no `_edit` hint is given.
+function defaultEditorForProp(def) {
+	if (!def) return 'ElTextInput';
+	const t = def?.type ?? def;
+	const types = Array.isArray(t) ? t : [t];
+	if (types.includes(Boolean)) return 'ElBooleanInput';
+	if (types.includes(Number)) return 'ElNumberInput';
+	if (types.includes(Array) || types.includes(Object) || types.includes(Function)) return null;
+	return 'ElTextInput';
+}
+
+function resolveEditor(hint, def) {
+	// 1. Explicit editor name wins.
+	if (hint.editor) return hint.editor;
+	// 2. Back-compat: older `_edit: { component: 'ElXxx' }` still works.
+	if (hint.component) return hint.component;
+	// 3. `options` (or `enum`) implies a select.
+	if (hint.options || hint.enum) return 'ElSelectInput';
+	// 4. Fall back to the prop type.
+	return defaultEditorForProp(def);
+}
+
 export function inferSchema(node) {
 	if (isTextNode(node)) {
-		return [{ key: 'text', label: 'Text', type: 'text', rows: 3, target: 'text' }];
+		return [{ key: 'text', target: 'text', editor: 'ElTextareaInput', label: 'Text', rows: 3 }];
 	}
 
 	const fields = [];
@@ -54,25 +66,18 @@ export function inferSchema(node) {
 		if (key === 'class' || key === 'modelModifiers') continue;
 
 		// Per-prop hints — `_edit` on the prop definition is the canonical
-		// place (lives with the component, shows up in source). Registry hints
-		// stack on top so the studio can override.
+		// place (lives with the component, shows up in source). Registry
+		// hints stack on top so the studio can override per-component.
 		const inlineEdit = def && typeof def === 'object' && def._edit;
 		const merged = { ...(inlineEdit || {}), ...(hints[key] || {}) };
-		const hasHint = Object.keys(merged).length > 0;
-
-		// Resolve type:
-		//   1. explicit `type` from a hint
-		//   2. 'editor' if an editor component is named
-		//   3. Vue prop type inference
-		const type = merged.type || (merged.component ? 'editor' : inferFieldType(def));
-		if (!type) continue;
+		const editor = resolveEditor(merged, def);
+		if (!editor) continue;
 
 		fields.push({
-			...(hasHint ? merged : {}),
+			...merged,
 			key,
 			label: merged.label || prettify(key),
-			type,
-			editor: merged.component,
+			editor,
 		});
 	}
 
@@ -80,9 +85,9 @@ export function inferSchema(node) {
 		fields.push({
 			key: 'class',
 			label: 'Tailwind classes',
-			type: 'text',
+			editor: 'ElTextareaInput',
 			rows: 3,
-			hint: 'Any utility classes — applied to the rendered element.',
+			description: 'Any utility classes — applied to the rendered element.',
 		});
 	}
 

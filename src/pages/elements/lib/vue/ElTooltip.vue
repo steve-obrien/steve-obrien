@@ -11,7 +11,6 @@ defineProps({
 		type: String,
 		default: 'top',
 		_edit: {
-			type: 'select',
 			options: ['top', 'bottom', 'left', 'right'],
 			description: 'Position of the bubble relative to the trigger.',
 		},

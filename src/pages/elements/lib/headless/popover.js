@@ -11,6 +11,34 @@ import { ElementBase, defineElement, uid } from './base.js';
 export class ElementPopover extends ElementBase {
 	static get observedAttributes() { return ['open']; }
 
+	static __doc = {
+		name: 'element-popover',
+		description: 'Floating panel anchored to a trigger. Built on the native HTML Popover API — top layer, light-dismiss and Esc are handled by the browser.',
+		slots: [
+			{ name: 'trigger', description: 'Element that toggles the panel when clicked.' },
+			{ name: 'panel', description: 'Panel content. Gets popover="auto" applied automatically.' },
+		],
+		attributes: [
+			{ name: 'open', type: 'boolean', description: 'Reflects open state.' },
+			{ name: 'data-panel-id', type: 'string', description: 'Id of an external (teleported) panel element.' },
+		],
+		events: [
+			{ name: 'el:open', description: 'Fired when the panel opens.' },
+			{ name: 'el:close', description: 'Fired when the panel closes.' },
+		],
+		keyboard: [
+			{ keys: 'Click trigger', action: 'Toggles the panel.' },
+			{ keys: 'Click outside', action: 'Light-dismiss via the native popover API.' },
+			{ keys: 'Esc', action: 'Closes the panel.' },
+		],
+		example: `<element-popover>
+  <button slot="trigger">More</button>
+  <div slot="panel">
+    <p>Anything you like — text, buttons, even forms.</p>
+  </div>
+</element-popover>`,
+	};
+
 	constructor() {
 		super();
 		this._open = false;

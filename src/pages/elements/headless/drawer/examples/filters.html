@@ -1,0 +1,23 @@
+<element-drawer side="left">
+	<button
+		slot="trigger"
+		type="button"
+		class="inline-flex h-10 items-center rounded-full bg-skin-surface px-4 text-sm font-medium text-skin-primary ring-1 ring-skin-border transition hover:bg-skin-border/40"
+	>
+		Open filters
+	</button>
+	<div class="space-y-4 bg-zinc-50/95 p-4 text-sm text-skin-secondary dark:bg-zinc-900/95">
+		<p>Sort by date, status, or assignee.</p>
+		<button
+			type="button"
+			data-close
+			class="inline-flex h-10 w-full items-center justify-center rounded-full bg-skin-surface px-4 text-sm font-medium text-skin-primary ring-1 ring-skin-border transition hover:bg-skin-border/40"
+		>
+			Apply
+		</button>
+	</div>
+</element-drawer>
+
+<script type="module">
+	import '@elements/headless/drawer.js';
+</script>

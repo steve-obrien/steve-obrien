@@ -9,6 +9,33 @@ import { ElementBase, defineElement, uid, createRoving } from './base.js';
 export class ElementTabs extends ElementBase {
 	static get observedAttributes() { return ['value']; }
 
+	static __doc = {
+		name: 'element-tabs',
+		description: 'Tab list with managed ARIA, roving tabindex and panel linking via data-tab / data-panel pairs.',
+		slots: [
+			{ name: '(structural)', description: 'Pair each <button data-tab="key"> with a panel <div data-panel="key">. The tablist wrapper carries role="tablist".' },
+		],
+		attributes: [
+			{ name: 'value', type: 'string', description: 'Active tab key. Mirrors the currently-selected data-tab value.' },
+		],
+		events: [
+			{ name: 'el:change', payload: '{ value }', description: 'Fired when the active tab changes.' },
+		],
+		keyboard: [
+			{ keys: '← / →', action: 'Move to previous / next tab.' },
+			{ keys: 'Home / End', action: 'Jump to first / last tab.' },
+			{ keys: 'Enter / Space', action: 'Activate focused tab.' },
+		],
+		example: `<element-tabs value="overview">
+  <div role="tablist">
+    <button data-tab="overview">Overview</button>
+    <button data-tab="pricing">Pricing</button>
+  </div>
+  <div data-panel="overview">Overview content…</div>
+  <div data-panel="pricing">Pricing content…</div>
+</element-tabs>`,
+	};
+
 	connectedCallback() {
 		this._tablist = this.querySelector('[role="tablist"], [data-tablist]');
 		this._tabs = Array.from(this.querySelectorAll('[data-tab]'));

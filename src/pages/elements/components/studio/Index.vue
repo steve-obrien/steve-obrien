@@ -1,7 +1,7 @@
 <script setup>
 import { markRaw } from 'vue';
-import ElementsLayout from '../../_layout/ElementsLayout.vue';
-import DemoStudio from '../../_layout/inspector/DemoStudio.vue';
+import InspectorLayout from '../../_layout/InspectorLayout.vue';
+import Studio from '../../_layout/inspector/Studio.vue';
 import { ElButton } from '../../lib/vue';
 
 // Starter that exercises the full tree: nested containers, native HTML,
@@ -62,19 +62,7 @@ const initialSpec = {
 </script>
 
 <template>
-	<ElementsLayout :full-width="true">
-		<section class="mb-4 flex flex-wrap items-end justify-between gap-3">
-			<div>
-				<p class="text-xs font-semibold uppercase tracking-[0.18em] text-skin-muted">Studio</p>
-				<h1 class="mt-1 text-3xl font-bold tracking-tight text-skin-primary">Build · Inspect · Export · Rehydrate</h1>
-				<p class="mt-1 max-w-2xl text-sm text-skin-secondary">
-					Drag components from the palette onto the stage, edit any property — including Tailwind classes — and round-trip
-					the result through JSON or HTML. Save the spec, load it back with
-					<code class="rounded-md bg-skin-surface px-1.5 py-0.5 text-[12px] font-mono ring-1 ring-skin-border">&lt;ElRenderer&gt;</code>.
-				</p>
-			</div>
-		</section>
-
-		<DemoStudio :initial-spec="initialSpec" title="Studio" />
-	</ElementsLayout>
+	<InspectorLayout>
+		<Studio :initial-spec="initialSpec" title="Build · Inspect · Export · Rehydrate" />
+	</InspectorLayout>
 </template>

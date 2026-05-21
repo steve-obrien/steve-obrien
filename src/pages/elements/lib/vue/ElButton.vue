@@ -11,7 +11,6 @@ const props = defineProps({
 		type: String,
 		default: 'primary',
 		_edit: {
-			type: 'select',
 			options: ['primary', 'secondary', 'ghost', 'danger'],
 			description: 'Visual style — pick the role this button plays in the layout.',
 		},
@@ -20,7 +19,6 @@ const props = defineProps({
 		type: String,
 		default: 'md',
 		_edit: {
-			type: 'select',
 			options: ['sm', 'md', 'lg'],
 			description: 'Three balanced sizes.',
 		},

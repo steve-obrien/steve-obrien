@@ -11,7 +11,7 @@ const props = defineProps({
 		default: () => [],
 		// Self-edit: when the inspector lands on an ElListInput's `modelValue`,
 		// render an ElListInput to edit its value.
-		_edit: { component: 'ElListInput' },
+		_edit: { editor: 'ElListInput' },
 	},
 	label: String,
 	description: String,

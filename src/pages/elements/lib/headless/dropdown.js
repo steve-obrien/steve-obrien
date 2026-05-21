@@ -9,6 +9,45 @@ import { ElementBase, defineElement, uid, createRoving } from './base.js';
 export class ElementDropdown extends ElementBase {
 	static get observedAttributes() { return ['open']; }
 
+	static __doc = {
+		name: 'element-dropdown',
+		description: 'A menu that opens from a button — fully keyboard accessible, with focus return and outside-click handling.',
+		slots: [
+			{ name: 'trigger', description: 'Button that opens the menu.' },
+			{ name: 'menu', description: 'Menu container. Items inside must carry role="menuitem". data-value flows through el:select.' },
+		],
+		attributes: [
+			{ name: 'open', type: 'boolean', description: 'Reflects open state (toggle by setting / removing).' },
+			{ name: 'data-menu-id', type: 'string', description: 'Id of an external (teleported) menu element. Used when the menu lives outside the host — e.g. portalled to <body>.' },
+		],
+		events: [
+			{ name: 'el:open', description: 'Fired when the menu opens.' },
+			{ name: 'el:close', description: 'Fired when the menu closes.' },
+			{ name: 'el:select', payload: '{ value, event }', description: 'Fired when a menu item is chosen.' },
+		],
+		keyboard: [
+			{ keys: 'Enter / Space / ↓', action: 'Open menu (when trigger is focused).' },
+			{ keys: '↑ / ↓', action: 'Move active item.' },
+			{ keys: 'Home / End', action: 'Jump to first / last item.' },
+			{ keys: 'Enter', action: 'Select active item.' },
+			{ keys: 'Esc / Tab', action: 'Close menu and return focus.' },
+		],
+		example: `<element-dropdown>
+  <button slot="trigger">Account ▾</button>
+  <div slot="menu">
+    <button role="menuitem" data-value="profile">Profile</button>
+    <button role="menuitem" data-value="billing">Billing</button>
+    <button role="menuitem" data-value="signout">Sign out</button>
+  </div>
+</element-dropdown>
+
+<script type="module">
+  import '@elements/headless';
+  document.querySelector('element-dropdown')
+    .addEventListener('el:select', (e) => console.log(e.detail.value));
+<\/script>`,
+	};
+
 	constructor() {
 		super();
 		this._open = false;

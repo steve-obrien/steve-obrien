@@ -9,6 +9,28 @@ import { ElementBase, defineElement, uid } from './base.js';
 export class ElementAccordionItem extends ElementBase {
 	static get observedAttributes() { return ['open']; }
 
+	static __doc = {
+		name: 'element-accordion-item',
+		description: 'A single collapsible section. Lives inside an <element-accordion> host.',
+		slots: [
+			{ name: 'header', description: 'The clickable header. Carries aria-expanded.' },
+			{ name: 'content', description: 'The collapsible region. Hidden when closed.' },
+		],
+		attributes: [
+			{ name: 'open', type: 'boolean', description: 'Reflects the open state of the item.' },
+		],
+		events: [
+			{ name: 'el:change', payload: '{ open }', description: 'Fired when the item is opened or closed.' },
+		],
+		keyboard: [
+			{ keys: 'Enter / Space', action: 'Toggle the section (when header is focused).' },
+		],
+		example: `<element-accordion-item open>
+  <button slot="header">Section A</button>
+  <div slot="content">Lorem ipsum…</div>
+</element-accordion-item>`,
+	};
+
 	connectedCallback() {
 		this._header = this.querySelector('[slot="header"], [data-header]');
 		this._content = this.querySelector('[slot="content"], [data-content]');
@@ -55,6 +77,29 @@ export class ElementAccordionItem extends ElementBase {
 }
 
 export class ElementAccordion extends ElementBase {
+	static __doc = {
+		name: 'element-accordion',
+		description: 'Disclosure-panel group containing one or more <element-accordion-item> children.',
+		slots: [
+			{ name: '(default)', description: 'A list of <element-accordion-item> children.' },
+		],
+		attributes: [
+			{ name: 'multiple', type: 'boolean', description: 'Allow multiple items to be open at once. Otherwise opening one closes the others.' },
+		],
+		events: [],
+		keyboard: [],
+		example: `<element-accordion multiple>
+  <element-accordion-item open>
+    <button slot="header">Section A</button>
+    <div slot="content">Lorem ipsum…</div>
+  </element-accordion-item>
+  <element-accordion-item>
+    <button slot="header">Section B</button>
+    <div slot="content">Dolor sit amet…</div>
+  </element-accordion-item>
+</element-accordion>`,
+	};
+
 	connectedCallback() {
 		this.setAttribute('role', 'group');
 	}

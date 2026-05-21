@@ -5,13 +5,14 @@ import {
 	ElTextareaInput,
 	ElNumberInput,
 	ElSelectInput,
+	ElCombobox,
 	ElBooleanInput,
 	ElColorInput,
 } from '../../lib/vue';
 
-// Editor components are referenced by string name in spec schemas (e.g.
-// `_edit: { component: 'ElListInput' }`). This indirection keeps production
-// output (anything rendered through ElRenderer) free of inspector / form code.
+// Editor components are referenced by their actual component name in spec
+// schemas (e.g. `_edit: { editor: 'ElSelectInput' }`). The indirection keeps
+// production output (anything rendered through ElRenderer) free of form code.
 //
 // To add your own editor: `registerEditor('MyEditor', MyEditorComponent)`.
 
@@ -21,10 +22,12 @@ const editors = {
 	ElTextareaInput: markRaw(ElTextareaInput),
 	ElNumberInput: markRaw(ElNumberInput),
 	ElSelectInput: markRaw(ElSelectInput),
+	ElCombobox: markRaw(ElCombobox),
 	ElBooleanInput: markRaw(ElBooleanInput),
 	ElColorInput: markRaw(ElColorInput),
 };
 
 export function getEditor(name) { return editors[name] || null; }
+export function getDefaultEditor() { return editors.ElTextInput; }
 export function registerEditor(name, component) { editors[name] = markRaw(component); }
 export function listEditors() { return Object.keys(editors); }

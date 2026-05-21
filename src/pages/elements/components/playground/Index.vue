@@ -5,7 +5,7 @@ import DocPage from '../../_layout/DocPage.vue';
 import DocSection from '../../_layout/DocSection.vue';
 import CodeBlock from '../../_layout/CodeBlock.vue';
 import { RouterLink } from 'vue-router';
-import DemoInspector from '../../_layout/inspector/DemoInspector.vue';
+import DemoInspector from '../../_layout/inspector/Inspector.vue';
 import { ElButton, ElToggle, ElTooltip } from '../../lib/vue';
 
 // --- Demo 1 — simple button ----------------------------------------------------

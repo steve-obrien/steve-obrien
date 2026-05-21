@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref, useId } from 'vue';
+import { onMounted, onBeforeUnmount, ref, useId, watch } from 'vue';
 
 // useId() gives a stable, per-instance id. The previous module-counter
 // approach reset on every setup() call, so multiple comboboxes on a page
@@ -16,7 +16,7 @@ const props = defineProps({
 		type: Array,
 		required: true,
 		_edit: {
-			component: 'ElListInput',
+			editor: 'ElListInput',
 			description: 'Searchable options. The input filters this list live.',
 		},
 	},
@@ -59,21 +59,30 @@ function detachReflow() {
 	scrollHandler = resizeHandler = null;
 }
 
+function syncInputFromModel() {
+	if (inputEl.value) inputEl.value.value = props.modelValue ?? '';
+}
+
 onMounted(async () => {
 	isMounted.value = true;
 	await import('../headless/combobox.js');
+	syncInputFromModel();
 	root.value?.addEventListener('el:change', (e) => emit('update:modelValue', e.detail.value));
-	// The combobox opens on input focus + on filter — track both.
 	inputEl.value?.addEventListener('focus', () => {
 		updatePosition();
 		attachReflow();
 	});
-	inputEl.value?.addEventListener('input', updatePosition);
+	inputEl.value?.addEventListener('input', (e) => {
+		updatePosition();
+		emit('update:modelValue', e.target.value);
+	});
 	inputEl.value?.addEventListener('blur', () => {
 		// Tear down on next tick so click-outside in headless still fires.
 		setTimeout(detachReflow, 100);
 	});
 });
+
+watch(() => props.modelValue, syncInputFromModel);
 
 onBeforeUnmount(detachReflow);
 

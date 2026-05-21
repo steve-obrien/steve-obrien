@@ -36,6 +36,7 @@ const components = [
 	{ name: 'Button', tag: 'el-button', to: '/elements/components/button' },
 	{ name: 'Dropdown', tag: 'element-dropdown', to: '/elements/components/dropdown' },
 	{ name: 'Dialog', tag: 'element-dialog', to: '/elements/components/dialog' },
+	{ name: 'Drawer', tag: 'element-drawer', to: '/elements/components/drawer' },
 	{ name: 'Tabs', tag: 'element-tabs', to: '/elements/components/tabs' },
 	{ name: 'Toggle', tag: 'element-toggle', to: '/elements/components/toggle' },
 	{ name: 'Tooltip', tag: 'element-tooltip', to: '/elements/components/tooltip' },

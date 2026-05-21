@@ -1,94 +1,36 @@
 <script setup>
 import { computed } from 'vue';
-import {
-	ElTextInput,
-	ElTextareaInput,
-	ElNumberInput,
-	ElSelectInput,
-	ElBooleanInput,
-	ElColorInput,
-} from '../../lib/vue';
-import { getEditor } from './editorRegistry.js';
+import { getEditor, getDefaultEditor } from './editorRegistry.js';
 
-// The inspector form is built from the library's own form primitives:
-// every type maps to one of <ElTextInput>, <ElNumberInput>, <ElSelectInput>,
-// <ElBooleanInput>, <ElTextareaInput>, <ElColorInput>. Each carries the
-// shared <ElField> chrome (label + description) so author-provided hints
-// from a prop's `_edit: { description: '…' }` show up automatically.
+// One generic renderer: the field knows which editor component it wants by
+// name (e.g. 'ElSelectInput', 'ElListInput'). We resolve the name to the
+// real component via the editor registry — no per-type switch statement,
+// no string mappings like 'select' or 'text' to maintain.
 const props = defineProps({
 	field: { type: Object, required: true },
 	modelValue: { default: undefined },
 });
 const emit = defineEmits(['update:modelValue']);
-
 const update = (v) => emit('update:modelValue', v);
-const customEditor = computed(() => (props.field.editor ? getEditor(props.field.editor) : null));
+
+const editor = computed(() => getEditor(props.field.editor) || getDefaultEditor());
+
+// Pass through every schema entry except the bookkeeping fields so editors
+// pick up their own props (options, rows, min/max/step, placeholder, …).
+const editorProps = computed(() => {
+	// eslint-disable-next-line no-unused-vars
+	const { key, editor: _editor, target, label, description, ...rest } = props.field;
+	return rest;
+});
 </script>
 
 <template>
-	<!-- Custom editor referenced by string in the editor registry. -->
 	<component
-		v-if="customEditor"
-		:is="customEditor"
+		:is="editor"
 		:model-value="modelValue"
 		:label="field.label"
 		:description="field.description"
-		:field="field"
-		@update:model-value="update"
-	/>
-
-	<ElSelectInput
-		v-else-if="field.type === 'select'"
-		:model-value="modelValue"
-		:options="field.options"
-		:label="field.label"
-		:description="field.description"
-		@update:model-value="update"
-	/>
-
-	<ElBooleanInput
-		v-else-if="field.type === 'boolean'"
-		:model-value="!!modelValue"
-		:label="field.label"
-		:description="field.description"
-		@update:model-value="update"
-	/>
-
-	<ElNumberInput
-		v-else-if="field.type === 'number'"
-		:model-value="modelValue"
-		:label="field.label"
-		:description="field.description"
-		:min="field.min"
-		:max="field.max"
-		:step="field.step"
-		@update:model-value="update"
-	/>
-
-	<ElColorInput
-		v-else-if="field.type === 'color'"
-		:model-value="modelValue"
-		:label="field.label"
-		:description="field.description"
-		@update:model-value="update"
-	/>
-
-	<ElTextareaInput
-		v-else-if="field.type === 'text'"
-		:model-value="modelValue"
-		:label="field.label"
-		:description="field.description"
-		:rows="field.rows"
-		:placeholder="field.placeholder"
-		@update:model-value="update"
-	/>
-
-	<ElTextInput
-		v-else
-		:model-value="modelValue"
-		:label="field.label"
-		:description="field.description"
-		:placeholder="field.placeholder"
+		v-bind="editorProps"
 		@update:model-value="update"
 	/>
 </template>

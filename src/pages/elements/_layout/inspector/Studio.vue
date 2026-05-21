@@ -10,7 +10,7 @@ import {
 } from './useInspector.js';
 import { componentRegistry, canHaveChildren } from './componentRegistry.js';
 import { serializeTree, deserializeTree, stageToHtml } from './serialize.js';
-import { ElTabs, ElRenderer } from '../../lib/vue';
+import { ElTabs, ElRenderer } from '../../lib/vue/index.js';
 import StageNode from './StageNode.vue';
 import InspectorPanel from './InspectorPanel.vue';
 import ComponentPalette from './ComponentPalette.vue';
@@ -242,35 +242,34 @@ const tabs = [
 </script>
 
 <template>
-	<div class="overflow-hidden rounded-2xl border border-skin-border bg-skin-background">
-		<div class="flex items-center justify-between border-b border-skin-border bg-skin-surface/40 px-4 py-2">
-			<div class="flex items-center gap-3">
-				<p class="text-xs font-semibold uppercase tracking-[0.18em] text-skin-muted">{{ title }}</p>
-				<span v-if="state.dragEntry" class="rounded-full bg-skin-primary/10 px-2 py-0.5 text-[10px] font-medium text-skin-primary">drag onto the stage</span>
+	<div class="el-studio flex min-h-0 flex-1 flex-col overflow-hidden bg-skin-background">
+		<div class="flex shrink-0 items-center justify-between border-b border-skin-border bg-skin-surface/40 px-4 py-2">
+			<div class="flex min-w-0 items-center gap-3">
+				<p class="truncate text-xs font-semibold uppercase tracking-[0.18em] text-skin-muted">{{ title }}</p>
+				<span v-if="state.dragEntry" class="shrink-0 rounded-full bg-skin-primary/10 px-2 py-0.5 text-[10px] font-medium text-skin-primary">drag onto the stage</span>
 			</div>
 			<button
 				type="button"
-				class="rounded-full px-2.5 py-1 text-[11px] font-medium text-skin-secondary ring-1 ring-skin-border hover:bg-skin-background hover:text-skin-primary"
+				class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium text-skin-secondary ring-1 ring-skin-border hover:bg-skin-background hover:text-skin-primary"
 				@click="reset"
 			>Reset</button>
 		</div>
 
-		<div class="">
-			<ElTabs v-model="tab" :tabs="tabs">
+		<div class="flex min-h-0 flex-1 flex-col overflow-hidden">
+			<ElTabs v-model="tab" :tabs="tabs" fill>
 				<!-- ------------------------------------------------------------ Stage -->
 				<template #stage>
-					<div class="grid grid-cols-1 overflow-hidden rounded-2xl border border-skin-border xl:grid-cols-[220px_1fr_340px]">
+					<div class="grid min-h-0 flex-1 grid-cols-1 overflow-auto xl:grid-cols-[220px_1fr_340px] xl:overflow-hidden">
 						<!-- Palette -->
-						<div class="border-skin-border xl:border-r border-b xl:border-b-0">
+						<div class="min-h-0 border-skin-border xl:overflow-auto xl:border-r border-b xl:border-b-0">
 							<ComponentPalette />
 						</div>
 
 						<!-- Stage -->
 						<div
 							ref="stageEl"
-							class="el-stage relative flex items-start justify-center bg-gradient-to-br from-skin-surface/40 via-skin-background to-skin-surface/30 p-10"
+							class="el-stage relative min-h-[280px] overflow-auto bg-gradient-to-br from-skin-surface/40 via-skin-background to-skin-surface/30 p-10 xl:min-h-0"
 							:class="state.pickMode && 'el-pick-mode'"
-							style="min-height: 480px;"
 							@dragover="onDragOver"
 							@dragleave="onDragLeave"
 							@drop="onDrop"
@@ -298,7 +297,7 @@ const tabs = [
 						</div>
 
 						<!-- Inspector -->
-						<div class="border-skin-border bg-skin-background xl:border-l border-t xl:border-t-0">
+						<div class="flex min-h-0 flex-col overflow-hidden border-skin-border bg-skin-background xl:border-l border-t xl:border-t-0">
 							<InspectorPanel :tree="tree" :enable-actions="true" />
 						</div>
 					</div>
@@ -306,7 +305,7 @@ const tabs = [
 
 				<!-- ------------------------------------------------------------ Data -->
 				<template #data>
-					<div class="space-y-3">
+					<div class="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
 						<div class="flex items-center justify-between">
 							<p class="text-sm text-skin-secondary">Edit the JSON below — the stage updates as soon as the structure parses cleanly.</p>
 							<button
@@ -333,7 +332,7 @@ const tabs = [
 
 				<!-- ------------------------------------------------------------ HTML -->
 				<template #html>
-					<div class="space-y-3">
+					<div class="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
 						<div class="flex items-center justify-between">
 							<p class="text-sm text-skin-secondary">A copy-paste ready snapshot of the rendered stage — strip the inspector chrome, keep your classes.</p>
 							<button
@@ -348,7 +347,7 @@ const tabs = [
 
 				<!-- ------------------------------------------------------------ Renderer -->
 				<template #renderer>
-					<div class="space-y-4">
+					<div class="flex min-h-0 flex-1 flex-col gap-4 overflow-auto">
 						<div class="rounded-2xl border border-skin-border bg-gradient-to-br from-skin-surface/40 via-skin-background to-skin-surface/30 p-10">
 							<div class="mb-4 flex items-center gap-2">
 								<span class="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>

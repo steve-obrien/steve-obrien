@@ -1,6 +1,32 @@
 <script setup>
 import { onMounted, onBeforeUnmount, ref, useId } from 'vue';
 
+// Documentation metadata co-located with the component. Reflected by
+// <ComponentProps> / <ComponentSlots> / <ComponentEvents> / <ComponentKeyboard>.
+// Props themselves are not duplicated here — they come from defineProps +
+// the inline `_edit` hints below.
+defineOptions({
+	__doc: {
+		name: 'Dropdown',
+		tag: '<ElDropdown>',
+		description: 'A menu that opens from a button — fully keyboard accessible, with focus return and outside-click handling.',
+		slots: [
+			{ name: 'trigger', description: 'Replaces the inner content of the trigger button.' },
+			{ name: 'item', payload: '{ item, index }', description: 'Replaces the rendering of each menu item.' },
+		],
+		events: [
+			{ name: 'select', payload: '(value: string)', description: 'Fired when a menu item is chosen.' },
+		],
+		keyboard: [
+			{ keys: 'Enter / Space / ↓', action: 'Open menu (when trigger is focused).' },
+			{ keys: '↑ / ↓', action: 'Move active item.' },
+			{ keys: 'Home / End', action: 'Jump to first / last item.' },
+			{ keys: 'Enter', action: 'Select active item.' },
+			{ keys: 'Esc / Tab', action: 'Close menu and return focus.' },
+		],
+	},
+});
+
 // useId() is stable across SSR and unique per component instance — replaces
 // the previous module-counter approach which reset on every setup and gave
 // every dropdown the same id when multiple instances rendered on a page.
@@ -11,7 +37,7 @@ const props = defineProps({
 		type: Array,
 		required: true,
 		_edit: {
-			component: 'ElListInput',
+			editor: 'ElListInput',
 			description: 'Menu items shown when the dropdown opens.',
 		},
 	},
@@ -24,7 +50,6 @@ const props = defineProps({
 		type: String,
 		default: 'left',
 		_edit: {
-			type: 'select',
 			options: ['left', 'right'],
 			description: 'Where the menu opens relative to the trigger.',
 		},
