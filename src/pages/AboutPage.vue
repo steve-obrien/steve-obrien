@@ -1,13 +1,4 @@
 <template>
-	<title>About | Steve O'Brien</title>
-	<meta name="description" content="About Steve O'Brien: engineer, founder, and builder of practical AI and software systems.">
-	<meta property="og:title" content="About | Steve O'Brien">
-	<meta property="og:description" content="About Steve O'Brien: engineer, founder, and builder of practical AI and software systems.">
-	<meta property="og:type" content="website">
-	<meta property="og:url" content="https://steve-obrien.com/about">
-	<meta property="og:image" content="https://steve-obrien.com/og-image.png">
-	<meta property="og:site_name" content="Steve O'Brien">
-	<meta property="og:locale" content="en_US">
 	<SteveLayout>
 		<section class="space-y-6">
 			<div class="flex gap-4">
@@ -31,7 +22,6 @@
 					<img src="../assets/me.jpeg" alt="Steve O'Brien" class="w-full h-auto rounded-full" />
 				</div>
 			</div>
-			
 		</section>
 	</SteveLayout>
 </template>

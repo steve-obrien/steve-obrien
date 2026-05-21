@@ -248,11 +248,11 @@ const Card = defineComponent({
 		text: String,
 	},
 	template: `
-    <article class="rounded-[2rem] border border-white/10 bg-white/5 p-6">
-      <h3 class="text-lg font-semibold text-white">{{ title }}</h3>
-      <p class="mt-3 text-sm leading-6 text-zinc-400">{{ text }}</p>
-    </article>
-  `,
+	<article class="rounded-[2rem] border border-white/10 bg-white/5 p-6">
+		<h3 class="text-lg font-semibold text-white">{{ title }}</h3>
+		<p class="mt-3 text-sm leading-6 text-zinc-400">{{ text }}</p>
+	</article>
+	`,
 })
 
 const Module = defineComponent({
@@ -262,12 +262,12 @@ const Module = defineComponent({
 		text: String,
 	},
 	template: `
-    <article class="rounded-[2rem] border border-zinc-200 bg-white p-7 shadow-lg shadow-zinc-900/5">
-      <p class="text-sm font-semibold text-zinc-400">{{ number }}</p>
-      <h3 class="mt-8 text-2xl font-semibold tracking-tight">{{ title }}</h3>
-      <p class="mt-4 leading-7 text-zinc-600">{{ text }}</p>
-    </article>
-  `,
+	<article class="rounded-[2rem] border border-zinc-200 bg-white p-7 shadow-lg shadow-zinc-900/5">
+		<p class="text-sm font-semibold text-zinc-400">{{ number }}</p>
+		<h3 class="mt-8 text-2xl font-semibold tracking-tight">{{ title }}</h3>
+		<p class="mt-4 leading-7 text-zinc-600">{{ text }}</p>
+	</article>
+	`,
 })
 
 const Faq = defineComponent({
@@ -276,14 +276,14 @@ const Faq = defineComponent({
 		answer: String,
 	},
 	template: `
-    <details class="group py-6">
-      <summary class="flex cursor-pointer list-none items-center justify-between gap-6 text-left text-lg font-semibold">
-        {{ question }}
-        <span class="text-2xl leading-none transition group-open:rotate-45">+</span>
-      </summary>
-      <p class="mt-4 max-w-3xl leading-7 text-zinc-600">{{ answer }}</p>
-    </details>
-  `,
+	<details class="group py-6">
+		<summary class="flex cursor-pointer list-none items-center justify-between gap-6 text-left text-lg font-semibold">
+		{{ question }}
+		<span class="text-2xl leading-none transition group-open:rotate-45">+</span>
+		</summary>
+		<p class="mt-4 max-w-3xl leading-7 text-zinc-600">{{ answer }}</p>
+	</details>
+	`,
 })
 
 </script>

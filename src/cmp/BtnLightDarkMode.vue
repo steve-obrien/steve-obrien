@@ -1,29 +1,75 @@
-<template>
-		<button type="button" aria-label="Switch to dark theme" @click="toggleTheme"
-		class="group rounded-full  px-3 py-2   backdrop-blur-sm transition dark:bg-zinc-800/90 dark:ring-white/10 dark:hover:ring-white/20">
-			<svg viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
-			class="h-6 w-6 fill-zinc-100 stroke-zinc-500 transition group-hover:fill-zinc-200 group-hover:stroke-zinc-700 dark:hidden dark:fill-teal-50 dark:stroke-teal-500 dark:group-hover:fill-teal-50 dark:group-hover:stroke-teal-600">
-				<path d="M8 12.25A4.25 4.25 0 0 1 12.25 8v0a4.25 4.25 0 0 1 4.25 4.25v0a4.25 4.25 0 0 1-4.25 4.25v0A4.25 4.25 0 0 1 8 12.25v0Z"></path>
-				<path d="M12.25 3v1.5M21.5 12.25H20M18.791 18.791l-1.06-1.06M18.791 5.709l-1.06 1.06M12.25 20v1.5M4.5 12.25H3M6.77 6.77 5.709 5.709M6.77 17.73l-1.061 1.061" fill="none"></path>
-			</svg>
-			<svg viewBox="0 0 24 24" aria-hidden="true"
-			class="hidden h-6 w-6 fill-zinc-700 stroke-zinc-500 transition not-dark:fill-teal-400/10 not-dark:stroke-teal-500 dark:block dark:group-hover:stroke-zinc-400">
-				<path d="M17.25 16.22a6.937 6.937 0 0 1-9.47-9.47 7.451 7.451 0 1 0 9.47 9.47ZM12.75 7C17 7 17 2.75 17 2.75S17 7 21.25 7C17 7 17 11.25 17 11.25S17 7 12.75 7Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-			</svg>
-		</button>
-</template>
-
 <script setup>
+import { computed, onMounted, ref } from 'vue';
 import { useTheme } from '../composable/useTheme';
-import { onMounted } from 'vue';
 
-const {
-	currentTheme,
-	toggleTheme,
-	initTheme
-} = useTheme();
+const { mode, cycleMode, initTheme } = useTheme();
 
+const mounted = ref(false);
 onMounted(() => {
 	initTheme();
+	mounted.value = true;
+});
+
+const ariaLabel = computed(() => {
+	if (mode.value === 'light') return 'Theme: light — click for dark';
+	if (mode.value === 'dark') return 'Theme: dark — click for system';
+	return 'Theme: system — click for light';
 });
 </script>
+
+<template>
+	<button
+		type="button"
+		:aria-label="ariaLabel"
+		:title="ariaLabel"
+		class="grid size-9 place-items-center rounded-full text-skin-secondary transition hover:bg-skin-surface hover:text-skin-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skin-primary/40"
+		@click="cycleMode"
+	>
+		<!-- Sun (light) -->
+		<svg
+			v-if="mounted && mode === 'light'"
+			viewBox="0 0 24 24"
+			class="size-5"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="1.5"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			aria-hidden="true"
+		>
+			<circle cx="12" cy="12" r="4" />
+			<path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+		</svg>
+
+		<!-- Moon (dark) -->
+		<svg
+			v-else-if="mounted && mode === 'dark'"
+			viewBox="0 0 24 24"
+			class="size-5"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="1.5"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			aria-hidden="true"
+		>
+			<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+		</svg>
+
+		<!-- Monitor (system) -->
+		<svg
+			v-else
+			viewBox="0 0 24 24"
+			class="size-5"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="1.5"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			aria-hidden="true"
+		>
+			<rect x="3" y="4" width="18" height="12" rx="2" />
+			<path d="M9 20h6M12 16v4" />
+		</svg>
+	</button>
+</template>

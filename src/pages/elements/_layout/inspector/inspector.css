@@ -1,0 +1,46 @@
+/* Stage chrome shared by DemoInspector and DemoStudio. */
+.el-stage {
+	position: relative;
+}
+.el-stage-node {
+	position: relative;
+	border-radius: 6px;
+	transition: outline-color 120ms ease, box-shadow 120ms ease;
+}
+.el-stage-node[data-selected] {
+	outline: 2px solid rgb(var(--primary));
+	outline-offset: 3px;
+}
+.el-text-node[data-selected] {
+	background-color: rgba(var(--primary), 0.12);
+	outline: 1px solid rgb(var(--primary));
+	border-radius: 3px;
+}
+/* Hover hints + click-to-select only apply while the stage is in pick mode.
+ * `:not([data-selected])` keeps the solid selection outline visible — hover
+ * never overrides selection. */
+.el-stage.el-pick-mode .el-stage-node,
+.el-stage.el-pick-mode .el-text-node { cursor: pointer; }
+.el-stage.el-pick-mode .el-stage-node:not([data-selected]):hover,
+.el-stage.el-pick-mode .el-text-node:not([data-selected]):hover {
+	outline: 1px dashed rgba(var(--primary), 0.6);
+	outline-offset: 3px;
+}
+.el-stage.el-pick-mode .el-stage-node:not([data-selected]):has(.el-stage-node:hover, .el-text-node:hover) {
+	outline: none;
+}
+
+/* Drop indicator — single absolutely-positioned div, controlled by inline styles. */
+.el-drop-indicator {
+	position: absolute;
+	pointer-events: none;
+	z-index: 10;
+	background: rgb(var(--primary));
+	border-radius: 2px;
+	box-shadow: 0 0 0 1px rgba(var(--background), 0.8), 0 0 0 3px rgba(var(--primary), 0.25);
+}
+.el-drop-indicator--inside {
+	background: transparent;
+	border: 2px dashed rgb(var(--primary));
+	box-shadow: 0 0 0 4px rgba(var(--primary), 0.08) inset;
+}

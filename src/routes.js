@@ -1,13 +1,11 @@
 import AboutPage from './pages/AboutPage.vue';
-import ExperimentsPage from './pages/ExperimentsPage.vue';
 import IdeasPage from './pages/IdeasPage.vue';
 import NotFoundPage from './NotFoundPage.vue';
-import ProjectsPage from './pages/ProjectsPage.vue';
 
-const pageRouteModules = import.meta.glob('./pages/**/Page.vue');
+const pageRouteModules = import.meta.glob('./pages/**/Index.vue');
 
 function filePathToRoutePath(globKey) {
-	const m = globKey.match(/^\.\/pages\/(.+)\/Page\.vue$/);
+	const m = globKey.match(/^\.\/pages\/(.+)\/Index\.vue$/);
 	if (!m) return null;
 	const inner = m[1];
 	if (inner === '.' || inner === '..' || inner.includes('..')) return null;
@@ -18,7 +16,7 @@ function filePathToRoutePath(globKey) {
 function titleFromRoutePath(path) {
 	if (path === '/') return 'Home';
 	const seg = path.split('/').filter(Boolean).pop();
-	if (!seg) return 'Page';
+	if (!seg) return 'Index';
 	return seg
 		.replace(/-/g, ' ')
 		.replace(/\b\w/g, (c) => c.toUpperCase());
@@ -38,8 +36,6 @@ const fileBasedRoutes = Object.entries(pageRouteModules)
 
 const manualRoutes = [
 	{ path: '/', component: AboutPage, meta: { title: 'About' } },
-	{ path: '/experiments', component: ExperimentsPage, meta: { title: 'Experiments' } },
-	{ path: '/projects', component: ProjectsPage, meta: { title: 'Projects' } },
 	{ path: '/ideas', component: IdeasPage, meta: { title: 'Ideas' } },
 ];
 

@@ -4,17 +4,21 @@ import SteveLayout from './pages/SteveLayout.vue';
 import './style.css';
 import { routes } from './routes';
 
-const getInitialTheme = () => {
-	if (typeof window === 'undefined') {
-		return 'light';
+// Apply the stored theme mode to `<html data-theme>` as early as possible so
+// the first paint matches what useTheme would do on mount. `system` mode
+// resolves against the OS preference. Legacy `theme` key (which only held
+// 'light' or 'dark') is honoured for users who set their preference before
+// the three-mode toggle landed.
+const applyInitialTheme = () => {
+	if (typeof window === 'undefined') return;
+	const stored = window.localStorage.getItem('theme-mode')
+		|| window.localStorage.getItem('theme')
+		|| 'system';
+	let theme = stored;
+	if (stored === 'system' || (stored !== 'light' && stored !== 'dark')) {
+		theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 	}
-
-	const storedTheme = window.localStorage.getItem('theme');
-	if (storedTheme === 'light' || storedTheme === 'dark') {
-		return storedTheme;
-	}
-
-	return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+	document.documentElement.dataset.theme = theme;
 };
 
 export const createApp = ViteSSG(
@@ -27,8 +31,6 @@ export const createApp = ViteSSG(
 			return;
 		}
 
-		const theme = getInitialTheme();
-		document.documentElement.dataset.theme = theme;
-		window.localStorage.setItem('theme', theme);
+		applyInitialTheme();
 	},
 );
