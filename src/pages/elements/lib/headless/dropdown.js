@@ -20,7 +20,9 @@ import './popover.js';
 //   </div>
 // </element-dropdown>
 export class ElementDropdown extends ElementBase {
-	static get observedAttributes() { return ['open', 'align', 'offset']; }
+	static get observedAttributes() {
+		return ['open', 'align', 'offset', 'placement', 'collision-padding'];
+	}
 
 	static __doc = {
 		name: 'element-dropdown',
@@ -31,8 +33,10 @@ export class ElementDropdown extends ElementBase {
 		],
 		attributes: [
 			{ name: 'open', type: 'boolean', description: 'Reflects open state (toggle by setting / removing).' },
+			{ name: 'placement', type: "'top' | 'right' | 'bottom' | 'left' | '<side>-<align>'", description: 'Preferred placement before collision handling (default bottom).' },
 			{ name: 'align', type: "'left' | 'right'", description: 'Horizontal alignment under the trigger (default left).' },
 			{ name: 'offset', type: 'number', description: 'Gap in pixels between trigger and menu (default 4).' },
+			{ name: 'collision-padding', type: 'number', description: 'Viewport padding used when flipping or shifting the menu (default 8).' },
 			{ name: 'data-menu-id', type: 'string', description: 'Id of an external (teleported) menu element. Used when the menu lives outside the host — e.g. portalled to <body>.' },
 		],
 		events: [
@@ -77,6 +81,8 @@ export class ElementDropdown extends ElementBase {
 		return {
 			align: this.getAttribute('align') || 'left',
 			offset: Number(this.getAttribute('offset') || 4),
+			placement: this.getAttribute('placement') || 'bottom',
+			padding: Number(this.getAttribute('collision-padding') || 8),
 		};
 	}
 
@@ -160,9 +166,9 @@ export class ElementDropdown extends ElementBase {
 	}
 
 	_placeMenu() {
-		positionPopoverPanel(this._menu, this._trigger, this._positionOpts());
 		const r = this._trigger.getBoundingClientRect();
 		this._menu.style.minWidth = `${r.width}px`;
+		positionPopoverPanel(this._menu, this._trigger, this._positionOpts());
 	}
 
 	_syncOpen(next, fromPopover = false) {
@@ -215,6 +221,13 @@ export class ElementDropdown extends ElementBase {
 		if (e.key === 'Escape' || e.key === 'Tab') {
 			if (e.key === 'Escape') e.preventDefault();
 			this.open = false;
+		}
+	}
+
+	attributeChangedCallback(name) {
+		if (!this._open || !this._menu || !this._trigger) return;
+		if (name === 'align' || name === 'offset' || name === 'placement' || name === 'collision-padding') {
+			this._placeMenu();
 		}
 	}
 

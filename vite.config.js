@@ -24,4 +24,8 @@ export default defineConfig({
 		},
 	},
 	base: '/',
+	server: {
+		host: true,
+		// https: true,
+	}
 });

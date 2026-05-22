@@ -54,8 +54,9 @@ export class ElementBase extends (isBrowser ? HTMLElement : class {}) {
 	}
 
 	setBoolAttr(name, value) {
-		if (value) this.setAttribute(name, '');
-		else this.removeAttribute(name);
+		const hasAttr = this.hasAttribute(name);
+		if (value && !hasAttr) this.setAttribute(name, '');
+		else if (!value && hasAttr) this.removeAttribute(name);
 	}
 }
 

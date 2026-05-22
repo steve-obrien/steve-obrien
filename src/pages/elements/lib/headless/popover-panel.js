@@ -1,4 +1,8 @@
 import { isBrowser, uid } from './base.js';
+import {
+	applyFloatingPosition,
+	autoUpdateFloating,
+} from './floating.js';
 
 /** Wire a panel for the native Popover API (top layer + light dismiss). */
 export function preparePopoverPanel(panel, trigger) {
@@ -38,38 +42,16 @@ export function isPopoverOpen(panel) {
 }
 
 /** Anchor a top-layer popover panel under its trigger (fixed coords). */
-export function positionPopoverPanel(panel, trigger, { align = 'left', offset = 8 } = {}) {
+export function positionPopoverPanel(panel, trigger, { align = 'left', offset = 8, placement = 'bottom', padding = 8 } = {}) {
 	if (!panel || !trigger || typeof window === 'undefined') return;
-	const r = trigger.getBoundingClientRect();
-	panel.style.position = 'fixed';
-	panel.style.top = `${r.bottom + offset}px`;
-	panel.style.margin = '0';
-	panel.style.transform = '';
-	if (align === 'right') {
-		panel.style.left = 'auto';
-		panel.style.right = `${window.innerWidth - r.right}px`;
-	} else if (align === 'center') {
-		panel.style.left = `${r.left + r.width / 2}px`;
-		panel.style.right = 'auto';
-		panel.style.transform = 'translateX(-50%)';
-	} else {
-		panel.style.left = `${r.left}px`;
-		panel.style.right = 'auto';
-	}
+	return applyFloatingPosition(trigger, panel, { align, offset, placement, padding });
 }
 
 /** Keep the panel aligned while scrolling or resizing. Returns an unbind fn. */
 export function attachPopoverReflow(panel, trigger, options = {}) {
 	const update = () => positionPopoverPanel(panel, trigger, options);
 	update();
-	const onScroll = () => update();
-	const onResize = () => update();
-	window.addEventListener('scroll', onScroll, { capture: true, passive: true });
-	window.addEventListener('resize', onResize);
-	return () => {
-		window.removeEventListener('scroll', onScroll, { capture: true });
-		window.removeEventListener('resize', onResize);
-	};
+	return autoUpdateFloating(trigger, panel, update);
 }
 
 /** Sync host state when the browser opens/closes the popover. Returns an unbind fn. */

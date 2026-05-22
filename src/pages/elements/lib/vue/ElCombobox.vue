@@ -96,7 +96,7 @@ const normalised = (opt) => (typeof opt === 'string' ? { value: opt, label: opt 
 			slot="input"
 			type="text"
 			:placeholder="placeholder"
-			class="h-10 w-full rounded-full border border-skin-border bg-skin-background px-4 text-sm text-skin-primary outline-none transition focus:ring-2 focus:ring-skin-primary/40"
+			class="h-10 w-full rounded-full border border-skin-border bg-skin-background px-4 text-sm text-skin-primary outline-none transition focus:ring-2 focus:ring-skin-primary/60"
 		/>
 		<Teleport to="body" :disabled="!isMounted">
 			<ul

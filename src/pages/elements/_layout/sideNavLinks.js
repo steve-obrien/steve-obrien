@@ -1,4 +1,4 @@
-export const componentGroups = [
+export const sideNavLinks = [
 	{
 		label: 'Tooling',
 		items: [
@@ -7,7 +7,7 @@ export const componentGroups = [
 		],
 	},
 	{
-		label: 'Elements',
+		label: 'Components',
 		items: [
 			{ to: '/elements/components/button', label: 'Button' },
 			{ to: '/elements/components/dropdown', label: 'Dropdown' },

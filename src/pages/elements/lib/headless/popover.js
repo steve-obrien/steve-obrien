@@ -18,7 +18,9 @@ import {
 // top-layer promotion, light-dismiss, and Esc — we just wire the trigger and
 // surface our usual el:open / el:close events.
 export class ElementPopover extends ElementBase {
-	static get observedAttributes() { return ['open', 'align', 'offset']; }
+	static get observedAttributes() {
+		return ['open', 'align', 'offset', 'placement', 'collision-padding'];
+	}
 
 	static __doc = {
 		name: 'element-popover',
@@ -29,8 +31,10 @@ export class ElementPopover extends ElementBase {
 		],
 		attributes: [
 			{ name: 'open', type: 'boolean', description: 'Reflects open state.' },
+			{ name: 'placement', type: "'top' | 'right' | 'bottom' | 'left' | '<side>-<align>'", description: 'Preferred placement before collision handling (default bottom).' },
 			{ name: 'align', type: "'left' | 'right' | 'center'", description: 'Horizontal alignment under the trigger (default left).' },
 			{ name: 'offset', type: 'number', description: 'Gap in pixels between trigger and panel (default 8).' },
+			{ name: 'collision-padding', type: 'number', description: 'Viewport padding used when flipping or shifting the panel (default 8).' },
 			{ name: 'data-panel-id', type: 'string', description: 'Id of an external (teleported) panel element.' },
 		],
 		events: [
@@ -61,6 +65,8 @@ export class ElementPopover extends ElementBase {
 		return {
 			align: this.getAttribute('align') || 'left',
 			offset: Number(this.getAttribute('offset') || 8),
+			placement: this.getAttribute('placement') || 'bottom',
+			padding: Number(this.getAttribute('collision-padding') || 8),
 		};
 	}
 
@@ -144,7 +150,7 @@ export class ElementPopover extends ElementBase {
 
 	attributeChangedCallback(name) {
 		if (!this._open || !this._panel || !this._trigger) return;
-		if (name === 'align' || name === 'offset') {
+		if (name === 'align' || name === 'offset' || name === 'placement' || name === 'collision-padding') {
 			positionPopoverPanel(this._panel, this._trigger, this._positionOpts());
 		}
 	}

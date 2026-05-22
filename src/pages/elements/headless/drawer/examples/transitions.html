@@ -1,0 +1,35 @@
+<element-drawer
+	side="right"
+	enter="transition duration-1000 ease-out"
+	enter-from="opacity-0 scale-50"
+	enter-to="opacity-100 scale-100"
+	leave="transition duration-1000 ease-in"
+	leave-from="opacity-100 scale-100"
+	leave-to="opacity-0 scale-50"
+>
+	<button
+		slot="trigger"
+		type="button"
+		class="inline-flex h-10 items-center rounded-full bg-skin-surface px-4 text-sm font-medium text-skin-primary ring-1 ring-skin-border transition hover:bg-skin-border/40"
+	>
+		Open (fade)
+	</button>
+	<div class="flex h-full bg-white flex-col gap-4 p-6">
+		<h2 class="text-base font-semibold text-skin-primary">Custom transitions</h2>
+		<p class="text-sm text-skin-secondary">
+			Set <code>enter</code>, <code>enter-from</code>, <code>enter-to</code>, and matching
+			<code>leave-*</code> attributes with Tailwind classes
+		</p>
+		<button
+			data-close
+			type="button"
+			class="inline-flex h-10 w-fit items-center rounded-full bg-skin-primary px-4 text-sm font-medium text-skin-inverse transition hover:opacity-90"
+		>
+			Close
+		</button>
+	</div>
+</element-drawer>
+
+<script type="module">
+	import '@elements/headless/drawer.js';
+</script>

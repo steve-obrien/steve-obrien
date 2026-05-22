@@ -8,6 +8,7 @@ import { ElementDrawer } from '../../lib/headless';
 import NavigationSrc from './examples/navigation.html?raw';
 import FiltersSrc from './examples/filters.html?raw';
 import ProgrammaticSrc from './examples/programmatic.html?raw';
+import TransitionsSrc from './examples/transitions.html?raw';
 </script>
 
 <template>
@@ -31,6 +32,17 @@ import ProgrammaticSrc from './examples/programmatic.html?raw';
 				description="Set the side attribute to left for filter panels and secondary surfaces."
 			>
 				<HtmlDemo :source="FiltersSrc" />
+			</Example>
+		</DocSection>
+
+		<DocSection eyebrow="Demo" title="Custom transitions">
+			<Example
+				:source="TransitionsSrc"
+				lang="html"
+				filename="transitions.html"
+				description="Headless UI–style enter/leave attributes with Tailwind classes on the panel instead of the default slide animation."
+			>
+				<HtmlDemo :source="TransitionsSrc" />
 			</Example>
 		</DocSection>
 

@@ -4,7 +4,7 @@ import { computed, onMounted } from 'vue';
 import { useTheme } from '../../../composable/useTheme';
 import BtnLightDarkMode from '../../../cmp/BtnLightDarkMode.vue';
 import { ElPopover } from '../lib/vue';
-import { componentGroups } from './nav';
+import { sideNavLinks } from './sideNavLinks';
 const { initTheme } = useTheme();
 onMounted(() => initTheme());
 

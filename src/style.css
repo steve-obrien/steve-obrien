@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source inline("transition duration-1000 ease-in ease-out opacity-0 opacity-100 scale-50 scale-100");
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 :root {

@@ -1,0 +1,18 @@
+{
+	"compilerOptions": {
+		"baseUrl": ".",
+		"paths": {
+			"@elements/vue": ["./src/pages/elements/lib/vue"],
+			"@elements/vue/*": ["./src/pages/elements/lib/vue/*"],
+			"@elements/headless": ["./src/pages/elements/lib/headless"],
+			"@elements/headless/*": ["./src/pages/elements/lib/headless/*"]
+		},
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"target": "ESNext",
+		"jsx": "preserve",
+		"allowJs": true
+	},
+	"include": ["src/**/*.js", "src/**/*.vue"],
+	"exclude": ["node_modules", "dist"]
+}

@@ -24,10 +24,20 @@ const props = defineProps({
 		default: 'left',
 		_edit: { options: ['left', 'right', 'center'], description: 'Horizontal anchor relative to the trigger.' },
 	},
+	placement: {
+		type: String,
+		default: 'bottom',
+		_edit: { options: ['bottom', 'top', 'right', 'left'], description: 'Preferred side before collision handling.' },
+	},
 	offset: {
 		type: Number,
 		default: 8,
 		_edit: { description: 'Gap in pixels between the trigger and the popover.' },
+	},
+	collisionPadding: {
+		type: Number,
+		default: 8,
+		_edit: { description: 'Viewport padding used when the panel flips or shifts.' },
 	},
 	width: {
 		type: String,
@@ -56,6 +66,8 @@ onMounted(async () => {
 		ref="root"
 		:align="align"
 		:offset="offset"
+		:placement="placement"
+		:collision-padding="collisionPadding"
 		class="relative inline-block"
 	>
 		<button

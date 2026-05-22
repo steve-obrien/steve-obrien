@@ -47,6 +47,19 @@ const props = defineProps({
 			description: 'Where the menu opens relative to the trigger.',
 		},
 	},
+	placement: {
+		type: String,
+		default: 'bottom',
+		_edit: {
+			options: ['bottom', 'top', 'right', 'left'],
+			description: 'Preferred side before collision handling.',
+		},
+	},
+	collisionPadding: {
+		type: Number,
+		default: 8,
+		_edit: { description: 'Viewport padding used when the menu flips or shifts.' },
+	},
 	width: {
 		type: String,
 		default: 'min-w-[12rem]',
@@ -74,6 +87,8 @@ const valueOf = (item) => (item && typeof item === 'object' ? (item.value ?? ite
 		:data-menu-id="menuId"
 		:align="align"
 		:offset="4"
+		:placement="placement"
+		:collision-padding="collisionPadding"
 		class="relative inline-block"
 	>
 		<button

@@ -72,23 +72,23 @@ const props = defineProps({
 });
 const emit = defineEmits(['update:modelValue', 'open', 'close']);
 
-const root = ref(null);
+const drawer = ref(null);
 
 const hostStyle = computed(() => ({
 	'--el-drawer-width': props.width,
 }));
 
 function setOpen(v) {
-	if (root.value) root.value.open = v;
+	if (drawer.value) drawer.value.open = v;
 }
 
 onMounted(async () => {
 	await import('../headless/drawer.js');
-	root.value?.addEventListener('el:open', () => {
+	drawer.value?.addEventListener('el:open', () => {
 		emit('update:modelValue', true);
 		emit('open');
 	});
-	root.value?.addEventListener('el:close', () => {
+	drawer.value?.addEventListener('el:close', () => {
 		emit('update:modelValue', false);
 		emit('close');
 	});
@@ -100,13 +100,13 @@ watch(() => props.modelValue, setOpen);
 defineExpose({
 	open: () => setOpen(true),
 	close: () => setOpen(false),
-	toggle: () => { if (root.value) root.value.toggle(); },
-	get element() { return root.value; },
+	toggle: () => { if (drawer.value) drawer.value.toggle(); },
+	get element() { return drawer.value; },
 });
 </script>
 
 <template>
-	<element-drawer ref="root" :side="side" :static="static || null" :style="hostStyle">
+	<element-drawer ref="drawer" :side="side" :static="static || null" :style="hostStyle">
 		<span slot="trigger" class="contents">
 			<slot name="trigger" />
 		</span>
