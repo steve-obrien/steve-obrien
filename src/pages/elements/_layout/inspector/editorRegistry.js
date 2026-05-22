@@ -8,6 +8,7 @@ import {
 	ElCombobox,
 	ElBooleanInput,
 	ElColorInput,
+	ElJsonListInput,
 } from '../../lib/vue';
 
 // Editor components are referenced by their actual component name in spec
@@ -25,6 +26,7 @@ const editors = {
 	ElCombobox: markRaw(ElCombobox),
 	ElBooleanInput: markRaw(ElBooleanInput),
 	ElColorInput: markRaw(ElColorInput),
+	ElJsonListInput: markRaw(ElJsonListInput),
 };
 
 export function getEditor(name) { return editors[name] || null; }

@@ -18,5 +18,6 @@ export { default as ElSelectInput } from './ElSelectInput.vue';
 export { default as ElBooleanInput } from './ElBooleanInput.vue';
 export { default as ElColorInput } from './ElColorInput.vue';
 export { default as ElListInput } from './ElListInput.vue';
+export { default as ElJsonListInput } from './ElJsonListInput.vue';
 // Rehydration
 export { default as ElRenderer } from './ElRenderer.vue';

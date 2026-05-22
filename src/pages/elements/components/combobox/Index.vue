@@ -4,23 +4,55 @@ import DocPage from '../../_layout/DocPage.vue';
 import DocSection from '../../_layout/DocSection.vue';
 import Playground from '../../_layout/docs/Playground.vue';
 import PropsTable from '../../_layout/PropsTable.vue';
-import { ElCombobox } from '../../lib/vue';
 import PickFruit from './examples/PickFruit.vue';
 import PickFruitSrc from './examples/PickFruit.vue?raw';
 import PeopleLookup from './examples/PeopleLookup.vue';
 import PeopleLookupSrc from './examples/PeopleLookup.vue?raw';
+import PeoplePlayground from './examples/PeoplePlayground.vue';
+import PeoplePlaygroundSrc from './examples/PeoplePlayground.vue?raw';
 import Example from '../../_layout/docs/Example.vue';
 import { RouterLink } from 'vue-router';
 
-const fruits = [
-	{ value: '1', label: 'Apple' },
-	{ value: '2', label: 'Banana' },
-	{ value: '3', label: 'Cherry' },
-	{ value: '4', label: 'Date' },
-	{ value: '5', label: 'Elderberry' },
-	{ value: '6', label: 'Fig' },
-	{ value: '7', label: 'Grape' },
-];
+const peoplePlaygroundInspect = {
+	props: {
+		modelValue: {
+			type: String,
+			default: '',
+			_edit: { label: 'Selected value', description: 'The option value currently committed by v-model.' },
+		},
+		options: {
+			type: Array,
+			default: () => [],
+			_edit: {
+				editor: 'ElJsonListInput',
+				label: 'People',
+				description: 'Rows of JSON-like option data used by the custom item slot.',
+				addLabel: '+ Add person',
+				schema: [
+					{ key: 'value', label: 'Value', placeholder: 'person-id', default: (index) => `person-${index + 1}` },
+					{ key: 'label', label: 'Name', placeholder: 'Person name', default: (index) => `Person ${index + 1}` },
+					{ key: 'role', label: 'Role', placeholder: 'Role or title' },
+					{ key: 'avatar', label: 'Avatar URL', type: 'url', placeholder: 'https://...' },
+				],
+			},
+		},
+		placeholder: {
+			type: String,
+			default: 'Assign a person',
+			_edit: { description: 'Placeholder shown when no option is selected.' },
+		},
+		placement: {
+			type: String,
+			default: 'bottom',
+			_edit: { options: ['bottom', 'top', 'right', 'left'], description: 'Preferred side before collision handling.' },
+		},
+		floatingMode: {
+			type: String,
+			default: 'viewport',
+			_edit: { options: ['viewport', 'anchor'], description: 'viewport keeps the list inside the browser; anchor keeps it attached while scrolling.' },
+		},
+	},
+};
 
 const props = [
 	{ name: 'v-model', type: 'string', default: '—', description: 'Selected option value.' },
@@ -39,12 +71,14 @@ const keys = [
 <template>
 	<ElementsLayout>
 		<DocPage name="Combobox" tagline="A styled select-like control: show the option label, store the option value, and keep keyboard navigation." tag="<element-combobox>">
-			<DocSection eyebrow="Playground" title="Try every prop live">
+			<DocSection eyebrow="Playground" title="Custom item playground">
 				<Playground
-					:inspect="ElCombobox"
-					:initial="{ options: fruits, placeholder: 'Pick a fruit' }"
-					title="Combobox playground"
-					description="Edit props in the inspector — type to filter options and preview placeholder and disabled state."
+					:inspect="peoplePlaygroundInspect"
+					:component="PeoplePlayground"
+					:source="PeoplePlaygroundSrc"
+					filename="PeoplePlayground.vue"
+					title="People combobox playground"
+					description="Edit people rows in the inspector and the custom item slot keeps rendering the richer markup."
 				/>
 			</DocSection>
 
