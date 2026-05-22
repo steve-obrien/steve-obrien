@@ -8,8 +8,8 @@ defineProps({
 <template>
 	<section class="space-y-3">
 		<h3 class="text-sm font-semibold uppercase tracking-[0.18em] text-skin-muted">{{ title }}</h3>
-		<div class="overflow-hidden rounded-2xl border border-skin-border">
-			<table class="w-full text-left text-sm">
+		<div class="overflow-x-auto overflow-y-hidden rounded-2xl border border-skin-border">
+			<table class="min-w-full text-left text-sm">
 				<thead class="bg-skin-surface text-xs uppercase tracking-wider text-skin-muted">
 					<tr>
 						<th class="px-4 py-2 font-medium">Name</th>

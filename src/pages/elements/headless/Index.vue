@@ -37,8 +37,8 @@ const elements = [
 	{ cls: ElementToggle, to: '/elements/headless/toggle' },
 	{ cls: ElementTooltip, to: '/elements/headless/tooltip' },
 	{ cls: ElementAccordion, to: '/elements/headless/accordion' },
-	{ cls: ElementAutocomplete, to: '/elements/headless/combobox' },
 	{ cls: ElementCombobox, to: '/elements/headless/combobox' },
+	{ cls: ElementAutocomplete, to: '/elements/headless/autocomplete' },
 	{ cls: ElementDrawer, to: '/elements/headless/drawer' },
 ];
 

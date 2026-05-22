@@ -6,29 +6,29 @@ import HtmlDemo from '../../_layout/docs/HtmlDemo.vue';
 import { ElementCombobox } from '../../lib/headless';
 
 import BasicSrc from './examples/basic.html?raw';
-import AutocompleteSrc from './examples/autocomplete.html?raw';
+import PeopleSrc from './examples/people.html?raw';
 </script>
 
 <template>
 	<HeadlessPage :element="ElementCombobox">
-		<DocSection eyebrow="Demo" title="Combobox">
+		<DocSection eyebrow="Demo" title="Select-like search">
 			<Example
 				:source="BasicSrc"
 				lang="html"
 				filename="basic.html"
-				description="Select-like input with a toggle button, filtering, arrow keys, Enter to commit, Esc to dismiss, and floating list positioning."
+				description="Select an option value while showing its label in the input. The list still supports filtering, arrow keys, Enter, Esc, and floating positioning."
 			>
 				<HtmlDemo :source="BasicSrc" />
 			</Example>
 		</DocSection>
-		<DocSection eyebrow="Demo" title="Autocomplete">
+		<DocSection eyebrow="Demo" title="Rich option markup">
 			<Example
-				:source="AutocompleteSrc"
+				:source="PeopleSrc"
 				lang="html"
-				filename="autocomplete.html"
-				description="Free-text input with optional suggestions. Typed values remain valid even when they do not match the list."
+				filename="people.html"
+				description="List items can be authored directly in the DOM with images and nested labels. data-label controls the text shown in the input, and data-value is the selected value."
 			>
-				<HtmlDemo :source="AutocompleteSrc" />
+				<HtmlDemo :source="PeopleSrc" />
 			</Example>
 		</DocSection>
 	</HeadlessPage>

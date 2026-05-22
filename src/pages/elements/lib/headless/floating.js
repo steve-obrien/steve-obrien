@@ -1,5 +1,6 @@
 const SIDE_OPTIONS = ['top', 'right', 'bottom', 'left'];
 const ALIGN_OPTIONS = ['start', 'center', 'end'];
+const FLOATING_MODES = ['viewport', 'anchor'];
 
 function clamp(value, min, max) {
 	return Math.min(Math.max(value, min), max);
@@ -9,6 +10,11 @@ function normalizeAlign(value) {
 	if (value === 'left') return 'start';
 	if (value === 'right') return 'end';
 	return ALIGN_OPTIONS.includes(value) ? value : 'start';
+}
+
+function normalizeMode(value) {
+	if (value === 'element') return 'anchor';
+	return FLOATING_MODES.includes(value) ? value : 'viewport';
 }
 
 function parsePlacement(placement = 'bottom', align = 'start') {
@@ -112,9 +118,12 @@ export function computeFloatingPosition(referenceEl, floatingEl, options = {}) {
 		align = 'start',
 		offset = 8,
 		padding = 8,
-		flip = true,
-		shift = true,
+		flip,
+		shift,
 	} = options;
+	const mode = normalizeMode(options.mode || options.floatingMode);
+	const shouldFlip = flip ?? mode === 'viewport';
+	const shouldShift = shift ?? mode === 'viewport';
 	const preferred = parsePlacement(placement, align);
 	const bounds = getViewportRect(Number(padding) || 0);
 	const reference = referenceEl.getBoundingClientRect();
@@ -125,7 +134,7 @@ export function computeFloatingPosition(referenceEl, floatingEl, options = {}) {
 	let coords = baseCoords(side, resolvedAlign, reference, floating, Number(offset) || 0);
 	const initialOverflow = overflowFor(coords.x, coords.y, floating.width, floating.height, bounds);
 
-	if (flip && hasOverflow(initialOverflow)) {
+	if (shouldFlip && hasOverflow(initialOverflow)) {
 		const opposite = oppositeSide(side);
 		if (axisSpace(opposite, reference, bounds, Number(offset) || 0) > axisSpace(side, reference, bounds, Number(offset) || 0)) {
 			side = opposite;
@@ -136,7 +145,7 @@ export function computeFloatingPosition(referenceEl, floatingEl, options = {}) {
 	let x = coords.x;
 	let y = coords.y;
 
-	if (shift) {
+	if (shouldShift) {
 		x = clamp(x, bounds.left, Math.max(bounds.left, bounds.right - floating.width));
 		y = clamp(y, bounds.top, Math.max(bounds.top, bounds.bottom - floating.height));
 	}
@@ -147,6 +156,7 @@ export function computeFloatingPosition(referenceEl, floatingEl, options = {}) {
 	return {
 		x,
 		y,
+		mode,
 		side,
 		align: resolvedAlign,
 		placement: placementName,
@@ -178,6 +188,7 @@ export function applyFloatingPosition(referenceEl, floatingEl, options = {}) {
 	floatingEl.style.setProperty('--el-floating-available-width', `${Math.round(result.availableWidth)}px`);
 	floatingEl.style.setProperty('--el-floating-available-height', `${Math.round(result.availableHeight)}px`);
 	floatingEl.dataset.placement = result.placement;
+	floatingEl.dataset.floatingMode = result.mode;
 	floatingEl.dataset.side = result.side;
 	floatingEl.dataset.align = result.align;
 	floatingEl.toggleAttribute('data-flipped', result.flipped);

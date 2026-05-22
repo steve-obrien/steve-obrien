@@ -5,6 +5,7 @@
 const MODULE_LOADERS = {
 	'@elements/headless': () => import('../../lib/headless/index.js'),
 	'@elements/headless/accordion.js': () => import('../../lib/headless/accordion.js'),
+	'@elements/headless/autocomplete.js': () => import('../../lib/headless/autocomplete.js'),
 	'@elements/headless/combobox.js': () => import('../../lib/headless/combobox.js'),
 	'@elements/headless/dialog.js': () => import('../../lib/headless/dialog.js'),
 	'@elements/headless/drawer.js': () => import('../../lib/headless/drawer.js'),

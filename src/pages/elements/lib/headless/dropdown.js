@@ -21,7 +21,7 @@ import './popover.js';
 // </element-dropdown>
 export class ElementDropdown extends ElementBase {
 	static get observedAttributes() {
-		return ['open', 'align', 'offset', 'placement', 'collision-padding'];
+		return ['open', 'align', 'offset', 'placement', 'collision-padding', 'floating-mode'];
 	}
 
 	static __doc = {
@@ -37,6 +37,7 @@ export class ElementDropdown extends ElementBase {
 			{ name: 'align', type: "'left' | 'right'", description: 'Horizontal alignment under the trigger (default left).' },
 			{ name: 'offset', type: 'number', description: 'Gap in pixels between trigger and menu (default 4).' },
 			{ name: 'collision-padding', type: 'number', description: 'Viewport padding used when flipping or shifting the menu (default 8).' },
+			{ name: 'floating-mode', type: "'viewport' | 'anchor'", description: 'viewport keeps the menu inside the browser; anchor keeps it attached to the trigger while scrolling.' },
 			{ name: 'data-menu-id', type: 'string', description: 'Id of an external (teleported) menu element. Used when the menu lives outside the host — e.g. portalled to <body>.' },
 		],
 		events: [
@@ -83,6 +84,7 @@ export class ElementDropdown extends ElementBase {
 			offset: Number(this.getAttribute('offset') || 4),
 			placement: this.getAttribute('placement') || 'bottom',
 			padding: Number(this.getAttribute('collision-padding') || 8),
+			mode: this.getAttribute('floating-mode') || 'viewport',
 		};
 	}
 
@@ -226,7 +228,7 @@ export class ElementDropdown extends ElementBase {
 
 	attributeChangedCallback(name) {
 		if (!this._open || !this._menu || !this._trigger) return;
-		if (name === 'align' || name === 'offset' || name === 'placement' || name === 'collision-padding') {
+		if (name === 'align' || name === 'offset' || name === 'placement' || name === 'collision-padding' || name === 'floating-mode') {
 			this._placeMenu();
 		}
 	}

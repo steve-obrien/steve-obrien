@@ -7,20 +7,20 @@ defineOptions({
 	__doc: {
 		name: 'Combobox',
 		tag: '<ElCombobox>',
-		description: 'Select-like combobox with a styled input, floating list, keyboard navigation, optional creation, and query events for async lookups.',
+		description: 'Select-like combobox with a styled input, floating list, keyboard navigation, and query events for async lookups.',
 		slots: [
 			{ name: 'item', payload: '{ item, index }', description: 'Replaces the rendering of each option.' },
 		],
 		events: [
 			{ name: 'query', payload: '(query: string)', description: 'Fired as the user types. Use it to fetch or replace options.' },
-			{ name: 'create', payload: '(value: string)', description: 'Fired when creatable is true and a missing value is committed.' },
+			{ name: 'select', payload: '({ item, value, label })', description: 'Fired when an option is selected. item is the original option object.' },
 		],
 	},
 });
 
 const props = defineProps({
 	modelValue: {
-		type: String,
+		type: [String, Number],
 		default: '',
 		_edit: { description: 'Committed selected value.' },
 	},
@@ -37,38 +37,33 @@ const props = defineProps({
 		default: 'Search...',
 		_edit: { description: 'Placeholder shown when the input is empty.' },
 	},
-	creatable: {
-		type: Boolean,
-		default: false,
-		_edit: { description: 'Allow committing a value that is not in the list.' },
-	},
 	placement: {
 		type: String,
 		default: 'bottom',
 		_edit: { options: ['bottom', 'top', 'right', 'left'], description: 'Preferred side before collision handling.' },
 	},
+	floatingMode: {
+		type: String,
+		default: 'viewport',
+		_edit: { options: ['viewport', 'anchor'], description: 'viewport keeps the list inside the browser; anchor keeps it attached while scrolling.' },
+	},
 });
-const emit = defineEmits(['update:modelValue', 'query', 'create']);
+const emit = defineEmits(['update:modelValue', 'query', 'select']);
 
 const root = ref(null);
 const inputEl = ref(null);
 const isMounted = ref(false);
-const query = ref('');
 
 const normalised = (option) => (typeof option === 'string' ? { value: option, label: option } : option);
 const optionList = computed(() => props.options.map(normalised));
-const visibleItems = computed(() => {
-	const q = query.value.trim().toLowerCase();
-	const items = [...optionList.value];
-	const exact = items.some((item) => String(item.value ?? item.label).toLowerCase() === q || String(item.label ?? item.value).toLowerCase() === q);
-	if (props.creatable && q && !exact) {
-		items.push({ value: query.value.trim(), label: `Add "${query.value.trim()}"`, create: true });
-	}
-	return items;
-});
+
+function displayForValue(value) {
+	const selected = optionList.value.find((option) => String(option.value ?? option.label) === String(value));
+	return selected ? (selected.label ?? selected.value ?? '') : (value ?? '');
+}
 
 function syncInputFromModel() {
-	if (inputEl.value) inputEl.value.value = props.modelValue ?? '';
+	if (inputEl.value) inputEl.value.value = displayForValue(props.modelValue);
 }
 
 onMounted(async () => {
@@ -76,24 +71,31 @@ onMounted(async () => {
 	await import('../headless/combobox.js');
 	syncInputFromModel();
 	root.value?.addEventListener('el:change', (event) => emit('update:modelValue', event.detail.value));
+	root.value?.addEventListener('el:select', (event) => {
+		const index = Number(event.detail.option?.dataset.index);
+		emit('select', {
+			item: Number.isFinite(index) ? optionList.value[index] : null,
+			value: event.detail.value,
+			label: event.detail.label,
+			option: event.detail.option,
+		});
+	});
 	root.value?.addEventListener('el:query', (event) => {
-		query.value = event.detail.query;
 		emit('query', event.detail.query);
 	});
-	root.value?.addEventListener('el:create', (event) => emit('create', event.detail.value));
 });
 
-watch(() => props.modelValue, syncInputFromModel);
+watch([() => props.modelValue, optionList], syncInputFromModel);
 </script>
 
 <template>
 	<element-combobox
 		ref="root"
 		:data-menu-id="listId"
-		:value="modelValue || null"
+		:value="modelValue ?? null"
 		:placement="placement"
-		:creatable="creatable ? '' : null"
-		class="relative inline-block w-64"
+		:floating-mode="floatingMode"
+		class="relative block"
 	>
 		<input
 			ref="inputEl"
@@ -118,11 +120,11 @@ watch(() => props.modelValue, syncInputFromModel);
 				class="z-50 max-h-[min(15rem,var(--el-floating-available-height))] overflow-auto rounded-2xl border border-skin-border bg-skin-background p-1 shadow-2xl shadow-black/10 ring-1 ring-black/[0.04]"
 			>
 				<li
-					v-for="(option, index) in visibleItems"
-					:key="`${option.create ? 'create' : 'option'}-${option.value}`"
+					v-for="(option, index) in optionList"
+					:key="option.value ?? index"
 					:data-value="option.value"
 					:data-label="option.label"
-					:data-create="option.create ? '' : null"
+					:data-index="index"
 					class="cursor-pointer rounded-xl px-3 py-2 text-sm text-skin-primary transition data-[active]:bg-skin-surface aria-selected:bg-skin-surface"
 				>
 					<slot name="item" :item="option" :index="index">{{ option.label }}</slot>

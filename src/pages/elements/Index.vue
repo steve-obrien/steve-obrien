@@ -42,6 +42,7 @@ const components = [
 	{ name: 'Tooltip', tag: 'element-tooltip', to: '/elements/components/tooltip' },
 	{ name: 'Accordion', tag: 'element-accordion', to: '/elements/components/accordion' },
 	{ name: 'Combobox', tag: 'element-combobox', to: '/elements/components/combobox' },
+	{ name: 'Autocomplete', tag: 'element-autocomplete', to: '/elements/components/autocomplete' },
 ];
 </script>
 

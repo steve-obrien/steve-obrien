@@ -18,6 +18,7 @@ export const sideNavLinks = [
 			{ to: '/elements/components/tooltip', label: 'Tooltip' },
 			{ to: '/elements/components/accordion', label: 'Accordion' },
 			{ to: '/elements/components/combobox', label: 'Combobox' },
+			{ to: '/elements/components/autocomplete', label: 'Autocomplete' },
 			{ to: '/elements/components/popover', label: 'Popover', tag: 'New' },
 		],
 	},
@@ -46,6 +47,7 @@ export const sideNavLinks = [
 			{ to: '/elements/headless/tooltip', label: 'Tooltip' },
 			{ to: '/elements/headless/accordion', label: 'Accordion' },
 			{ to: '/elements/headless/combobox', label: 'Combobox' },
+			{ to: '/elements/headless/autocomplete', label: 'Autocomplete' },
 		],
 	},
 ];

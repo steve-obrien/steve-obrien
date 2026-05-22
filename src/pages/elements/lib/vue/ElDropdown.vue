@@ -60,6 +60,11 @@ const props = defineProps({
 		default: 8,
 		_edit: { description: 'Viewport padding used when the menu flips or shifts.' },
 	},
+	floatingMode: {
+		type: String,
+		default: 'viewport',
+		_edit: { options: ['viewport', 'anchor'], description: 'viewport keeps the menu inside the browser; anchor keeps it attached while scrolling.' },
+	},
 	width: {
 		type: String,
 		default: 'min-w-[12rem]',
@@ -89,6 +94,7 @@ const valueOf = (item) => (item && typeof item === 'object' ? (item.value ?? ite
 		:offset="4"
 		:placement="placement"
 		:collision-padding="collisionPadding"
+		:floating-mode="floatingMode"
 		class="relative inline-block"
 	>
 		<button

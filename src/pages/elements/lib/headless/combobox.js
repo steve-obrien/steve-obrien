@@ -19,7 +19,7 @@ const OBSERVED = [
 	'offset',
 	'placement',
 	'collision-padding',
-	'creatable',
+	'floating-mode',
 ];
 
 function textOf(option) {
@@ -27,11 +27,14 @@ function textOf(option) {
 }
 
 function valueOf(option) {
-	return option.dataset.value ?? textOf(option);
+	return option.dataset.value ?? option.getAttribute('value') ?? option.value ?? textOf(option);
+}
+
+function labelOf(option) {
+	return option.dataset.label ?? option.getAttribute('label') ?? textOf(option);
 }
 
 function matchesOption(option, query) {
-	if (option.hasAttribute('data-create')) return true;
 	if (!query) return true;
 	const haystack = `${option.dataset.value || ''} ${option.dataset.label || ''} ${option.textContent}`.toLowerCase();
 	return haystack.includes(query);
@@ -48,7 +51,7 @@ function dispatchCancelable(host, type, detail) {
 	return event;
 }
 
-class ComboBase extends ElementBase {
+export class ComboBase extends ElementBase {
 	static get observedAttributes() { return OBSERVED; }
 
 	constructor() {
@@ -66,6 +69,8 @@ class ComboBase extends ElementBase {
 
 	get _freeText() { return false; }
 	get _inputRole() { return 'combobox'; }
+	get _valueMode() { return 'option'; }
+	get _activeOnFilter() { return true; }
 
 	_positionOpts() {
 		return {
@@ -73,6 +78,7 @@ class ComboBase extends ElementBase {
 			offset: Number(this.getAttribute('offset') || 4),
 			placement: this.getAttribute('placement') || 'bottom',
 			padding: Number(this.getAttribute('collision-padding') || 8),
+			mode: this.getAttribute('floating-mode') || 'viewport',
 		};
 	}
 
@@ -97,7 +103,7 @@ class ComboBase extends ElementBase {
 		this.on(this._input, 'input', () => this._handleInput());
 		this.on(this._input, 'focus', () => this._filter(this._input.value, { open: true }));
 		this.on(this._input, 'keydown', (e) => this._onKey(e));
-		if (this.hasAttribute('value')) this._input.value = this.getAttribute('value') || '';
+		if (this.hasAttribute('value')) this._syncInputFromValue();
 		if (this.hasAttribute('open')) this._setOpen(true);
 	}
 
@@ -150,6 +156,7 @@ class ComboBase extends ElementBase {
 		});
 		this._mutationObserver.observe(this._list, { childList: true, subtree: true, characterData: true });
 		this._refreshOptions();
+		this._syncInputFromValue();
 	}
 
 	_refreshOptions() {
@@ -169,6 +176,18 @@ class ComboBase extends ElementBase {
 		if (this._freeText) this.setAttribute('value', value);
 	}
 
+	_syncInputFromValue() {
+		if (!this._input || !this.hasAttribute('value')) return;
+		const value = this.getAttribute('value') || '';
+		if (this._valueMode === 'text') {
+			if (this._input.value !== value) this._input.value = value;
+			return;
+		}
+		const selected = this._options.find((option) => valueOf(option) === value);
+		const display = selected ? labelOf(selected) : value;
+		if (this._input.value !== display) this._input.value = display;
+	}
+
 	_onDocDown(e) {
 		if (this.contains(e.target)) return;
 		if (this._list && this._list.contains(e.target)) return;
@@ -178,7 +197,7 @@ class ComboBase extends ElementBase {
 	_positionList() {
 		if (!this._input || !this._list || this._list.hidden) return;
 		const rect = this._input.getBoundingClientRect();
-		this._list.style.minWidth = `${Math.round(rect.width)}px`;
+		this._list.style.width = `${Math.round(rect.width)}px`;
 		applyFloatingPosition(this._input, this._list, this._positionOpts());
 	}
 
@@ -233,8 +252,8 @@ class ComboBase extends ElementBase {
 		});
 
 		this._list.toggleAttribute('data-empty', firstVisible < 0);
-		this._setOpen(open && (firstVisible >= 0 || this.hasAttribute('creatable')));
-		this._setActive(firstVisible);
+		this._setOpen(open && firstVisible >= 0);
+		this._setActive(this._activeOnFilter ? firstVisible : -1);
 		this._positionList();
 	}
 
@@ -260,6 +279,10 @@ class ComboBase extends ElementBase {
 		const visible = this._visible();
 		if (!visible.length) return;
 		const current = visible.findIndex(({ index }) => index === this._active);
+		if (current === -1) {
+			this._setActive(delta > 0 ? visible[0].index : visible[visible.length - 1].index);
+			return;
+		}
 		const next = visible[(current + delta + visible.length) % visible.length];
 		this._setActive(next.index);
 	}
@@ -277,7 +300,7 @@ class ComboBase extends ElementBase {
 			if (this._active >= 0) {
 				e.preventDefault();
 				this._commit(this._options[this._active]);
-			} else if (this._freeText || this.hasAttribute('creatable')) {
+			} else if (this._freeText) {
 				e.preventDefault();
 				this._commitCustom(this._input.value);
 			}
@@ -303,8 +326,9 @@ class ComboBase extends ElementBase {
 
 	_toggleList() {
 		if (!this._ensureList()) return;
+		const wasOpen = this._open;
 		this._input.focus();
-		if (this._open) this._setOpen(false);
+		if (wasOpen) this._setOpen(false);
 		else this._filter('', { open: true });
 	}
 
@@ -313,19 +337,17 @@ class ComboBase extends ElementBase {
 		const value = valueOf(option);
 		const detail = {
 			value,
-			label: option.dataset.label ?? textOf(option),
+			label: labelOf(option),
 			option,
-			custom: option.hasAttribute('data-create'),
+			custom: false,
 		};
+		const inputValue = this._valueMode === 'text' ? detail.label : detail.label;
+		const hostValue = this._valueMode === 'text' ? detail.label : value;
 
-		if (detail.custom) {
-			const event = dispatchCancelable(this, 'el:create', detail);
-			if (event.defaultPrevented) return;
-		}
-
-		this._input.value = value;
-		this.setAttribute('value', value);
+		this._input.value = inputValue;
+		this.setAttribute('value', hostValue);
 		this._setOpen(false);
+		this.emit('el:select', detail);
 		this.emit('el:change', detail);
 	}
 
@@ -333,8 +355,7 @@ class ComboBase extends ElementBase {
 		const value = rawValue.trim();
 		if (!value) return;
 		const detail = { value, label: value, option: null, custom: true };
-		const type = this.hasAttribute('creatable') ? 'el:create' : 'el:custom';
-		const event = dispatchCancelable(this, type, detail);
+		const event = dispatchCancelable(this, 'el:custom', detail);
 		if (event.defaultPrevented) return;
 		this._input.value = value;
 		this.setAttribute('value', value);
@@ -344,9 +365,9 @@ class ComboBase extends ElementBase {
 
 	attributeChangedCallback(name, _old, value) {
 		if (!this.isConnected || !this._input) return;
-		if (name === 'value' && this._input.value !== (value || '')) this._input.value = value || '';
+		if (name === 'value') this._syncInputFromValue();
 		if (name === 'open') this._setOpen(value !== null);
-		if (['align', 'offset', 'placement', 'collision-padding'].includes(name) && this._open) this._positionList();
+		if (['align', 'offset', 'placement', 'collision-padding', 'floating-mode'].includes(name) && this._open) this._positionList();
 	}
 
 	get value() { return this.getAttribute('value') || ''; }
@@ -365,49 +386,23 @@ export class ElementCombobox extends ComboBase {
 		attributes: [
 			{ name: 'value', type: 'string', description: 'Currently-selected value.' },
 			{ name: 'open', type: 'boolean', description: 'Reflects whether the list is visible.' },
-			{ name: 'creatable', type: 'boolean', description: 'Allows Enter to create a missing value and emit el:create.' },
 			{ name: 'placement', type: 'string', description: 'Preferred floating placement before collision handling.' },
+			{ name: 'floating-mode', type: "'viewport' | 'anchor'", description: 'viewport keeps the list inside the browser; anchor keeps it attached to the input while scrolling.' },
 			{ name: 'data-menu-id', type: 'string', description: 'Id of an external or teleported list element.' },
 		],
 		events: [
 			{ name: 'el:input', payload: '{ value }', description: 'Fired whenever the text value changes.' },
 			{ name: 'el:query', payload: '{ query }', description: 'Fired whenever the user types. Useful for server lookups.' },
-			{ name: 'el:create', payload: '{ value, label }', description: 'Fired when a missing value is committed while creatable.' },
-			{ name: 'el:change', payload: '{ value, option, custom }', description: 'Fired when an option or custom value is committed.' },
+			{ name: 'el:select', payload: '{ value, label, option }', description: 'Fired when an option is selected.' },
+			{ name: 'el:change', payload: '{ value, option, custom }', description: 'Fired when an option is committed.' },
 		],
 		keyboard: [
 			{ keys: '↑ / ↓', action: 'Move active option.' },
-			{ keys: 'Enter', action: 'Commit active option, or create when creatable.' },
+			{ keys: 'Enter', action: 'Commit active option.' },
 			{ keys: 'Esc', action: 'Close the list.' },
 			{ keys: 'Type', action: 'Filter the list and emit el:query.' },
 		],
 	};
 }
 
-export class ElementAutocomplete extends ComboBase {
-	static __doc = {
-		name: 'element-autocomplete',
-		description: 'Free-text autocomplete. Suggestions are optional; typed values are valid and Enter commits the current text.',
-		slots: [
-			{ name: 'input', description: 'The text input. Gets role="combobox" and aria-controls wired automatically.' },
-			{ name: 'list', description: 'Optional suggestions. The list may be updated by a framework or server lookup.' },
-		],
-		attributes: [
-			{ name: 'value', type: 'string', description: 'Current text value.' },
-			{ name: 'open', type: 'boolean', description: 'Reflects whether suggestions are visible.' },
-			{ name: 'placement', type: 'string', description: 'Preferred floating placement before collision handling.' },
-			{ name: 'data-menu-id', type: 'string', description: 'Id of an external or teleported suggestion list.' },
-		],
-		events: [
-			{ name: 'el:input', payload: '{ value }', description: 'Fired whenever the text value changes.' },
-			{ name: 'el:query', payload: '{ query }', description: 'Fired whenever the user types. Useful for server lookups.' },
-			{ name: 'el:custom', payload: '{ value, label }', description: 'Cancelable event fired when Enter commits free text.' },
-			{ name: 'el:change', payload: '{ value, option, custom }', description: 'Fired when text or a suggestion is committed.' },
-		],
-	};
-
-	get _freeText() { return true; }
-}
-
 defineElement('element-combobox', ElementCombobox);
-defineElement('element-autocomplete', ElementAutocomplete);

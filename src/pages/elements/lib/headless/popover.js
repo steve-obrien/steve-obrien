@@ -19,7 +19,7 @@ import {
 // surface our usual el:open / el:close events.
 export class ElementPopover extends ElementBase {
 	static get observedAttributes() {
-		return ['open', 'align', 'offset', 'placement', 'collision-padding'];
+		return ['open', 'align', 'offset', 'placement', 'collision-padding', 'floating-mode'];
 	}
 
 	static __doc = {
@@ -35,6 +35,7 @@ export class ElementPopover extends ElementBase {
 			{ name: 'align', type: "'left' | 'right' | 'center'", description: 'Horizontal alignment under the trigger (default left).' },
 			{ name: 'offset', type: 'number', description: 'Gap in pixels between trigger and panel (default 8).' },
 			{ name: 'collision-padding', type: 'number', description: 'Viewport padding used when flipping or shifting the panel (default 8).' },
+			{ name: 'floating-mode', type: "'viewport' | 'anchor'", description: 'viewport keeps the panel inside the browser; anchor keeps it attached to the trigger while scrolling.' },
 			{ name: 'data-panel-id', type: 'string', description: 'Id of an external (teleported) panel element.' },
 		],
 		events: [
@@ -67,6 +68,7 @@ export class ElementPopover extends ElementBase {
 			offset: Number(this.getAttribute('offset') || 8),
 			placement: this.getAttribute('placement') || 'bottom',
 			padding: Number(this.getAttribute('collision-padding') || 8),
+			mode: this.getAttribute('floating-mode') || 'viewport',
 		};
 	}
 
@@ -150,7 +152,7 @@ export class ElementPopover extends ElementBase {
 
 	attributeChangedCallback(name) {
 		if (!this._open || !this._panel || !this._trigger) return;
-		if (name === 'align' || name === 'offset' || name === 'placement' || name === 'collision-padding') {
+		if (name === 'align' || name === 'offset' || name === 'placement' || name === 'collision-padding' || name === 'floating-mode') {
 			positionPopoverPanel(this._panel, this._trigger, this._positionOpts());
 		}
 	}

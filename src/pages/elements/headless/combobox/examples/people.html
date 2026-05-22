@@ -1,0 +1,51 @@
+<element-combobox class="relative block w-full max-w-md">
+	<input
+		slot="input"
+		type="text"
+		placeholder="Assign a person…"
+		class="h-10 w-full rounded-full border border-skin-border bg-skin-background px-4 pr-10 text-sm text-skin-primary outline-none focus:ring-2 focus:ring-skin-primary/40"
+	/>
+	<button
+		slot="toggle"
+		type="button"
+		aria-label="Show people"
+		class="absolute right-1 top-1 inline-flex size-8 items-center justify-center rounded-full text-skin-muted hover:bg-skin-surface"
+	>
+		<svg viewBox="0 0 20 20" class="size-4" fill="none">
+			<path d="M6 8l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+		</svg>
+	</button>
+	<ul slot="list" class="z-50 max-h-[min(14rem,var(--el-floating-available-height))] overflow-auto rounded-2xl border border-skin-border bg-skin-background p-1 shadow-lg">
+		<li data-value="ada" data-label="Ada Lovelace" class="cursor-pointer rounded-xl px-3 py-2 text-sm text-skin-primary transition hover:bg-skin-surface data-[active]:bg-skin-surface aria-selected:bg-skin-surface">
+			<div class="flex items-center gap-3">
+				<img src="https://unavatar.io/github/adafruit" alt="" class="size-8 rounded-full bg-skin-surface object-cover" />
+				<span class="min-w-0">
+					<span class="block truncate font-medium">Ada Lovelace</span>
+					<span class="block truncate text-xs text-skin-muted">Mathematician</span>
+				</span>
+			</div>
+		</li>
+		<li data-value="grace" data-label="Grace Hopper" class="cursor-pointer rounded-xl px-3 py-2 text-sm text-skin-primary transition hover:bg-skin-surface data-[active]:bg-skin-surface aria-selected:bg-skin-surface">
+			<div class="flex items-center gap-3">
+				<img src="https://unavatar.io/github/ghopper" alt="" class="size-8 rounded-full bg-skin-surface object-cover" />
+				<span class="min-w-0">
+					<span class="block truncate font-medium">Grace Hopper</span>
+					<span class="block truncate text-xs text-skin-muted">Computer scientist</span>
+				</span>
+			</div>
+		</li>
+		<li data-value="katherine" data-label="Katherine Johnson" class="cursor-pointer rounded-xl px-3 py-2 text-sm text-skin-primary transition hover:bg-skin-surface data-[active]:bg-skin-surface aria-selected:bg-skin-surface">
+			<div class="flex items-center gap-3">
+				<img src="https://unavatar.io/github/nasa" alt="" class="size-8 rounded-full bg-skin-surface object-cover" />
+				<span class="min-w-0">
+					<span class="block truncate font-medium">Katherine Johnson</span>
+					<span class="block truncate text-xs text-skin-muted">NASA mathematician</span>
+				</span>
+			</div>
+		</li>
+	</ul>
+</element-combobox>
+
+<script type="module">
+	import '@elements/headless/combobox.js';
+</script>

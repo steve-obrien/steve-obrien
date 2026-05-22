@@ -2,43 +2,31 @@
 import ElementsLayout from '../../_layout/ElementsLayout.vue';
 import DocPage from '../../_layout/DocPage.vue';
 import DocSection from '../../_layout/DocSection.vue';
-import CodeBlock from '../../_layout/CodeBlock.vue';
-import Demo from '../../_layout/Demo.vue';
 import Playground from '../../_layout/docs/Playground.vue';
 import PropsTable from '../../_layout/PropsTable.vue';
-import { ElAutocomplete, ElCombobox } from '../../lib/vue';
-import { ref } from 'vue';
+import { ElCombobox } from '../../lib/vue';
 import PickFruit from './examples/PickFruit.vue';
 import PickFruitSrc from './examples/PickFruit.vue?raw';
+import PeopleLookup from './examples/PeopleLookup.vue';
+import PeopleLookupSrc from './examples/PeopleLookup.vue?raw';
 import Example from '../../_layout/docs/Example.vue';
+import { RouterLink } from 'vue-router';
 
-const value = ref('');
-const autocompleteValue = ref('');
 const fruits = [
-	{ value: 'apple', label: 'Apple' },
-	{ value: 'banana', label: 'Banana' },
-	{ value: 'cherry', label: 'Cherry' },
-	{ value: 'date', label: 'Date' },
-	{ value: 'elderberry', label: 'Elderberry' },
-	{ value: 'fig', label: 'Fig' },
-	{ value: 'grape', label: 'Grape' },
+	{ value: '1', label: 'Apple' },
+	{ value: '2', label: 'Banana' },
+	{ value: '3', label: 'Cherry' },
+	{ value: '4', label: 'Date' },
+	{ value: '5', label: 'Elderberry' },
+	{ value: '6', label: 'Fig' },
+	{ value: '7', label: 'Grape' },
 ];
 
-
-const usageWeb = `<element-combobox creatable>
-  <input slot="input" placeholder="Search…" />
-  <button slot="toggle" type="button">Show</button>
-  <ul slot="list">
-    <li data-value="apple">Apple</li>
-    <li data-value="banana">Banana</li>
-  </ul>
-</element-combobox>`;
-
 const props = [
-	{ name: 'v-model', type: 'string', default: '—', description: 'Selected value.' },
+	{ name: 'v-model', type: 'string', default: '—', description: 'Selected option value.' },
 	{ name: 'options', type: 'Array<{ value, label }> | string[]', default: '—', description: 'Available options.' },
 	{ name: 'placeholder', type: 'string', default: "'Search…'", description: 'Input placeholder.' },
-	{ name: 'creatable', type: 'boolean', default: 'false', description: 'Allows a missing value to emit create and become selected.' },
+	{ name: 'floatingMode', type: "'viewport' | 'anchor'", default: "'viewport'", description: 'Choose whether the list stays in the browser or follows the input while scrolling.' },
 ];
 const keys = [
 	{ k: '↑ / ↓', d: 'Move active option.' },
@@ -50,7 +38,7 @@ const keys = [
 
 <template>
 	<ElementsLayout>
-		<DocPage name="Combobox" tagline="Select-like combobox and free-text autocomplete with floating positioning, keyboard navigation, and query events." tag="<element-combobox>">
+		<DocPage name="Combobox" tagline="A styled select-like control: show the option label, store the option value, and keep keyboard navigation." tag="<element-combobox>">
 			<DocSection eyebrow="Playground" title="Try every prop live">
 				<Playground
 					:inspect="ElCombobox"
@@ -60,32 +48,37 @@ const keys = [
 				/>
 			</DocSection>
 
-			<DocSection eyebrow="Demo" title="Live preview">
-				<Demo>
-					<div class="flex w-full max-w-sm flex-col items-stretch gap-2">
-						<ElCombobox v-model="value" :options="fruits" placeholder="Pick a fruit" creatable />
-						<p class="text-xs text-skin-muted">Selected: <code class="text-skin-primary">{{ value || '—' }}</code></p>
-					</div>
-				</Demo>
-			</DocSection>
-
-			<DocSection eyebrow="Demo" title="Autocomplete">
-				<Demo>
-					<div class="flex w-full max-w-sm flex-col items-stretch gap-2">
-						<ElAutocomplete v-model="autocompleteValue" :options="fruits" placeholder="Search or type anything" />
-						<p class="text-xs text-skin-muted">Text: <code class="text-skin-primary">{{ autocompleteValue || '—' }}</code></p>
-					</div>
-				</Demo>
-			</DocSection>
-
-			<DocSection eyebrow="Usage" title="Vue">
-				<Example :source="PickFruitSrc">
+			<DocSection eyebrow="Demo" title="Vue">
+				<Example
+					:source="PickFruitSrc"
+					filename="PickFruit.vue"
+					description="The input displays the label, while v-model receives the option value."
+				>
 					<PickFruit />
 				</Example>
 			</DocSection>
 
-			<DocSection eyebrow="Usage" title="Web component">
-				<CodeBlock :code="usageWeb" lang="html" />
+			<DocSection eyebrow="Demo" title="Custom item markup">
+				<Example
+					:source="PeopleLookupSrc"
+					filename="PeopleLookup.vue"
+					description="Use the item slot for richer option rendering. The input still displays the label and v-model still receives the value."
+				>
+					<PeopleLookup />
+				</Example>
+			</DocSection>
+
+			<DocSection eyebrow="Usage" title="Plain HTML">
+				<p class="text-sm leading-relaxed text-skin-secondary">
+					Use the headless custom element when you want the same combobox behaviour in plain HTML or another framework.
+					The headless page includes copyable DOM-defined list examples.
+				</p>
+				<RouterLink
+					to="/elements/headless/combobox"
+					class="mt-4 inline-flex h-10 items-center rounded-full bg-skin-primary px-4 text-sm font-medium text-skin-inverse transition hover:opacity-90"
+				>
+					View headless combobox
+				</RouterLink>
 			</DocSection>
 
 			<DocSection title="Props">

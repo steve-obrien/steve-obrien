@@ -1,0 +1,34 @@
+<div class="flex w-full max-w-sm flex-col gap-2">
+	<element-autocomplete id="people-autocomplete" class="relative block w-full">
+		<input
+			slot="input"
+			type="text"
+			placeholder="Search or type anything…"
+			class="h-10 w-full rounded-full border border-skin-border bg-skin-background px-4 text-sm text-skin-primary outline-none focus:ring-2 focus:ring-skin-primary/40"
+		/>
+		<ul slot="list" class="z-50 max-h-[min(12rem,var(--el-floating-available-height))] overflow-auto rounded-2xl border border-skin-border bg-skin-background p-1 shadow-lg">
+			<li data-value="1" data-label="Ada Lovelace" data-email="ada@example.com" class="cursor-pointer rounded-xl px-3 py-2 text-sm text-skin-primary transition hover:bg-skin-surface data-[active]:bg-skin-surface aria-selected:bg-skin-surface">Ada Lovelace</li>
+			<li data-value="2" data-label="Grace Hopper" data-email="grace@example.com" class="cursor-pointer rounded-xl px-3 py-2 text-sm text-skin-primary transition hover:bg-skin-surface data-[active]:bg-skin-surface aria-selected:bg-skin-surface">Grace Hopper</li>
+			<li data-value="3" data-label="Katherine Johnson" data-email="katherine@example.com" class="cursor-pointer rounded-xl px-3 py-2 text-sm text-skin-primary transition hover:bg-skin-surface data-[active]:bg-skin-surface aria-selected:bg-skin-surface">Katherine Johnson</li>
+		</ul>
+	</element-autocomplete>
+	<p class="text-xs text-skin-muted">Typed text: <code id="people-query" class="text-skin-primary">—</code></p>
+	<p class="text-xs text-skin-muted">Selected: <code id="people-selected" class="text-skin-primary">—</code></p>
+</div>
+
+<script type="module">
+	import '@elements/headless/autocomplete.js';
+
+	const autocomplete = document.getElementById('people-autocomplete');
+	const query = document.getElementById('people-query');
+	const selected = document.getElementById('people-selected');
+
+	autocomplete.addEventListener('el:input', (event) => {
+		query.textContent = event.detail.value || '—';
+	});
+
+	autocomplete.addEventListener('el:select', (event) => {
+		const option = event.detail.option;
+		selected.textContent = `${event.detail.label} (${option.dataset.email})`;
+	});
+</script>

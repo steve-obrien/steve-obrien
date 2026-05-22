@@ -42,9 +42,9 @@ export function isPopoverOpen(panel) {
 }
 
 /** Anchor a top-layer popover panel under its trigger (fixed coords). */
-export function positionPopoverPanel(panel, trigger, { align = 'left', offset = 8, placement = 'bottom', padding = 8 } = {}) {
+export function positionPopoverPanel(panel, trigger, { align = 'left', offset = 8, placement = 'bottom', padding = 8, mode = 'viewport' } = {}) {
 	if (!panel || !trigger || typeof window === 'undefined') return;
-	return applyFloatingPosition(trigger, panel, { align, offset, placement, padding });
+	return applyFloatingPosition(trigger, panel, { align, offset, placement, padding, mode });
 }
 
 /** Keep the panel aligned while scrolling or resizing. Returns an unbind fn. */

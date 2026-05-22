@@ -10,4 +10,5 @@ export * from './toggle.js';
 export * from './tooltip.js';
 export * from './accordion.js';
 export * from './combobox.js';
+export * from './autocomplete.js';
 export * from './drawer.js';
