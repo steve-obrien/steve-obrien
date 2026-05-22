@@ -6,6 +6,7 @@ export { default as ElToggle } from './ElToggle.vue';
 export { default as ElTooltip } from './ElTooltip.vue';
 export { default as ElAccordion } from './ElAccordion.vue';
 export { default as ElCombobox } from './ElCombobox.vue';
+export { default as ElAutocomplete } from './ElAutocomplete.vue';
 export { default as ElPopover } from './ElPopover.vue';
 export { default as ElDrawer } from './ElDrawer.vue';
 // Form primitives

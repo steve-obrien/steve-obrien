@@ -44,7 +44,7 @@ const mobileMenuOpen = ref(false);
 				<Teleport to="body">
 					<ElDrawer v-model="mobileMenuOpen" side="left" title="Filters" width="var(--container-xs)">
 						<div class="space-y-4 p-4 text-sm text-skin-secondary">
-							<SideNav v-if="showSidebar" class="hidden w-56 shrink-0 md:block" />
+							<SideNav v-if="showSidebar" class="block w-56 shrink-0 " />
 						</div>
 					</ElDrawer>
 				</Teleport>

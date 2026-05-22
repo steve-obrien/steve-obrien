@@ -6,10 +6,14 @@ import CodeBlock from '../../_layout/CodeBlock.vue';
 import Demo from '../../_layout/Demo.vue';
 import Playground from '../../_layout/docs/Playground.vue';
 import PropsTable from '../../_layout/PropsTable.vue';
-import { ElCombobox } from '../../lib/vue';
+import { ElAutocomplete, ElCombobox } from '../../lib/vue';
 import { ref } from 'vue';
+import PickFruit from './examples/PickFruit.vue';
+import PickFruitSrc from './examples/PickFruit.vue?raw';
+import Example from '../../_layout/docs/Example.vue';
 
 const value = ref('');
+const autocompleteValue = ref('');
 const fruits = [
 	{ value: 'apple', label: 'Apple' },
 	{ value: 'banana', label: 'Banana' },
@@ -20,22 +24,10 @@ const fruits = [
 	{ value: 'grape', label: 'Grape' },
 ];
 
-const usageVue = `<script setup>
-import { ElCombobox } from '@elements/vue';
-import { ref } from 'vue';
-const value = ref('');
-const options = [
-  { value: 'apple', label: 'Apple' },
-  { value: 'banana', label: 'Banana' },
-];
-<\/script>
 
-<template>
-  <ElCombobox v-model="value" :options="options" placeholder="Pick a fruit" />
-</template>`;
-
-const usageWeb = `<element-combobox>
+const usageWeb = `<element-combobox creatable>
   <input slot="input" placeholder="Search…" />
+  <button slot="toggle" type="button">Show</button>
   <ul slot="list">
     <li data-value="apple">Apple</li>
     <li data-value="banana">Banana</li>
@@ -46,6 +38,7 @@ const props = [
 	{ name: 'v-model', type: 'string', default: '—', description: 'Selected value.' },
 	{ name: 'options', type: 'Array<{ value, label }> | string[]', default: '—', description: 'Available options.' },
 	{ name: 'placeholder', type: 'string', default: "'Search…'", description: 'Input placeholder.' },
+	{ name: 'creatable', type: 'boolean', default: 'false', description: 'Allows a missing value to emit create and become selected.' },
 ];
 const keys = [
 	{ k: '↑ / ↓', d: 'Move active option.' },
@@ -57,7 +50,7 @@ const keys = [
 
 <template>
 	<ElementsLayout>
-		<DocPage name="Combobox" tagline="Type-ahead select with managed activedescendant, keyboard navigation, and outside-click dismiss." tag="<element-combobox>">
+		<DocPage name="Combobox" tagline="Select-like combobox and free-text autocomplete with floating positioning, keyboard navigation, and query events." tag="<element-combobox>">
 			<DocSection eyebrow="Playground" title="Try every prop live">
 				<Playground
 					:inspect="ElCombobox"
@@ -70,14 +63,25 @@ const keys = [
 			<DocSection eyebrow="Demo" title="Live preview">
 				<Demo>
 					<div class="flex w-full max-w-sm flex-col items-stretch gap-2">
-						<ElCombobox v-model="value" :options="fruits" placeholder="Pick a fruit" />
+						<ElCombobox v-model="value" :options="fruits" placeholder="Pick a fruit" creatable />
 						<p class="text-xs text-skin-muted">Selected: <code class="text-skin-primary">{{ value || '—' }}</code></p>
 					</div>
 				</Demo>
 			</DocSection>
 
+			<DocSection eyebrow="Demo" title="Autocomplete">
+				<Demo>
+					<div class="flex w-full max-w-sm flex-col items-stretch gap-2">
+						<ElAutocomplete v-model="autocompleteValue" :options="fruits" placeholder="Search or type anything" />
+						<p class="text-xs text-skin-muted">Text: <code class="text-skin-primary">{{ autocompleteValue || '—' }}</code></p>
+					</div>
+				</Demo>
+			</DocSection>
+
 			<DocSection eyebrow="Usage" title="Vue">
-				<CodeBlock :code="usageVue" lang="vue" />
+				<Example :source="PickFruitSrc">
+					<PickFruit />
+				</Example>
 			</DocSection>
 
 			<DocSection eyebrow="Usage" title="Web component">
