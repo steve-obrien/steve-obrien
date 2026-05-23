@@ -17,7 +17,7 @@ defineProps({
 	title: { type: String, default: '' },
 	description: { type: String, default: '' },
 	filename: { type: String, default: '' },
-	defaultOpen: { type: Boolean, default: true },
+	defaultOpen: { type: Boolean, default: false },
 });
 </script>
 
@@ -28,7 +28,7 @@ defineProps({
 			<p v-if="description" class="mt-0.5 text-sm text-skin-secondary">{{ description }}</p>
 		</figcaption>
 
-		<div class="flex min-h-[200px] items-center justify-center bg-gradient-to-br from-skin-surface/40 via-skin-background to-skin-surface/30 p-10">
+		<div class="flex min-h-[200px] items-center justify-center bg-linear-to-br from-skin-surface/40 via-skin-background to-skin-surface/30 p-10">
 			<slot />
 		</div>
 
@@ -37,6 +37,7 @@ defineProps({
 			:lang="lang"
 			:filename="filename"
 			:default-open="defaultOpen"
+			:preview-lines="5"
 		/>
 	</figure>
 </template>

@@ -183,6 +183,8 @@ const codeFilename = computed(() => {
 			:source="codeSource"
 			:lang="codeLang"
 			:filename="codeFilename"
+			:default-open="false"
+			:preview-lines="5"
 		/>
 	</figure>
 </template>

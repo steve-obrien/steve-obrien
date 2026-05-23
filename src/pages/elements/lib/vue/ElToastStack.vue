@@ -1,5 +1,6 @@
 <script setup>
-import { defineComponent, h, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import ElToastItem from './ElToastItem.vue';
 
 defineOptions({
 	__doc: {
@@ -31,7 +32,6 @@ const props = defineProps({
 					{ key: 'description', label: 'Description', placeholder: 'Your changes have been stored.' },
 					{ key: 'tone', label: 'Tone', placeholder: 'default | success | danger | warning', default: 'default' },
 					{ key: 'duration', label: 'Duration', type: 'number', default: 3600 },
-					{ key: 'content', label: 'Content template', type: 'json', placeholder: '{ "component": "AvatarToast", "props": {} }', default: null },
 				],
 			},
 		},
@@ -50,11 +50,6 @@ const props = defineProps({
 		type: Boolean,
 		default: true,
 		_edit: { description: 'Automatically emit dismiss after each toast duration.' },
-	},
-	contentComponents: {
-		type: Object,
-		default: () => ({}),
-		_edit: { description: 'Component registry used by toast.content templates, keyed by component name.' },
 	},
 });
 const emit = defineEmits(['dismiss', 'action']);
@@ -81,6 +76,8 @@ function dismiss(id) {
 	emit('dismiss', id);
 }
 
+// Auto-dismiss timers live in the stack so callers only need to update the
+// controlled toast array when dismiss is emitted.
 function syncTimers(toasts) {
 	const ids = new Set(toasts.map((toast) => toast.id));
 	for (const [id, timer] of timers) {
@@ -101,6 +98,8 @@ function syncTimers(toasts) {
 
 watch(() => props.toasts, syncRendered, { immediate: true, deep: true });
 
+// Keep leaving toasts in a local render list long enough for both opacity and
+// height transitions to finish before removing them from the DOM.
 function syncRendered(toasts) {
 	const nextIds = new Set(toasts.map((toast) => toast.id));
 	const current = new Map(renderedToasts.value.map((toast) => [toast.id, toast]));
@@ -177,53 +176,22 @@ const toneClass = (tone) => ({
 	warning: 'border-amber-500/35',
 }[tone] || 'border-skin-border');
 
-const accentClass = (tone) => ({
-	default: 'bg-skin-primary',
-	success: 'bg-emerald-500',
-	danger: 'bg-red-500',
-	warning: 'bg-amber-500',
-}[tone] || 'bg-skin-primary');
+function toastComponent(toast) {
+	return toast.component || ElToastItem;
+}
 
-const canDismiss = (toast) => toast.dismissible !== false;
-const toastSpec = (toast) => toast.content || (toast.component ? toast : null);
-
-const SpecContent = defineComponent({
-	name: 'SpecContent',
-	props: {
-		spec: { type: [Object, Array, String, Number], required: true },
-		components: { type: Object, default: () => ({}) },
-	},
-	emits: ['action'],
-	setup(props, { emit }) {
-		return () => renderSpec(props.spec, props.components, (payload) => emit('action', payload));
-	},
-});
-
-function renderSpec(spec, components, emitAction) {
-	if (spec == null || spec === false) return null;
-	if (typeof spec === 'string' || typeof spec === 'number') return String(spec);
-	if (Array.isArray(spec)) return spec.map((child) => renderSpec(child, components, emitAction));
-	if (spec.text != null) return String(spec.text);
-
-	const component = resolveSpecComponent(spec.component, components);
-	const attrs = {
-		...(spec.props || {}),
-		onAction: emitAction,
-		onDismiss: () => emitAction({ action: 'dismiss' }),
+function toastProps(toast) {
+	if (toast.component) return toast.props || {};
+	return {
+		title: toast.title,
+		description: toast.description,
+		tone: toast.tone,
+		dismissible: toast.dismissible !== false,
 	};
-	const children = (spec.children || []).map((child) => renderSpec(child, components, emitAction));
-	if (!children.length) return h(component, attrs);
-	return typeof component === 'string'
-		? h(component, attrs, children)
-		: h(component, attrs, { default: () => children });
 }
 
-function resolveSpecComponent(component, components) {
-	if (!component) return 'div';
-	if (typeof component !== 'string') return component;
-	return components[component] || component;
-}
-
+// Template components can emit action payloads for app-specific work, or emit
+// dismiss when they want the stack to remove their own toast.
 function onToastAction(toast, payload) {
 	const detail = {
 		id: toast.id,
@@ -266,33 +234,12 @@ function onToastAction(toast, payload) {
 						]"
 					>
 						<slot :toast="toast" :dismiss="dismiss">
-							<SpecContent
-								v-if="toastSpec(toast)"
-								:spec="toastSpec(toast)"
-								:components="contentComponents"
+							<component
+								:is="toastComponent(toast)"
+								v-bind="toastProps(toast)"
 								@action="onToastAction(toast, $event)"
+								@dismiss="dismiss(toast.id)"
 							/>
-							<div v-else class="flex items-start gap-3">
-								<span class="mt-1 size-2.5 shrink-0 rounded-full" :class="accentClass(toast.tone)"></span>
-								<div class="min-w-0 flex-1">
-									<div
-										v-if="toast.html"
-										class="text-sm text-skin-secondary [&_strong]:font-semibold [&_strong]:text-skin-primary"
-										v-html="toast.html"
-									></div>
-									<template v-else>
-										<p v-if="toast.title" class="text-sm font-semibold text-skin-primary">{{ toast.title }}</p>
-										<p v-if="toast.description" class="mt-1 text-sm text-skin-secondary">{{ toast.description }}</p>
-									</template>
-								</div>
-								<button
-									v-if="canDismiss(toast)"
-									type="button"
-									aria-label="Dismiss notification"
-									class="-mr-1 -mt-1 rounded-full px-2 text-lg leading-none text-skin-muted hover:bg-skin-surface hover:text-skin-primary"
-									@click="dismiss(toast.id)"
-								>×</button>
-							</div>
 						</slot>
 					</div>
 				</div>

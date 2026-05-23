@@ -14,6 +14,7 @@ export { default as ElAutocomplete } from './ElAutocomplete.vue';
 export { default as ElPopover } from './ElPopover.vue';
 export { default as ElDrawer } from './ElDrawer.vue';
 export { default as ElToastStack } from './ElToastStack.vue';
+export { default as ElToastItem } from './ElToastItem.vue';
 export { default as ElCommandPalette } from './ElCommandPalette.vue';
 export { useToasts } from './useToasts.js';
 // Form primitives

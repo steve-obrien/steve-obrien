@@ -25,7 +25,7 @@ const info = computed(() => inspectComponent(props.component));
 				<tbody class="divide-y divide-skin-border">
 					<tr v-for="p in info.props" :key="p.name">
 						<td class="px-4 py-3 font-mono text-[12.5px] text-skin-primary">
-							{{ p.name }}<span v-if="p.required" class="ml-0.5 text-red-500">*</span>
+							<code>{{ p.name }}</code><span v-if="p.required" class="ml-0.5 text-red-500">*</span>
 						</td>
 						<td class="px-4 py-3 font-mono text-[12.5px] text-skin-secondary">{{ p.type }}</td>
 						<td class="px-4 py-3 font-mono text-[12.5px] text-skin-secondary">{{ p.default }}</td>

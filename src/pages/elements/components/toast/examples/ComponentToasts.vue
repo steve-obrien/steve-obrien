@@ -23,7 +23,7 @@ function showUpdateToast() {
 		version: 'Elements 2.4',
 		size: '48 MB',
 	}, {
-		duration: 0,
+		duration: 3000,
 	});
 }
 
