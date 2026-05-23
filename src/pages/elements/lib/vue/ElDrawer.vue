@@ -42,26 +42,28 @@ const props = defineProps({
 		type: String,
 		default: 'var(--container-sm)',
 		_edit: {
-			editor: 'ElCombobox',
-			// Tailwind v4 max-w-* resolves to var(--container-*). Store the variable so
-			// theme overrides apply; combobox hints show the matching utility name.
-			options: [
-				{ value: 'var(--container-3xs)', label: 'var(--container-3xs) · max-w-3xs' },
-				{ value: 'var(--container-2xs)', label: 'var(--container-2xs) · max-w-2xs' },
-				{ value: 'var(--container-xs)', label: 'var(--container-xs) · max-w-xs' },
-				{ value: 'var(--container-sm)', label: 'var(--container-sm) · max-w-sm' },
-				{ value: 'var(--container-md)', label: 'var(--container-md) · max-w-md' },
-				{ value: 'var(--container-lg)', label: 'var(--container-lg) · max-w-lg' },
-				{ value: 'var(--container-xl)', label: 'var(--container-xl) · max-w-xl' },
-				{ value: 'var(--container-2xl)', label: 'var(--container-2xl) · max-w-2xl' },
-				{ value: 'var(--container-3xl)', label: 'var(--container-3xl) · max-w-3xl' },
-				{ value: 'var(--container-4xl)', label: 'var(--container-4xl) · max-w-4xl' },
-				{ value: 'var(--container-5xl)', label: 'var(--container-5xl) · max-w-5xl' },
-				{ value: 'var(--container-6xl)', label: 'var(--container-6xl) · max-w-6xl' },
-				{ value: 'var(--container-7xl)', label: 'var(--container-7xl) · max-w-7xl' },
-			],
-			placeholder: 'var(--container-sm)',
 			description: 'Panel width as a CSS length — pick a Tailwind container variable or type your own (e.g. 50rem).',
+			component: 'ElCombobox',
+			props: {
+				// Tailwind v4 max-w-* resolves to var(--container-*). Store the variable so
+				// theme overrides apply; combobox hints show the matching utility name.
+				options: [
+					{ value: 'var(--container-3xs)', label: 'var(--container-3xs) · max-w-3xs' },
+					{ value: 'var(--container-2xs)', label: 'var(--container-2xs) · max-w-2xs' },
+					{ value: 'var(--container-xs)', label: 'var(--container-xs) · max-w-xs' },
+					{ value: 'var(--container-sm)', label: 'var(--container-sm) · max-w-sm' },
+					{ value: 'var(--container-md)', label: 'var(--container-md) · max-w-md' },
+					{ value: 'var(--container-lg)', label: 'var(--container-lg) · max-w-lg' },
+					{ value: 'var(--container-xl)', label: 'var(--container-xl) · max-w-xl' },
+					{ value: 'var(--container-2xl)', label: 'var(--container-2xl) · max-w-2xl' },
+					{ value: 'var(--container-3xl)', label: 'var(--container-3xl) · max-w-3xl' },
+					{ value: 'var(--container-4xl)', label: 'var(--container-4xl) · max-w-4xl' },
+					{ value: 'var(--container-5xl)', label: 'var(--container-5xl) · max-w-5xl' },
+					{ value: 'var(--container-6xl)', label: 'var(--container-6xl) · max-w-6xl' },
+					{ value: 'var(--container-7xl)', label: 'var(--container-7xl) · max-w-7xl' },
+				],
+				placeholder: 'var(--container-sm)',
+			},
 		},
 	},
 	static: {

@@ -15,12 +15,16 @@ export function uid(prefix = 'n') {
 // Inline hints live on the component's prop definition under the `_edit` key:
 //
 //   const props = defineProps({
-//     items: { type: Array, required: true, _edit: { editor: 'ElListInput' } },
+//     items: {
+//       type: Array,
+//       required: true,
+//       _edit: { component: 'ElListInput', props: { label: 'Items' } },
+//     },
 //   });
 //
-// The `editor` is a component name (string) so production output (e.g.
-// ElRenderer) never pulls form components into the bundle. The studio
-// resolves the string through the editor registry at render time.
+// The `component` is a component name (string) so production output (e.g.
+// ElRenderer) never pulls form components into the bundle. `props` are passed
+// to that editor component, mirroring Vue's { component, props } shape.
 
 function componentProps(component) {
 	if (!component || typeof component === 'string') return {};
@@ -41,20 +45,34 @@ function defaultEditorForProp(def) {
 	return 'ElTextInput';
 }
 
-function resolveEditor(hint, def) {
-	// 1. Explicit editor name wins.
-	if (hint.editor) return hint.editor;
-	// 2. Back-compat: older `_edit: { component: 'ElXxx' }` still works.
+function resolveComponent(hint, props, def) {
+	// 1. Explicit editor component name wins.
 	if (hint.component) return hint.component;
+	// 2. Back-compat: older `_edit: { editor: 'ElXxx' }` still works.
+	if (hint.editor) return hint.editor;
 	// 3. `options` (or `enum`) implies a select.
-	if (hint.options || hint.enum) return 'ElSelectInput';
+	if (hint.options || hint.enum || props.options || props.enum) return 'ElSelectInput';
 	// 4. Fall back to the prop type.
 	return defaultEditorForProp(def);
 }
 
+function normaliseEdit(hint = {}, def) {
+	const props = { ...(hint.props || {}) };
+	for (const [key, value] of Object.entries(hint)) {
+		if (['component', 'editor', 'props', 'label', 'description'].includes(key)) continue;
+		if (!(key in props)) props[key] = value;
+	}
+	return {
+		component: resolveComponent(hint, props, def),
+		label: hint.label ?? props.label,
+		description: hint.description ?? props.description,
+		props,
+	};
+}
+
 export function inferSchema(node) {
 	if (isTextNode(node)) {
-		return [{ key: 'text', target: 'text', editor: 'ElTextareaInput', label: 'Text', rows: 3 }];
+		return [{ key: 'text', target: 'text', component: 'ElTextareaInput', label: 'Text', props: { rows: 3 } }];
 	}
 
 	const fields = [];
@@ -70,14 +88,15 @@ export function inferSchema(node) {
 		// hints stack on top so the studio can override per-component.
 		const inlineEdit = def && typeof def === 'object' && def._edit;
 		const merged = { ...(inlineEdit || {}), ...(hints[key] || {}) };
-		const editor = resolveEditor(merged, def);
-		if (!editor) continue;
+		const edit = normaliseEdit(merged, def);
+		if (!edit.component) continue;
 
 		fields.push({
-			...merged,
 			key,
-			label: merged.label || prettify(key),
-			editor,
+			label: edit.label || prettify(key),
+			description: edit.description,
+			component: edit.component,
+			props: edit.props,
 		});
 	}
 
@@ -85,8 +104,8 @@ export function inferSchema(node) {
 		fields.push({
 			key: 'class',
 			label: 'Tailwind classes',
-			editor: 'ElTextareaInput',
-			rows: 3,
+			component: 'ElTextareaInput',
+			props: { rows: 3 },
 			description: 'Any utility classes — applied to the rendered element.',
 		});
 	}

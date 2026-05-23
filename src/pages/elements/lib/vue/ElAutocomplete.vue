@@ -29,7 +29,7 @@ const props = defineProps({
 		type: Array,
 		default: () => [],
 		_edit: {
-			editor: 'ElListInput',
+			component: 'ElListInput',
 			description: 'Suggestions. May be replaced by async lookup results.',
 		},
 	},

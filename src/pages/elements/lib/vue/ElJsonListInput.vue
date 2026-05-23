@@ -6,7 +6,7 @@ const props = defineProps({
 	modelValue: {
 		type: Array,
 		default: () => [],
-		_edit: { editor: 'ElJsonListInput' },
+		_edit: { component: 'ElJsonListInput' },
 	},
 	label: String,
 	description: String,
@@ -43,6 +43,25 @@ function defaultFor(field, index) {
 
 function setRow(rowIndex, key, value) {
 	update(props.modelValue.map((row, index) => (index === rowIndex ? { ...row, [key]: value } : row)));
+}
+
+function setField(rowIndex, field, value) {
+	if (field.type !== 'json') {
+		setRow(rowIndex, field.key, value);
+		return;
+	}
+
+	try {
+		setRow(rowIndex, field.key, JSON.parse(value));
+	} catch {
+		// Leave invalid JSON untouched. The field will snap back on blur/change.
+	}
+}
+
+function fieldValue(row, field) {
+	const value = row?.[field.key];
+	if (field.type !== 'json') return value ?? '';
+	return JSON.stringify(value ?? null, null, 2);
 }
 
 function remove(rowIndex) {
@@ -82,12 +101,21 @@ function move(rowIndex, dir) {
 				</div>
 				<label v-for="field in fields" :key="field.key" class="block">
 					<span class="mb-1 block text-[11px] font-medium text-skin-muted">{{ field.label || field.key }}</span>
+					<textarea
+						v-if="field.type === 'json'"
+						:value="fieldValue(row, field)"
+						:placeholder="field.placeholder || field.key"
+						rows="5"
+						class="min-h-24 w-full resize-y rounded-md border border-skin-border bg-skin-background px-2 py-1.5 font-mono text-xs text-skin-primary outline-none focus:ring-2 focus:ring-skin-primary/40"
+						@change="setField(rowIndex, field, $event.target.value)"
+					></textarea>
 					<input
+						v-else
 						:type="field.type || 'text'"
-						:value="row?.[field.key] ?? ''"
+						:value="fieldValue(row, field)"
 						:placeholder="field.placeholder || field.key"
 						class="h-8 w-full rounded-md border border-skin-border bg-skin-background px-2 text-sm text-skin-primary outline-none focus:ring-2 focus:ring-skin-primary/40"
-						@input="setRow(rowIndex, field.key, $event.target.value)"
+						@input="setField(rowIndex, field, $event.target.value)"
 					/>
 				</label>
 			</div>

@@ -2,7 +2,11 @@ import { markRaw } from 'vue';
 import {
 	ElButton,
 	ElDropdown,
+	ElMenu,
+	ElListbox,
 	ElToggle,
+	ElCheckbox,
+	ElRadioGroup,
 	ElTooltip,
 	ElAccordion,
 	ElCombobox,
@@ -58,6 +62,41 @@ const entries = [
 		},
 	},
 	{
+		id: 'el-menu',
+		label: 'Menu',
+		group: 'Elements',
+		component: markRaw(ElMenu),
+		icon: '☷',
+		accepts: 'none',
+		defaults: {
+			props: {
+				items: [
+					{ label: 'Rename', value: 'rename' },
+					{ label: 'Duplicate', value: 'duplicate' },
+					{ label: 'Delete', value: 'delete', tone: 'danger' },
+				],
+			},
+		},
+	},
+	{
+		id: 'el-listbox',
+		label: 'Listbox',
+		group: 'Elements',
+		component: markRaw(ElListbox),
+		icon: '▤',
+		accepts: 'none',
+		defaults: {
+			props: {
+				modelValue: 'medium',
+				options: [
+					{ label: 'Small', value: 'small' },
+					{ label: 'Medium', value: 'medium' },
+					{ label: 'Large', value: 'large' },
+				],
+			},
+		},
+	},
+	{
 		id: 'el-toggle',
 		label: 'Toggle',
 		group: 'Elements',
@@ -65,6 +104,33 @@ const entries = [
 		icon: '⊙',
 		accepts: 'none',
 		defaults: { props: { modelValue: true, label: 'Notifications' } },
+	},
+	{
+		id: 'el-checkbox',
+		label: 'Checkbox',
+		group: 'Forms',
+		component: markRaw(ElCheckbox),
+		icon: '☑',
+		accepts: 'none',
+		defaults: { props: { modelValue: true, label: 'Product updates' } },
+	},
+	{
+		id: 'el-radio-group',
+		label: 'Radio group',
+		group: 'Forms',
+		component: markRaw(ElRadioGroup),
+		icon: '◌',
+		accepts: 'none',
+		defaults: {
+			props: {
+				label: 'Plan',
+				modelValue: 'team',
+				options: [
+					{ label: 'Solo', value: 'solo' },
+					{ label: 'Team', value: 'team' },
+				],
+			},
+		},
 	},
 	{
 		id: 'el-tooltip',

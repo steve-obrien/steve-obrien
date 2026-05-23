@@ -10,6 +10,8 @@ export const sideNavLinks = [
 		label: 'Components',
 		items: [
 			{ to: '/elements/components/button', label: 'Button' },
+			{ to: '/elements/components/menu', label: 'Menu', tag: 'New' },
+			{ to: '/elements/components/listbox', label: 'Listbox', tag: 'New' },
 			{ to: '/elements/components/dropdown', label: 'Dropdown' },
 			{ to: '/elements/components/dialog', label: 'Dialog' },
 			{ to: '/elements/components/drawer', label: 'Drawer', tag: 'New' },
@@ -20,11 +22,15 @@ export const sideNavLinks = [
 			{ to: '/elements/components/combobox', label: 'Combobox' },
 			{ to: '/elements/components/autocomplete', label: 'Autocomplete' },
 			{ to: '/elements/components/popover', label: 'Popover', tag: 'New' },
+			{ to: '/elements/components/toast', label: 'Toast', tag: 'New' },
+			{ to: '/elements/components/command-palette', label: 'Command palette', tag: 'New' },
 		],
 	},
 	{
 		label: 'Forms',
 		items: [
+			{ to: '/elements/components/checkbox', label: 'Checkbox', tag: 'New' },
+			{ to: '/elements/components/radio-group', label: 'Radio group', tag: 'New' },
 			{ to: '/elements/components/text-input', label: 'Text input' },
 			{ to: '/elements/components/textarea-input', label: 'Textarea' },
 			{ to: '/elements/components/number-input', label: 'Number input' },

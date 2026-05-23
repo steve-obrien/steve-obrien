@@ -28,7 +28,7 @@ const props = defineProps({
 		type: Array,
 		required: true,
 		_edit: {
-			editor: 'ElListInput',
+			component: 'ElListInput',
 			description: 'Available options. May be replaced by async lookup results.',
 		},
 	},

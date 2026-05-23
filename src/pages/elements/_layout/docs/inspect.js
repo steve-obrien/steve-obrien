@@ -68,10 +68,11 @@ function propEntries(component) {
 
 function buildPropDoc(name, def) {
 	const edit = def?._edit || {};
+	const editProps = edit.props || {};
 	const types = arrayify(def?.type ?? def);
 	let type;
-	if (edit.options) {
-		type = edit.options.map((o) => (typeof o === 'string' ? `'${o}'` : String(o))).join(' | ');
+	if (edit.options || editProps.options) {
+		type = (edit.options || editProps.options).map((o) => (typeof o === 'string' ? `'${o}'` : String(o))).join(' | ');
 	} else {
 		const formatted = types.map(formatType).filter(Boolean);
 		type = formatted.length ? formatted.join(' | ') : 'any';
@@ -81,8 +82,8 @@ function buildPropDoc(name, def) {
 		type,
 		default: formatDefault(def?.default),
 		required: !!def?.required,
-		description: edit.description || '',
-		editor: edit.editor || edit.component || null,
+		description: edit.description || editProps.description || '',
+		editor: edit.component || edit.editor || null,
 	};
 }
 

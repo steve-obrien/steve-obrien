@@ -34,6 +34,8 @@ const features = [
 
 const components = [
 	{ name: 'Button', tag: 'el-button', to: '/elements/components/button' },
+	{ name: 'Menu', tag: 'element-menu', to: '/elements/components/menu' },
+	{ name: 'Listbox', tag: 'element-listbox', to: '/elements/components/listbox' },
 	{ name: 'Dropdown', tag: 'element-dropdown', to: '/elements/components/dropdown' },
 	{ name: 'Dialog', tag: 'element-dialog', to: '/elements/components/dialog' },
 	{ name: 'Drawer', tag: 'element-drawer', to: '/elements/components/drawer' },
@@ -43,6 +45,8 @@ const components = [
 	{ name: 'Accordion', tag: 'element-accordion', to: '/elements/components/accordion' },
 	{ name: 'Combobox', tag: 'element-combobox', to: '/elements/components/combobox' },
 	{ name: 'Autocomplete', tag: 'element-autocomplete', to: '/elements/components/autocomplete' },
+	{ name: 'Toast', tag: 'element-toast-region', to: '/elements/components/toast' },
+	{ name: 'Command palette', tag: 'ElCommandPalette', to: '/elements/components/command-palette' },
 ];
 </script>
 

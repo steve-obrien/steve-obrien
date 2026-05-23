@@ -24,16 +24,18 @@ const peoplePlaygroundInspect = {
 			type: Array,
 			default: () => [],
 			_edit: {
-				editor: 'ElJsonListInput',
-				label: 'People',
 				description: 'Rows of JSON-like option data used by the custom item slot.',
-				addLabel: '+ Add person',
-				schema: [
-					{ key: 'value', label: 'Value', placeholder: 'person-id', default: (index) => `person-${index + 1}` },
-					{ key: 'label', label: 'Name', placeholder: 'Person name', default: (index) => `Person ${index + 1}` },
-					{ key: 'role', label: 'Role', placeholder: 'Role or title' },
-					{ key: 'avatar', label: 'Avatar URL', type: 'url', placeholder: 'https://...' },
-				],
+				component: 'ElJsonListInput',
+				props: {
+					label: 'People',
+					addLabel: '+ Add person',
+					schema: [
+						{ key: 'value', label: 'Value', placeholder: 'person-id', default: (index) => `person-${index + 1}` },
+						{ key: 'label', label: 'Name', placeholder: 'Person name', default: (index) => `Person ${index + 1}` },
+						{ key: 'role', label: 'Role', placeholder: 'Role or title' },
+						{ key: 'avatar', label: 'Avatar URL', type: 'url', placeholder: 'https://...' },
+					],
+				},
 			},
 		},
 		placeholder: {

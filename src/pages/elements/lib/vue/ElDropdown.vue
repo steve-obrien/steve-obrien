@@ -30,7 +30,7 @@ const props = defineProps({
 		type: Array,
 		required: true,
 		_edit: {
-			editor: 'ElListInput',
+			component: 'ElListInput',
 			description: 'Menu items shown when the dropdown opens.',
 		},
 	},

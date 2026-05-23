@@ -12,7 +12,7 @@ import {
 } from '../../lib/vue';
 
 // Editor components are referenced by their actual component name in spec
-// schemas (e.g. `_edit: { editor: 'ElSelectInput' }`). The indirection keeps
+// schemas (e.g. `_edit: { component: 'ElSelectInput' }`). The indirection keeps
 // production output (anything rendered through ElRenderer) free of form code.
 //
 // To add your own editor: `registerEditor('MyEditor', MyEditorComponent)`.
