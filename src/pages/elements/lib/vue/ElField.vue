@@ -19,12 +19,12 @@ defineProps({
 		<label
 			v-if="label"
 			:for="htmlFor"
-			class="block text-[11px] font-medium uppercase tracking-wider text-skin-muted"
+			class="block text-[11px] font-medium uppercase tracking-wider text-muted"
 		>
 			{{ label }}
-			<span v-if="required" class="text-red-500">*</span>
+			<span v-if="required" class="text-destructive-skin">*</span>
 		</label>
 		<slot />
-		<p v-if="description" class="text-[11px] leading-snug text-skin-muted">{{ description }}</p>
+		<p v-if="description" class="text-[11px] leading-snug text-muted">{{ description }}</p>
 	</div>
 </template>

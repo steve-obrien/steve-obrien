@@ -105,13 +105,13 @@ const keys = [
 			</DocSection>
 
 			<DocSection eyebrow="Usage" title="Plain HTML">
-				<p class="text-sm leading-relaxed text-skin-secondary">
+				<p class="text-sm leading-relaxed text-secondary">
 					Use the headless custom element when you want the same combobox behaviour in plain HTML or another framework.
 					The headless page includes copyable DOM-defined list examples.
 				</p>
 				<RouterLink
 					to="/elements/headless/combobox"
-					class="mt-4 inline-flex h-10 items-center rounded-full bg-skin-primary px-4 text-sm font-medium text-skin-inverse transition hover:opacity-90"
+					class="mt-4 inline-flex h-10 items-center rounded-full bg-primary-skin px-4 text-sm font-medium text-primary transition hover:opacity-90"
 				>
 					View headless combobox
 				</RouterLink>
@@ -122,10 +122,10 @@ const keys = [
 			</DocSection>
 
 			<DocSection title="Keyboard">
-				<ul class="space-y-2 rounded-2xl border border-skin-border bg-skin-surface/40 p-5 text-sm">
+				<ul class="space-y-2 rounded-2xl border border-border bg-secondary-skin/40 p-5 text-sm">
 					<li v-for="row in keys" :key="row.k" class="flex items-start gap-4">
-						<kbd class="rounded bg-skin-background px-2 py-0.5 font-mono text-xs ring-1 ring-skin-border">{{ row.k }}</kbd>
-						<span class="text-skin-secondary">{{ row.d }}</span>
+						<kbd class="rounded bg-background px-2 py-0.5 font-mono text-xs ring-1 ring-border">{{ row.k }}</kbd>
+						<span class="text-secondary">{{ row.d }}</span>
 					</li>
 				</ul>
 			</DocSection>

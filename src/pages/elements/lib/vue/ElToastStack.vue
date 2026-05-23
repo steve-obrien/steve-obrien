@@ -170,11 +170,11 @@ function requestClientFrame(callback) {
 }
 
 const toneClass = (tone) => ({
-	default: 'border-skin-border',
-	success: 'border-emerald-500/35',
-	danger: 'border-red-500/35',
-	warning: 'border-amber-500/35',
-}[tone] || 'border-skin-border');
+	default: 'border-border',
+	success: 'border-success-skin/35',
+	danger: 'border-destructive-skin/35',
+	warning: 'border-warning-skin/35',
+}[tone] || 'border-border');
 
 function toastComponent(toast) {
 	return toast.component || ElToastItem;
@@ -226,7 +226,7 @@ function onToastAction(toast, payload) {
 				<div class="toast-shell-inner">
 					<div
 						:role="toast.tone === 'danger' ? 'alert' : 'status'"
-						class="overflow-hidden rounded-2xl border bg-skin-background/95 p-4 shadow-[0_18px_50px_rgba(0,0,0,0.18),0_2px_10px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04] backdrop-blur-xl"
+						class="overflow-hidden rounded-2xl border bg-card-skin/95 p-4 text-card shadow-[0_18px_50px_rgba(0,0,0,0.18),0_2px_10px_rgba(0,0,0,0.08)] ring-1 ring-border/60 backdrop-blur-xl"
 						:class="[
 							toneClass(toast.tone),
 							toast.motion === 'entering' && 'toast-entering',

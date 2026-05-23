@@ -89,24 +89,24 @@ function move(rowIndex, dir) {
 			<div
 				v-for="(row, rowIndex) in modelValue"
 				:key="rowIndex"
-				class="space-y-2 rounded-lg border border-skin-border bg-skin-background p-2"
+				class="space-y-2 rounded-lg border border-border bg-background p-2"
 			>
 				<div class="flex items-center justify-between gap-2">
-					<span class="text-[11px] font-semibold uppercase tracking-wider text-skin-muted">Row {{ rowIndex + 1 }}</span>
+					<span class="text-[11px] font-semibold uppercase tracking-wider text-muted">Row {{ rowIndex + 1 }}</span>
 					<span class="flex items-center gap-1">
-						<button type="button" class="grid size-7 place-items-center rounded-md text-skin-secondary hover:bg-skin-surface hover:text-skin-primary" title="Move up" @click="move(rowIndex, -1)">↑</button>
-						<button type="button" class="grid size-7 place-items-center rounded-md text-skin-secondary hover:bg-skin-surface hover:text-skin-primary" title="Move down" @click="move(rowIndex, 1)">↓</button>
-						<button type="button" class="grid size-7 place-items-center rounded-md text-red-500 hover:bg-red-500/10" title="Remove" @click="remove(rowIndex)">×</button>
+						<button type="button" class="grid size-7 place-items-center rounded-md text-secondary hover:bg-secondary-skin hover:text-foreground" title="Move up" @click="move(rowIndex, -1)">↑</button>
+						<button type="button" class="grid size-7 place-items-center rounded-md text-secondary hover:bg-secondary-skin hover:text-foreground" title="Move down" @click="move(rowIndex, 1)">↓</button>
+						<button type="button" class="grid size-7 place-items-center rounded-md text-destructive-skin hover:bg-destructive-skin/10" title="Remove" @click="remove(rowIndex)">×</button>
 					</span>
 				</div>
 				<label v-for="field in fields" :key="field.key" class="block">
-					<span class="mb-1 block text-[11px] font-medium text-skin-muted">{{ field.label || field.key }}</span>
+					<span class="mb-1 block text-[11px] font-medium text-muted">{{ field.label || field.key }}</span>
 					<textarea
 						v-if="field.type === 'json'"
 						:value="fieldValue(row, field)"
 						:placeholder="field.placeholder || field.key"
 						rows="5"
-						class="min-h-24 w-full resize-y rounded-md border border-skin-border bg-skin-background px-2 py-1.5 font-mono text-xs text-skin-primary outline-none focus:ring-2 focus:ring-skin-primary/40"
+						class="min-h-24 w-full resize-y rounded-md border border-border bg-background px-2 py-1.5 font-mono text-xs text-foreground outline-none focus:ring-2 focus:ring-ring/40"
 						@change="setField(rowIndex, field, $event.target.value)"
 					></textarea>
 					<input
@@ -114,14 +114,14 @@ function move(rowIndex, dir) {
 						:type="field.type || 'text'"
 						:value="fieldValue(row, field)"
 						:placeholder="field.placeholder || field.key"
-						class="h-8 w-full rounded-md border border-skin-border bg-skin-background px-2 text-sm text-skin-primary outline-none focus:ring-2 focus:ring-skin-primary/40"
+						class="h-8 w-full rounded-md border border-border bg-background px-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/40"
 						@input="setField(rowIndex, field, $event.target.value)"
 					/>
 				</label>
 			</div>
 			<button
 				type="button"
-				class="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-skin-border bg-skin-background py-2 text-xs font-medium text-skin-secondary hover:border-skin-primary/40 hover:text-skin-primary"
+				class="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-border bg-background py-2 text-xs font-medium text-secondary hover:border-primary-skin/40 hover:text-foreground"
 				@click="add"
 			>{{ addLabel }}</button>
 		</div>

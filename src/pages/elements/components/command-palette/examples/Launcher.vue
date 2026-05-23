@@ -20,7 +20,7 @@ function onSelect(event) {
 	<div class="grid gap-3">
 		<div class="flex flex-wrap items-center gap-2">
 			<ElButton variant="secondary" @click="open = true">Open command palette (Cmd+K)</ElButton>
-			<p class="text-xs text-skin-muted">Selected: <code class="text-skin-primary">{{ selected }}</code></p>
+			<p class="text-xs text-muted">Selected: <code class="text-foreground">{{ selected }}</code></p>
 		</div>
 		<ElCommandPalette v-model="open" :commands="commands" @select="onSelect" />
 	</div>

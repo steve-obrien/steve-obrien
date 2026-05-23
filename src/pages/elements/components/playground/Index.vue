@@ -39,14 +39,14 @@ const cardSpec = {
 	id: 'card',
 	label: 'Card',
 	component: 'div',
-	props: { class: 'flex flex-col items-start gap-4 w-[320px] rounded-3xl border border-skin-border bg-skin-background p-7 shadow-xl shadow-black/10 ring-1 ring-black/[0.04]' },
+	props: { class: 'flex flex-col items-start gap-4 w-[320px] rounded-3xl border border-border bg-background p-7 shadow-xl shadow-black/10 ring-1 ring-border/60' },
 	schema: [],
 	children: [
 		{
 			id: 'badge',
 			label: 'Badge',
 			component: 'span',
-			props: { class: 'rounded-full bg-skin-primary px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-skin-inverse' },
+			props: { class: 'rounded-full bg-primary-skin px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary' },
 			text: 'Lifetime',
 			schema: [
 				{ key: 'text', label: 'Text', type: 'string', target: 'text' },
@@ -56,7 +56,7 @@ const cardSpec = {
 			id: 'title',
 			label: 'Title',
 			component: 'h3',
-			props: { class: 'text-2xl font-bold tracking-tight text-skin-primary' },
+			props: { class: 'text-2xl font-bold tracking-tight text-foreground' },
 			text: 'Pro',
 			schema: [
 				{ key: 'text', label: 'Text', type: 'string', target: 'text' },
@@ -66,7 +66,7 @@ const cardSpec = {
 			id: 'price',
 			label: 'Price',
 			component: 'p',
-			props: { class: 'text-skin-secondary' },
+			props: { class: 'text-secondary' },
 			text: '$149 once · forever yours',
 			schema: [
 				{ key: 'text', label: 'Text', type: 'string', target: 'text' },
@@ -91,7 +91,7 @@ const specCode = `const cardSpec = {
   id: 'card',
   label: 'Card',
   component: 'div',
-  props: { class: 'rounded-3xl border bg-skin-background p-7 …' },
+  props: { class: 'rounded-3xl border bg-background p-7 …' },
   children: [
     {
       id: 'title',
@@ -149,35 +149,35 @@ const spec = {
 		>
 			<DocSection eyebrow="Demo" title="Single component">
 				<DemoInspector :spec="buttonSpec" title="Button" />
-				<p class="mt-3 text-sm text-skin-secondary">
+				<p class="mt-3 text-sm text-secondary">
 					Click <strong>Pick</strong> in the inspector, then click the button on the stage to select it. Edit variant, size, or label — the stage updates live.
 				</p>
 			</DocSection>
 
 			<DocSection eyebrow="Auto-schema" title="Schema inferred from the component's props">
 				<DemoInspector :spec="inferredButtonSpec" title="Button (no schema declared)" />
-				<p class="mt-3 text-sm text-skin-secondary">
+				<p class="mt-3 text-sm text-secondary">
 					Same component, but the spec doesn't declare a <code>schema</code>. The inspector walks <code>ElButton.props</code>, looks up registry hints (variant + size), and adds a Tailwind classes editor at the end — automatically.
 				</p>
 			</DocSection>
 
 			<DocSection eyebrow="Demo" title="Nested arrangement">
 				<DemoInspector :spec="cardSpec" title="Pricing card" stage-class="min-h-[360px]" />
-				<p class="mt-3 text-sm text-skin-secondary">
+				<p class="mt-3 text-sm text-secondary">
 					Multiple selectable nodes — pick any layer in the stage or use the layer list to drill in.
 				</p>
 			</DocSection>
 
 			<DocSection eyebrow="Studio" title="Build full layouts with the Studio">
-				<div class="rounded-2xl border border-skin-border bg-gradient-to-br from-skin-surface to-transparent p-6">
-					<p class="text-sm leading-relaxed text-skin-secondary">
-						The dedicated <strong class="text-skin-primary">Studio</strong> page gives you a full-width canvas with a palette of every component,
+				<div class="rounded-2xl border border-border bg-gradient-to-br from-secondary-skin to-transparent p-6">
+					<p class="text-sm leading-relaxed text-secondary">
+						The dedicated <strong class="text-foreground">Studio</strong> page gives you a full-width canvas with a palette of every component,
 						drag-and-drop with drop indicators, a Data / HTML / Renderer tab bar, and lossless round-trip through
-						<code class="rounded bg-skin-surface px-1 py-0.5 text-[12px] font-mono ring-1 ring-skin-border">&lt;ElRenderer&gt;</code>.
+						<code class="rounded bg-secondary-skin px-1 py-0.5 text-[12px] font-mono ring-1 ring-border">&lt;ElRenderer&gt;</code>.
 					</p>
 					<RouterLink
 						to="/elements/components/studio"
-						class="mt-4 inline-flex items-center gap-1.5 rounded-full bg-skin-primary px-4 py-1.5 text-sm font-medium text-skin-inverse hover:opacity-90"
+						class="mt-4 inline-flex items-center gap-1.5 rounded-full bg-primary-skin px-4 py-1.5 text-sm font-medium text-primary hover:opacity-90"
 					>Open the Studio →</RouterLink>
 				</div>
 			</DocSection>
@@ -199,9 +199,9 @@ const spec = {
 						{ name: 'boolean', desc: 'Renders the ElToggle switch.' },
 						{ name: 'select', desc: 'Pill group of options.' },
 						{ name: 'color', desc: 'Native color picker plus hex input.' },
-					]" :key="f.name" class="rounded-xl border border-skin-border bg-skin-surface/40 p-4">
-						<code class="text-sm font-semibold text-skin-primary">{{ f.name }}</code>
-						<p class="mt-1 text-sm text-skin-secondary">{{ f.desc }}</p>
+					]" :key="f.name" class="rounded-xl border border-border bg-secondary-skin/40 p-4">
+						<code class="text-sm font-semibold text-foreground">{{ f.name }}</code>
+						<p class="mt-1 text-sm text-secondary">{{ f.desc }}</p>
 					</div>
 				</div>
 			</DocSection>

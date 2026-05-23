@@ -46,29 +46,29 @@ function move(i, dir) {
 			<div
 				v-for="(it, i) in modelValue"
 				:key="i"
-				class="space-y-1.5 rounded-lg border border-skin-border bg-skin-background p-2"
+				class="space-y-1.5 rounded-lg border border-border bg-background p-2"
 			>
 				<div class="flex items-center gap-1">
 					<input
 						:value="it.label"
 						:placeholder="labelPlaceholder"
-						class="h-8 flex-1 rounded-md border border-skin-border bg-skin-background px-2 text-sm text-skin-primary outline-none focus:ring-2 focus:ring-skin-primary/40"
+						class="h-8 flex-1 rounded-md border border-border bg-background px-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/40"
 						@input="setRow(i, 'label', $event.target.value)"
 					/>
-					<button type="button" class="grid size-7 place-items-center rounded-md text-skin-secondary hover:bg-skin-surface hover:text-skin-primary" title="Move up" @click="move(i, -1)">↑</button>
-					<button type="button" class="grid size-7 place-items-center rounded-md text-skin-secondary hover:bg-skin-surface hover:text-skin-primary" title="Move down" @click="move(i, 1)">↓</button>
-					<button type="button" class="grid size-7 place-items-center rounded-md text-red-500 hover:bg-red-500/10" title="Remove" @click="remove(i)">×</button>
+					<button type="button" class="grid size-7 place-items-center rounded-md text-secondary hover:bg-secondary-skin hover:text-foreground" title="Move up" @click="move(i, -1)">↑</button>
+					<button type="button" class="grid size-7 place-items-center rounded-md text-secondary hover:bg-secondary-skin hover:text-foreground" title="Move down" @click="move(i, 1)">↓</button>
+					<button type="button" class="grid size-7 place-items-center rounded-md text-destructive-skin hover:bg-destructive-skin/10" title="Remove" @click="remove(i)">×</button>
 				</div>
 				<input
 					:value="it.value"
 					:placeholder="valuePlaceholder"
-					class="h-7 w-full rounded-md border border-skin-border bg-skin-background px-2 font-mono text-[12px] text-skin-secondary outline-none focus:ring-2 focus:ring-skin-primary/40"
+					class="h-7 w-full rounded-md border border-border bg-background px-2 font-mono text-[12px] text-secondary outline-none focus:ring-2 focus:ring-ring/40"
 					@input="setRow(i, 'value', $event.target.value)"
 				/>
 			</div>
 			<button
 				type="button"
-				class="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-skin-border bg-skin-background py-2 text-xs font-medium text-skin-secondary hover:border-skin-primary/40 hover:text-skin-primary"
+				class="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-border bg-background py-2 text-xs font-medium text-secondary hover:border-primary-skin/40 hover:text-foreground"
 				@click="add"
 			>{{ addLabel }}</button>
 		</div>

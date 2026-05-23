@@ -100,7 +100,7 @@ const valueOf = (item) => (item && typeof item === 'object' ? (item.value ?? ite
 		<button
 			slot="trigger"
 			type="button"
-			class="inline-flex h-10 items-center gap-2 rounded-full bg-skin-surface px-4 text-sm font-medium text-skin-primary ring-1 ring-skin-border transition hover:bg-skin-border/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-skin-primary/60"
+			class="inline-flex h-10 items-center gap-2 rounded-full bg-secondary-skin px-4 text-sm font-medium text-foreground ring-1 ring-border transition hover:bg-accent-skin focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
 		>
 			<slot name="trigger">{{ label }}</slot>
 			<svg viewBox="0 0 20 20" class="size-4 opacity-70" fill="none">
@@ -110,16 +110,16 @@ const valueOf = (item) => (item && typeof item === 'object' ? (item.value ?? ite
 		<Teleport to="body" :disabled="!isMounted">
 			<div
 				:id="menuId"
-				class="el-dropdown-menu rounded-2xl border border-skin-border bg-skin-background p-1 shadow-2xl shadow-black/10 ring-1 ring-black/[0.04] dark:shadow-black/40"
+				class="el-dropdown-menu rounded-2xl border border-border bg-popover-skin p-1 text-popover shadow-2xl shadow-black/10 ring-1 ring-border/60 dark:shadow-black/40"
 				:class="width"
 			>
 				<template v-for="(item, i) in items" :key="valueOf(item) ?? i">
-					<hr v-if="item && item.separator" class="my-1 border-t border-skin-border" />
+					<hr v-if="item && item.separator" class="my-1 border-t border-border" />
 					<button
 						v-else
 						role="menuitem"
 						:data-value="valueOf(item)"
-						class="block w-full rounded-xl px-3 py-2 text-left text-sm text-skin-primary outline-none transition hover:bg-skin-surface focus:bg-skin-surface"
+						class="block w-full rounded-xl px-3 py-2 text-left text-sm outline-none transition hover:bg-accent-skin focus:bg-accent-skin"
 					>
 						<slot name="item" :item="item" :index="i">{{ labelOf(item) }}</slot>
 					</button>

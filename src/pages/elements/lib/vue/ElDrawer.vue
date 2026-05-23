@@ -113,16 +113,16 @@ defineExpose({
 			<slot name="trigger" />
 		</span>
 		<div
-			class="flex h-full flex-col bg-zinc-50/95 ring-1 ring-zinc-900/5 backdrop-blur-sm dark:bg-zinc-900/95 dark:ring-white/10"
+			class="flex h-full flex-col bg-card-skin/95 ring-1 ring-border backdrop-blur-sm"
 		>
-			<header v-if="title || $slots.header" class="flex shrink-0 items-center justify-between gap-3 border-b border-skin-border px-4 py-4">
+			<header v-if="title || $slots.header" class="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-4">
 				<slot name="header">
-					<h2 v-if="title" class="text-base font-semibold tracking-tight text-skin-primary">{{ title }}</h2>
+					<h2 v-if="title" class="text-base font-semibold tracking-tight text-foreground">{{ title }}</h2>
 				</slot>
 				<button
 					data-close
 					type="button"
-					class="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-skin-secondary ring-1 ring-skin-border transition hover:bg-skin-surface hover:text-skin-primary"
+					class="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-secondary ring-1 ring-border transition hover:bg-secondary-skin hover:text-foreground"
 					aria-label="Close"
 				>
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5" aria-hidden="true">
@@ -133,7 +133,7 @@ defineExpose({
 			<div class="min-h-0 flex-1 overflow-y-auto">
 				<slot />
 			</div>
-			<footer v-if="$slots.footer" class="shrink-0 border-t border-skin-border p-4">
+			<footer v-if="$slots.footer" class="shrink-0 border-t border-border p-4">
 				<slot name="footer" />
 			</footer>
 		</div>

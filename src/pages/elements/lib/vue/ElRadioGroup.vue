@@ -52,7 +52,7 @@ const selected = (option) => String(props.modelValue ?? '') === valueOf(option);
 
 <template>
 	<div class="grid gap-2">
-		<p v-if="label" class="text-sm font-medium text-skin-primary">{{ label }}</p>
+		<p v-if="label" class="text-sm font-medium text-foreground">{{ label }}</p>
 		<element-radio-group
 			ref="root"
 			:value="modelValue ?? ''"
@@ -65,10 +65,10 @@ const selected = (option) => String(props.modelValue ?? '') === valueOf(option);
 				:key="valueOf(option) || index"
 				role="radio"
 				:data-value="valueOf(option)"
-				class="inline-flex items-center gap-3 rounded-xl border border-skin-border bg-skin-background px-3 py-2 text-left text-sm text-skin-primary outline-none transition hover:bg-skin-surface focus:ring-2 focus:ring-skin-primary/40 aria-checked:border-skin-primary aria-checked:bg-skin-surface"
+				class="inline-flex items-center gap-3 rounded-xl border border-border bg-background px-3 py-2 text-left text-sm text-foreground outline-none transition hover:bg-secondary-skin focus:ring-2 focus:ring-ring/40 aria-checked:border-primary-skin aria-checked:bg-secondary-skin"
 			>
-				<span class="grid size-4 place-items-center rounded-full border border-skin-border" aria-hidden="true">
-					<span class="size-2 rounded-full bg-skin-primary" :class="selected(option) ? 'opacity-100' : 'opacity-0'"></span>
+				<span class="grid size-4 place-items-center rounded-full border border-border" aria-hidden="true">
+					<span class="size-2 rounded-full bg-primary-skin" :class="selected(option) ? 'opacity-100' : 'opacity-0'"></span>
 				</span>
 				<slot name="option" :option="option" :index="index">{{ labelOf(option) }}</slot>
 			</button>

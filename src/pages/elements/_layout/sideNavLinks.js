@@ -2,6 +2,7 @@ export const sideNavLinks = [
 	{
 		label: 'Tooling',
 		items: [
+			{ to: '/elements/theming', label: 'Theming', tag: 'New' },
 			{ to: '/elements/components/studio', label: 'Studio', tag: 'Pro' },
 			{ to: '/elements/components/playground', label: 'Playground' },
 		],

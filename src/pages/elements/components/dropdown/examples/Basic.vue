@@ -14,8 +14,8 @@ const selected = ref('');
 <template>
 	<div class="flex flex-col items-center gap-3">
 		<ElDropdown :items="items" label="Account ▾" @select="(v) => selected = v" />
-		<p class="text-xs text-skin-muted">
-			Selected: <code class="text-skin-primary">{{ selected || '—' }}</code>
+		<p class="text-xs text-muted">
+			Selected: <code class="text-foreground">{{ selected || '—' }}</code>
 		</p>
 	</div>
 </template>

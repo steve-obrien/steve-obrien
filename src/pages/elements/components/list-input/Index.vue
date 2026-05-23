@@ -77,17 +77,17 @@ const props = [
 				<Demo>
 					<div class="grid w-full max-w-2xl gap-6 sm:grid-cols-2">
 						<div>
-							<p class="mb-2 text-xs font-medium uppercase tracking-wider text-skin-muted">Editor</p>
+							<p class="mb-2 text-xs font-medium uppercase tracking-wider text-muted">Editor</p>
 							<ElListInput v-model="items" add-label="+ Add fruit" />
 						</div>
 						<div>
-							<p class="mb-2 text-xs font-medium uppercase tracking-wider text-skin-muted">Bound elsewhere</p>
+							<p class="mb-2 text-xs font-medium uppercase tracking-wider text-muted">Bound elsewhere</p>
 							<ElDropdown :items="items" label="Pick a fruit" />
-							<pre class="mt-3 overflow-auto rounded-lg border border-skin-border bg-[#0b1020] p-3 font-mono text-[11.5px] leading-relaxed text-white/90"><code>{{ JSON.stringify(items, null, 2) }}</code></pre>
+							<pre class="mt-3 overflow-auto rounded-lg border border-border bg-[#0b1020] p-3 font-mono text-[11.5px] leading-relaxed text-white/90"><code>{{ JSON.stringify(items, null, 2) }}</code></pre>
 						</div>
 					</div>
 				</Demo>
-				<p class="mt-3 text-sm text-skin-secondary">
+				<p class="mt-3 text-sm text-secondary">
 					Edits flow through <code>v-model</code> — the dropdown on the right is bound to the same array.
 				</p>
 			</DocSection>
@@ -98,10 +98,10 @@ const props = [
 
 			<DocSection eyebrow="Inspector" title="As an inline editor hint">
 				<CodeBlock :code="usageInspector" lang="js" />
-				<p class="mt-3 text-sm text-skin-secondary">
+				<p class="mt-3 text-sm text-secondary">
 					When the studio inspects this prop it resolves <code>'ElListInput'</code> against the editor registry and
 					renders the list editor — the same component you see here. Strings (not direct refs) keep form code out of
-					production bundles. See the <RouterLink to="/elements/components/studio" class="font-medium text-skin-primary underline-offset-2 hover:underline">Studio</RouterLink> for a live example via ElDropdown.
+					production bundles. See the <RouterLink to="/elements/components/studio" class="font-medium text-foreground underline-offset-2 hover:underline">Studio</RouterLink> for a live example via ElDropdown.
 				</p>
 			</DocSection>
 

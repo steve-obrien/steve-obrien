@@ -11,6 +11,7 @@ const props = defineProps({
 	filename: { type: String, default: '' },
 	defaultOpen: { type: Boolean, default: true },
 	previewLines: { type: Number, default: 0 },
+	borderTop: { type: Boolean, default: true },
 });
 
 const showCode = ref(props.defaultOpen || props.previewLines > 0);
@@ -58,10 +59,13 @@ function expandPreview() {
 
 <template>
 	<div>
-		<div class="flex items-center justify-between border-t border-skin-border bg-skin-surface/40 px-3 py-1.5 text-xs">
+		<div
+			class="flex items-center justify-between bg-secondary-skin/40 px-3 py-1.5 text-xs"
+			:class="borderTop && 'border-t border-border'"
+		>
 			<button
 				type="button"
-				class="inline-flex items-center gap-1.5 rounded-md px-2 py-1 font-medium text-skin-secondary hover:bg-skin-background hover:text-skin-primary"
+				class="inline-flex items-center gap-1.5 rounded-md px-2 py-1 font-medium text-secondary hover:bg-background hover:text-foreground"
 				@click="toggleCode"
 			>
 				<svg viewBox="0 0 16 16" class="size-3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -70,11 +74,11 @@ function expandPreview() {
 				{{ toggleLabel }}
 			</button>
 			<div class="flex items-center gap-2">
-				<span v-if="filename" class="font-mono text-[11px] text-skin-muted">{{ filename }}</span>
-				<span class="font-mono text-[11px] uppercase tracking-wider text-skin-muted">{{ lang }}</span>
+				<span v-if="filename" class="font-mono text-[11px] text-muted">{{ filename }}</span>
+				<span class="font-mono text-[11px] uppercase tracking-wider text-muted">{{ lang }}</span>
 				<button
 					type="button"
-					class="rounded-md px-2 py-1 font-medium text-skin-secondary hover:bg-skin-background hover:text-skin-primary"
+					class="rounded-md px-2 py-1 font-medium text-secondary hover:bg-background hover:text-foreground"
 					@click="copy"
 				>{{ copied ? 'Copied' : 'Copy' }}</button>
 			</div>
@@ -82,7 +86,7 @@ function expandPreview() {
 
 		<div
 			v-if="showCode"
-			class="el-code relative border-t border-skin-border transition-[max-height] duration-300 ease-out"
+			class="el-code relative border-t border-border transition-[max-height] duration-300 ease-out"
 			:class="isClipped ? 'cursor-pointer overflow-hidden' : 'overflow-auto'"
 			:style="codeStyle"
 			@click="expandPreview"
@@ -91,7 +95,7 @@ function expandPreview() {
 			<pre v-else class="overflow-auto bg-[#0b1020] p-4 text-[12.5px] leading-relaxed text-white/90"><code>{{ source }}</code></pre>
 			<div
 				v-if="isClipped"
-				class="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-linear-to-b from-transparent via-skin-background/80 to-skin-background"
+				class="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-linear-to-b from-transparent via-background/80 to-background"
 			></div>
 		</div>
 	</div>

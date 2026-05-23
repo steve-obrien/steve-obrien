@@ -45,12 +45,12 @@ const props = defineProps({
 		_edit: { description: 'Disable the button — non-interactive, lowered opacity.' },
 	},
 });
-const active = 'select-none active:data-disabled:bg-gray-50  active:shadow-[inset_0_1px_3px_rgba(0,0,0,0.2)] active:border-t-gray-300 active:data-disabled:shadow-none active:data-disabled:border-t-gray-200 focus-visible:outline-2 focus-visible:outline-blue-800 focus-visible:-outline-offset-1 data-disabled:text-gray-500'
+const active = 'select-none active:data-disabled:bg-secondary-skin active:shadow-[inset_0_1px_3px_rgba(0,0,0,0.2)] active:border-t-border active:data-disabled:shadow-none active:data-disabled:border-t-border focus-visible:outline-2 focus-visible:outline-ring focus-visible:-outline-offset-1 data-disabled:text-muted';
 const variants = {
-	primary: 'bg-skin-primary text-skin-inverse hover:opacity-90 ring-1 ring-skin-primary/10',
-	secondary: 'bg-skin-surface text-skin-primary ring-1 ring-skin-border hover:bg-skin-border/40',
-	ghost: 'text-skin-primary hover:bg-skin-surface',
-	danger: 'bg-skin-surface ring-1 ring-skin-border hover:bg-skin-border/40 text-red-600',
+	primary: 'bg-primary-skin text-primary hover:opacity-90 ring-1 ring-ring/10',
+	secondary: 'bg-secondary-skin text-foreground ring-1 ring-border hover:bg-accent-skin',
+	ghost: 'text-foreground hover:bg-secondary-skin',
+	danger: 'bg-secondary-skin ring-1 ring-border hover:bg-accent-skin text-destructive-skin',
 };
 const sizes = {
 	sm: 'h-8 px-3 text-xs',
@@ -61,7 +61,7 @@ const sizes = {
 const classes = computed(() => [
 	active,
 	'inline-flex items-center cursor-pointer justify-center gap-2 rounded-full font-medium tracking-tight transition',
-	'focus:outline-none focus-visible:ring-2 focus-visible:ring-skin-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-skin-background',
+	'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
 	variants[props.variant] || variants.primary,
 	sizes[props.size] || sizes.md,
 	(props.disabled || props.loading) && 'opacity-50 pointer-events-none',

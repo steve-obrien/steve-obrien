@@ -20,25 +20,25 @@ const props = defineProps({
 const emit = defineEmits(['dismiss']);
 
 const accentClass = (tone) => ({
-	default: 'bg-skin-primary',
-	success: 'bg-emerald-500',
-	danger: 'bg-red-500',
-	warning: 'bg-amber-500',
-}[tone] || 'bg-skin-primary');
+	default: 'bg-primary-skin',
+	success: 'bg-success-skin',
+	danger: 'bg-destructive-skin',
+	warning: 'bg-warning-skin',
+}[tone] || 'bg-primary-skin');
 </script>
 
 <template>
 	<div class="flex items-start gap-3">
 		<span class="mt-1 size-2.5 shrink-0 rounded-full" :class="accentClass(tone)"></span>
 		<div class="min-w-0 flex-1">
-			<p v-if="title" class="text-sm font-semibold text-skin-primary">{{ title }}</p>
-			<p v-if="description" class="mt-1 text-sm text-skin-secondary">{{ description }}</p>
+			<p v-if="title" class="text-sm font-semibold">{{ title }}</p>
+			<p v-if="description" class="mt-1 text-sm text-secondary">{{ description }}</p>
 		</div>
 		<button
 			v-if="props.dismissible"
 			type="button"
 			aria-label="Dismiss notification"
-			class="-mr-1 -mt-1 rounded-full px-2 text-lg leading-none text-skin-muted hover:bg-skin-surface hover:text-skin-primary"
+			class="-mr-1 -mt-1 rounded-full px-2 text-lg leading-none text-muted hover:bg-accent-skin hover:text-accent"
 			@click="emit('dismiss')"
 		>×</button>
 	</div>

@@ -1,15 +1,15 @@
-<element-drawer side="right" class="bg-white">
+<element-drawer side="right" class="bg-background">
 	<button
 		slot="trigger"
 		type="button"
-		class="inline-flex h-10 items-center rounded-full bg-skin-surface px-4 text-sm font-medium text-skin-primary ring-1 ring-skin-border transition hover:bg-skin-border/40"
+		class="inline-flex h-10 items-center rounded-full bg-secondary-skin px-4 text-sm font-medium text-foreground ring-1 ring-border transition hover:bg-accent-skin"
 	>
 		Open menu
 	</button>
-	<nav class="flex flex-col h-full bg-zinc-50 text-skin-primary dark:bg-zinc-900">
-		<a href="#" data-close class="border-b border-skin-border px-4 py-4 text-sm font-medium hover:bg-skin-surface/60">Home</a>
-		<a href="#" data-close class="border-b border-skin-border px-4 py-4 text-sm font-medium text-skin-secondary hover:bg-skin-surface/60 hover:text-skin-primary">Projects</a>
-		<a href="#" data-close class="border-b border-skin-border px-4 py-4 text-sm font-medium text-skin-secondary hover:bg-skin-surface/60 hover:text-skin-primary">Settings</a>
+	<nav class="flex flex-col h-full bg-card-skin text-foreground dark:bg-card-skin">
+		<a href="#" data-close class="border-b border-border px-4 py-4 text-sm font-medium hover:bg-secondary-skin/60">Home</a>
+		<a href="#" data-close class="border-b border-border px-4 py-4 text-sm font-medium text-secondary hover:bg-secondary-skin/60 hover:text-foreground">Projects</a>
+		<a href="#" data-close class="border-b border-border px-4 py-4 text-sm font-medium text-secondary hover:bg-secondary-skin/60 hover:text-foreground">Settings</a>
 	</nav>
 </element-drawer>
 

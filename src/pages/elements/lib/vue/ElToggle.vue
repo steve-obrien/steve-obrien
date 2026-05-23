@@ -38,6 +38,6 @@ watch(() => props.modelValue, (v) => {
 			:checked="modelValue || null"
 			:disabled="disabled || null"
 		/>
-		<span v-if="label" class="text-sm text-skin-primary">{{ label }}</span>
+		<span v-if="label" class="text-sm text-foreground">{{ label }}</span>
 	</label>
 </template>

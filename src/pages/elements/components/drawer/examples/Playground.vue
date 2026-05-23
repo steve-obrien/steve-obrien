@@ -26,13 +26,13 @@ defineExpose({ data });
 			<button
 				slot="trigger"
 				type="button"
-				class="inline-flex h-10 items-center rounded-full bg-skin-primary px-4 text-sm font-medium text-skin-inverse hover:opacity-90"
+				class="inline-flex h-10 items-center rounded-full bg-primary-skin px-4 text-sm font-medium text-primary hover:opacity-90"
 			>Open drawer</button>
 		</template>
 		<nav class="space-y-1 p-4">
-			<a class="block rounded-md px-3 py-2 hover:bg-skin-surface" href="#">Home</a>
-			<a class="block rounded-md px-3 py-2 hover:bg-skin-surface" href="#">Inbox</a>
-			<a class="block rounded-md px-3 py-2 hover:bg-skin-surface" href="#">Settings</a>
+			<a class="block rounded-md px-3 py-2 hover:bg-secondary-skin" href="#">Home</a>
+			<a class="block rounded-md px-3 py-2 hover:bg-secondary-skin" href="#">Inbox</a>
+			<a class="block rounded-md px-3 py-2 hover:bg-secondary-skin" href="#">Settings</a>
 		</nav>
 	</ElDrawer>
 </template>

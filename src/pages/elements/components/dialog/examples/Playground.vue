@@ -20,7 +20,7 @@ defineExpose({ data });
 		<template #trigger>
 			<ElButton variant="primary">Open dialog</ElButton>
 		</template>
-		<p class="text-sm text-skin-secondary">Dialog body content.</p>
+		<p class="text-sm text-secondary">Dialog body content.</p>
 		<template #footer>
 			<ElButton variant="secondary" data-close>Cancel</ElButton>
 			<ElButton data-close>Confirm</ElButton>

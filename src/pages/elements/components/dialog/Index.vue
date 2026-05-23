@@ -88,10 +88,10 @@ const doc = ElDialog.__doc;
 							{ t: '::backdrop', d: 'A pseudo-element you can style with CSS — blur, fade, animate, all native.' },
 						]"
 						:key="b.t"
-						class="rounded-xl border border-skin-border bg-skin-surface/40 p-4"
+						class="rounded-xl border border-border bg-secondary-skin/40 p-4"
 					>
-						<p class="text-sm font-semibold tracking-tight text-skin-primary">{{ b.t }}</p>
-						<p class="mt-1 text-sm text-skin-secondary">{{ b.d }}</p>
+						<p class="text-sm font-semibold tracking-tight text-foreground">{{ b.t }}</p>
+						<p class="mt-1 text-sm text-secondary">{{ b.d }}</p>
 					</div>
 				</div>
 			</DocSection>

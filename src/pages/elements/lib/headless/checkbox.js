@@ -12,10 +12,10 @@ element-checkbox {
 	place-items: center;
 	width: 1.25rem;
 	height: 1.25rem;
-	border: 1px solid rgb(var(--border));
+	border: 1px solid var(--border);
 	border-radius: 0.375rem;
-	background: rgb(var(--background));
-	color: rgb(var(--inverse));
+	background: var(--background);
+	color: var(--primary);
 	cursor: pointer;
 	vertical-align: middle;
 }
@@ -29,14 +29,14 @@ element-checkbox::after {
 	opacity: 0;
 }
 element-checkbox[aria-checked="true"] {
-	border-color: rgb(var(--primary));
-	background: rgb(var(--primary));
+	border-color: var(--primary-skin);
+	background: var(--primary-skin);
 }
 element-checkbox[aria-checked="true"]::after {
 	opacity: 1;
 }
 element-checkbox:focus-visible {
-	outline: 2px solid rgb(var(--primary) / 0.6);
+	outline: 2px solid var(--ring);
 	outline-offset: 2px;
 }
 element-checkbox[aria-disabled="true"] {

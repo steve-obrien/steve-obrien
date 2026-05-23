@@ -102,12 +102,12 @@ watch([() => props.modelValue, optionList], syncInputFromModel);
 			slot="input"
 			type="text"
 			:placeholder="placeholder"
-			class="h-10 w-full rounded-full border border-skin-border bg-skin-background px-4 pr-10 text-sm text-skin-primary outline-none transition focus:ring-2 focus:ring-skin-primary/60"
+			class="h-10 w-full rounded-full border border-border bg-background px-4 pr-10 text-sm text-foreground outline-none transition focus:ring-2 focus:ring-ring/60"
 		/>
 		<button
 			slot="toggle"
 			type="button"
-			class="absolute right-1 top-1 inline-flex size-8 items-center justify-center rounded-full text-skin-muted transition hover:bg-skin-surface hover:text-skin-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-skin-primary/60"
+			class="absolute right-1 top-1 inline-flex size-8 items-center justify-center rounded-full text-muted transition hover:bg-secondary-skin hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
 			aria-label="Show options"
 		>
 			<svg viewBox="0 0 20 20" class="size-4" fill="none">
@@ -117,7 +117,7 @@ watch([() => props.modelValue, optionList], syncInputFromModel);
 		<Teleport to="body" :disabled="!isMounted">
 			<ul
 				:id="listId"
-				class="z-50 max-h-[min(15rem,var(--el-floating-available-height))] overflow-auto rounded-2xl border border-skin-border bg-skin-background p-1 shadow-2xl shadow-black/10 ring-1 ring-black/[0.04]"
+				class="z-50 max-h-[min(15rem,var(--el-floating-available-height))] overflow-auto rounded-2xl border border-border bg-popover-skin p-1 text-popover shadow-2xl shadow-black/10 ring-1 ring-border/60"
 			>
 				<li
 					v-for="(option, index) in optionList"
@@ -125,7 +125,7 @@ watch([() => props.modelValue, optionList], syncInputFromModel);
 					:data-value="option.value"
 					:data-label="option.label"
 					:data-index="index"
-					class="cursor-pointer rounded-xl px-3 py-2 text-sm text-skin-primary transition data-[active]:bg-skin-surface aria-selected:bg-skin-surface"
+					class="cursor-pointer rounded-xl px-3 py-2 text-sm transition data-[active]:bg-accent-skin aria-selected:bg-accent-skin"
 				>
 					<slot name="item" :item="option" :index="index">{{ option.label }}</slot>
 				</li>

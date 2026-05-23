@@ -17,14 +17,14 @@ const emit = defineEmits(['update:modelValue']);
 				type="color"
 				:value="modelValue"
 				:disabled="disabled"
-				class="h-9 w-12 cursor-pointer rounded-lg border border-skin-border bg-skin-background"
+				class="h-9 w-12 cursor-pointer rounded-lg border border-border bg-background"
 				@input="emit('update:modelValue', $event.target.value)"
 			/>
 			<input
 				type="text"
 				:value="modelValue"
 				:disabled="disabled"
-				class="h-9 flex-1 rounded-lg border border-skin-border bg-skin-background px-3 text-sm font-mono text-skin-primary outline-none focus:ring-2 focus:ring-skin-primary/40"
+				class="h-9 flex-1 rounded-lg border border-border bg-background px-3 text-sm font-mono text-foreground outline-none focus:ring-2 focus:ring-ring/40"
 				@input="emit('update:modelValue', $event.target.value)"
 			/>
 		</div>

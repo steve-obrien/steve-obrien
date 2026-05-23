@@ -22,9 +22,9 @@ const experiments = [
 	<SteveLayout>
 	<section class="space-y-8">
 		<div class="space-y-3">
-			<p class="text-xs font-semibold uppercase tracking-[0.18em] text-skin-muted">Experiments</p>
+			<p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Experiments</p>
 			<h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">What I'm testing</h1>
-			<p class="max-w-3xl text-lg leading-relaxed text-skin-secondary">
+			<p class="max-w-3xl text-lg leading-relaxed text-secondary">
 				A running list of ideas. I may do or may not.
 			</p>
 		</div>
@@ -32,14 +32,14 @@ const experiments = [
 			<article
 				v-for="experiment in experiments"
 				:key="experiment.title"
-				class="rounded-2xl border border-skin-border bg-skin-surface p-6"
+				class="rounded-2xl border border-border bg-secondary-skin p-6"
 			>
 				<div class="flex items-start justify-between gap-4">
 					<div>
 						<h2 class="text-xl font-semibold tracking-tight">{{ experiment.title }}</h2>
-						<p class="mt-2 text-skin-secondary">{{ experiment.description }}</p>
+						<p class="mt-2 text-secondary">{{ experiment.description }}</p>
 					</div>
-					<span class="rounded-full border border-skin-border px-3 py-1 text-xs uppercase tracking-wide text-skin-muted">
+					<span class="rounded-full border border-border px-3 py-1 text-xs uppercase tracking-wide text-muted">
 						{{ experiment.status }}
 					</span>
 				</div>

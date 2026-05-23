@@ -242,15 +242,15 @@ const tabs = [
 </script>
 
 <template>
-	<div class="el-studio flex min-h-0 flex-1 flex-col overflow-hidden bg-skin-background">
-		<div class="flex shrink-0 items-center justify-between border-b border-skin-border bg-skin-surface/40 px-4 py-2">
+	<div class="el-studio flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
+		<div class="flex shrink-0 items-center justify-between border-b border-border bg-secondary-skin/40 px-4 py-2">
 			<div class="flex min-w-0 items-center gap-3">
-				<p class="truncate text-xs font-semibold uppercase tracking-[0.18em] text-skin-muted">{{ title }}</p>
-				<span v-if="state.dragEntry" class="shrink-0 rounded-full bg-skin-primary/10 px-2 py-0.5 text-[10px] font-medium text-skin-primary">drag onto the stage</span>
+				<p class="truncate text-xs font-semibold uppercase tracking-[0.18em] text-muted">{{ title }}</p>
+				<span v-if="state.dragEntry" class="shrink-0 rounded-full bg-primary-skin/10 px-2 py-0.5 text-[10px] font-medium text-foreground">drag onto the stage</span>
 			</div>
 			<button
 				type="button"
-				class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium text-skin-secondary ring-1 ring-skin-border hover:bg-skin-background hover:text-skin-primary"
+				class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium text-secondary ring-1 ring-border hover:bg-background hover:text-foreground"
 				@click="reset"
 			>Reset</button>
 		</div>
@@ -261,23 +261,23 @@ const tabs = [
 				<template #stage>
 					<div class="grid min-h-0 flex-1 grid-cols-1 overflow-auto xl:grid-cols-[220px_1fr_340px] xl:overflow-hidden">
 						<!-- Palette -->
-						<div class="min-h-0 border-skin-border xl:overflow-auto xl:border-r border-b xl:border-b-0">
+						<div class="min-h-0 border-border xl:overflow-auto xl:border-r border-b xl:border-b-0">
 							<ComponentPalette />
 						</div>
 
 						<!-- Stage -->
 						<div
 							ref="stageEl"
-							class="el-stage relative min-h-[280px] overflow-auto bg-gradient-to-br from-skin-surface/40 via-skin-background to-skin-surface/30 p-10 xl:min-h-0"
+							class="el-stage relative min-h-[280px] overflow-auto bg-gradient-to-br from-secondary-skin/40 via-background to-secondary-skin/30 p-10 xl:min-h-0"
 							:class="state.pickMode && 'el-pick-mode'"
 							@dragover="onDragOver"
 							@dragleave="onDragLeave"
 							@drop="onDrop"
 						>
-							<div v-if="!tree.children?.length" class="pointer-events-none absolute inset-6 grid place-items-center rounded-2xl border-2 border-dashed border-skin-border text-center">
+							<div v-if="!tree.children?.length" class="pointer-events-none absolute inset-6 grid place-items-center rounded-2xl border-2 border-dashed border-border text-center">
 								<div>
-									<p class="text-sm font-medium text-skin-secondary">Drop components here</p>
-									<p class="mt-1 text-xs text-skin-muted">Drag from the palette on the left. Click a component to inspect.</p>
+									<p class="text-sm font-medium text-secondary">Drop components here</p>
+									<p class="mt-1 text-xs text-muted">Drag from the palette on the left. Click a component to inspect.</p>
 								</div>
 							</div>
 
@@ -297,7 +297,7 @@ const tabs = [
 						</div>
 
 						<!-- Inspector -->
-						<div class="flex min-h-0 flex-col overflow-hidden border-skin-border bg-skin-background xl:border-l border-t xl:border-t-0">
+						<div class="flex min-h-0 flex-col overflow-hidden border-border bg-background xl:border-l border-t xl:border-t-0">
 							<InspectorPanel :tree="tree" :enable-actions="true" />
 						</div>
 					</div>
@@ -307,10 +307,10 @@ const tabs = [
 				<template #data>
 					<div class="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
 						<div class="flex items-center justify-between">
-							<p class="text-sm text-skin-secondary">Edit the JSON below — the stage updates as soon as the structure parses cleanly.</p>
+							<p class="text-sm text-secondary">Edit the JSON below — the stage updates as soon as the structure parses cleanly.</p>
 							<button
 								type="button"
-								class="rounded-md px-2.5 py-1 text-xs font-medium text-skin-secondary ring-1 ring-skin-border hover:bg-skin-surface hover:text-skin-primary"
+								class="rounded-md px-2.5 py-1 text-xs font-medium text-secondary ring-1 ring-border hover:bg-secondary-skin hover:text-foreground"
 								@click="copy(jsonText, 'data')"
 							>{{ copied === 'data' ? 'Copied' : 'Copy JSON' }}</button>
 						</div>
@@ -318,15 +318,15 @@ const tabs = [
 							:value="jsonText"
 							spellcheck="false"
 							rows="22"
-							class="w-full rounded-2xl border border-skin-border bg-[#0b1020] p-4 font-mono text-[12.5px] leading-relaxed text-white/90 outline-none focus:ring-2 focus:ring-skin-primary/40"
+							class="w-full rounded-2xl border border-border bg-[#0b1020] p-4 font-mono text-[12.5px] leading-relaxed text-white/90 outline-none focus:ring-2 focus:ring-ring/40"
 							@input="onJsonInput($event.target.value)"
 							@focus="jsonFocused = true"
 							@blur="jsonFocused = false"
 						></textarea>
-						<p v-if="jsonError" class="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-mono text-red-600 dark:text-red-400">
+						<p v-if="jsonError" class="rounded-lg border border-destructive-skin/40 bg-destructive-skin/10 px-3 py-2 text-xs font-mono text-destructive-skin dark:text-destructive-skin">
 							{{ jsonError }}
 						</p>
-						<p v-else class="text-xs text-skin-muted">Two-way: changes here update the stage, edits in the inspector flow back into the JSON.</p>
+						<p v-else class="text-xs text-muted">Two-way: changes here update the stage, edits in the inspector flow back into the JSON.</p>
 					</div>
 				</template>
 
@@ -334,34 +334,34 @@ const tabs = [
 				<template #html>
 					<div class="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
 						<div class="flex items-center justify-between">
-							<p class="text-sm text-skin-secondary">A copy-paste ready snapshot of the rendered stage — strip the inspector chrome, keep your classes.</p>
+							<p class="text-sm text-secondary">A copy-paste ready snapshot of the rendered stage — strip the inspector chrome, keep your classes.</p>
 							<button
 								type="button"
-								class="rounded-md px-2.5 py-1 text-xs font-medium text-skin-secondary ring-1 ring-skin-border hover:bg-skin-surface hover:text-skin-primary"
+								class="rounded-md px-2.5 py-1 text-xs font-medium text-secondary ring-1 ring-border hover:bg-secondary-skin hover:text-foreground"
 								@click="copy(htmlOutput, 'html')"
 							>{{ copied === 'html' ? 'Copied' : 'Copy HTML' }}</button>
 						</div>
-						<pre class="overflow-auto rounded-2xl border border-skin-border bg-[#0b1020] p-4 font-mono text-[12.5px] leading-relaxed text-white/90"><code>{{ htmlOutput || '<!-- nothing on stage -->' }}</code></pre>
+						<pre class="overflow-auto rounded-2xl border border-border bg-[#0b1020] p-4 font-mono text-[12.5px] leading-relaxed text-white/90"><code>{{ htmlOutput || '<!-- nothing on stage -->' }}</code></pre>
 					</div>
 				</template>
 
 				<!-- ------------------------------------------------------------ Renderer -->
 				<template #renderer>
 					<div class="flex min-h-0 flex-1 flex-col gap-4 overflow-auto">
-						<div class="rounded-2xl border border-skin-border bg-gradient-to-br from-skin-surface/40 via-skin-background to-skin-surface/30 p-10">
+						<div class="rounded-2xl border border-border bg-gradient-to-br from-secondary-skin/40 via-background to-secondary-skin/30 p-10">
 							<div class="mb-4 flex items-center gap-2">
-								<span class="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-								<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-skin-muted">Rehydrated via &lt;ElRenderer&gt;</p>
+								<span class="inline-flex h-1.5 w-1.5 rounded-full bg-success-skin"></span>
+								<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Rehydrated via &lt;ElRenderer&gt;</p>
 							</div>
 							<div class="flex items-center justify-center">
 								<ElRenderer :spec="serializedSpec" />
 							</div>
 						</div>
-						<details class="rounded-2xl border border-skin-border bg-skin-surface/40 p-4 open:bg-skin-surface/60">
-							<summary class="cursor-pointer text-sm font-medium text-skin-primary">Spec passed to ElRenderer</summary>
+						<details class="rounded-2xl border border-border bg-secondary-skin/40 p-4 open:bg-secondary-skin/60">
+							<summary class="cursor-pointer text-sm font-medium text-foreground">Spec passed to ElRenderer</summary>
 							<pre class="mt-3 overflow-auto rounded-xl bg-[#0b1020] p-4 font-mono text-[11.5px] leading-relaxed text-white/90"><code>{{ JSON.stringify(serializedSpec, null, 2) }}</code></pre>
 						</details>
-						<p class="text-xs text-skin-muted">This is the same data you'd load from a database to rebuild the section anywhere.</p>
+						<p class="text-xs text-muted">This is the same data you'd load from a database to rebuild the section anywhere.</p>
 					</div>
 				</template>
 			</ElTabs>

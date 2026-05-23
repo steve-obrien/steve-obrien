@@ -4,8 +4,8 @@ import { ElDropdown } from '@elements/vue';
 
 const items = [
 	{ value: 'sara', name: 'Sara Patel', role: 'Design', initials: 'SP', color: 'bg-rose-500' },
-	{ value: 'tomas', name: 'Tomás Ruiz', role: 'Engineering', initials: 'TR', color: 'bg-emerald-500' },
-	{ value: 'priya', name: 'Priya Nair', role: 'Product', initials: 'PN', color: 'bg-amber-500' },
+	{ value: 'tomas', name: 'Tomás Ruiz', role: 'Engineering', initials: 'TR', color: 'bg-success-skin' },
+	{ value: 'priya', name: 'Priya Nair', role: 'Product', initials: 'PN', color: 'bg-warning-skin' },
 	{ value: 'leo', name: 'Leo Almeida', role: 'Operations', initials: 'LA', color: 'bg-sky-500' },
 ];
 const assigned = ref('sara');
@@ -31,8 +31,8 @@ const current = computed(() => items.find((i) => i.value === assigned.value));
 					:class="item.color"
 				>{{ item.initials }}</span>
 				<div class="min-w-0">
-					<p class="truncate text-sm font-medium text-skin-primary">{{ item.name }}</p>
-					<p class="truncate text-xs text-skin-muted">{{ item.role }}</p>
+					<p class="truncate text-sm font-medium text-foreground">{{ item.name }}</p>
+					<p class="truncate text-xs text-muted">{{ item.role }}</p>
 				</div>
 			</div>
 		</template>

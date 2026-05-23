@@ -54,8 +54,8 @@ watch(() => props.modelValue, (value) => {
 			class="mt-0.5"
 		/>
 		<span class="grid gap-0.5">
-			<span v-if="label" class="text-sm font-medium text-skin-primary">{{ label }}</span>
-			<span v-if="description" class="text-xs text-skin-secondary">{{ description }}</span>
+			<span v-if="label" class="text-sm font-medium text-foreground">{{ label }}</span>
+			<span v-if="description" class="text-xs text-secondary">{{ description }}</span>
 		</span>
 	</label>
 </template>

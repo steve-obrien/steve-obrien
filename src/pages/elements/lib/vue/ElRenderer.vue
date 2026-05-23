@@ -36,7 +36,7 @@ export default defineComponent({
 			tree.value
 				? h(RenderNode, { node: tree.value })
 				: h('div', {
-					class: 'rounded-xl border border-dashed border-skin-border bg-skin-surface/40 p-4 text-xs text-skin-muted',
+					class: 'rounded-xl border border-dashed border-border bg-secondary-skin/40 p-4 text-xs text-muted',
 				}, 'Unable to render the provided spec.');
 	},
 });

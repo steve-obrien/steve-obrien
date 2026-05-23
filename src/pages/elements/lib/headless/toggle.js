@@ -18,16 +18,16 @@ element-toggle {
 	border: 0;
 	padding: 0;
 	border-radius: 9999px;
-	background: rgb(var(--border));
+	background: var(--input);
 	transition: background-color 150ms ease;
 	vertical-align: middle;
 }
 element-toggle:focus-visible {
-	outline: 2px solid rgb(var(--primary) / 0.6);
+	outline: 2px solid var(--ring);
 	outline-offset: 2px;
 }
 element-toggle[aria-checked="true"] {
-	background: rgb(var(--primary));
+	background: var(--primary-skin);
 }
 element-toggle[aria-disabled="true"] {
 	opacity: 0.5;
@@ -41,7 +41,7 @@ element-toggle::after {
 	width: 1.25rem;
 	height: 1.25rem;
 	border-radius: 9999px;
-	background: #fff;
+	background: var(--card-skin);
 	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 	transform: translateY(-50%);
 	transition: transform 150ms ease;

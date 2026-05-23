@@ -55,10 +55,10 @@ const roleOf = (item) => {
 	<element-menu
 		ref="root"
 		:orientation="orientation"
-		class="block rounded-2xl border border-skin-border bg-skin-background p-1 shadow-sm"
+		class="block rounded-2xl border border-border bg-background p-1 shadow-sm"
 	>
 		<template v-for="(item, index) in items" :key="valueOf(item) || index">
-			<hr v-if="item && item.separator" class="my-1 border-t border-skin-border" />
+			<hr v-if="item && item.separator" class="my-1 border-t border-border" />
 			<button
 				v-else
 				:role="roleOf(item)"
@@ -66,13 +66,13 @@ const roleOf = (item) => {
 				:aria-checked="item?.checked == null ? null : String(item.checked)"
 				:aria-disabled="item?.disabled ? 'true' : null"
 				:disabled="item?.disabled || null"
-				class="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm text-skin-primary outline-none transition hover:bg-skin-surface focus:bg-skin-surface aria-disabled:cursor-not-allowed aria-disabled:opacity-50 data-[tone=danger]:text-red-600"
+				class="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm text-foreground outline-none transition hover:bg-secondary-skin focus:bg-secondary-skin aria-disabled:cursor-not-allowed aria-disabled:opacity-50 data-[tone=danger]:text-destructive-skin"
 				:data-tone="item?.tone || null"
 			>
 				<span class="min-w-0">
 					<slot name="item" :item="item" :index="index">{{ labelOf(item) }}</slot>
 				</span>
-				<span v-if="item?.type === 'checkbox' || item?.type === 'radio'" aria-hidden="true" class="text-xs text-skin-muted">✓</span>
+				<span v-if="item?.type === 'checkbox' || item?.type === 'radio'" aria-hidden="true" class="text-xs text-muted">✓</span>
 			</button>
 		</template>
 	</element-menu>

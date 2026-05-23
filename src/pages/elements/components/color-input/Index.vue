@@ -58,8 +58,8 @@ const props = [
 							description="Used for primary buttons and links."
 						/>
 						<div class="flex items-center gap-2 text-sm">
-							<span class="size-6 rounded-md ring-1 ring-skin-border" :style="{ background: accent }"></span>
-							<code class="text-skin-primary">{{ accent }}</code>
+							<span class="size-6 rounded-md ring-1 ring-border" :style="{ background: accent }"></span>
+							<code class="text-foreground">{{ accent }}</code>
 						</div>
 					</div>
 				</Demo>

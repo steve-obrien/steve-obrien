@@ -79,13 +79,13 @@ onMounted(async () => {
 		<button
 			slot="trigger"
 			type="button"
-			class="inline-flex h-10 items-center gap-2 rounded-full bg-skin-surface px-4 text-sm font-medium text-skin-primary ring-1 ring-skin-border transition hover:bg-skin-border/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-skin-primary/60"
+			class="inline-flex h-10 items-center gap-2 rounded-full bg-secondary-skin px-4 text-sm font-medium text-foreground ring-1 ring-border transition hover:bg-accent-skin focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
 		>
 			<slot name="trigger">{{ label }}</slot>
 		</button>
 		<div
 			slot="panel"
-			class="el-popover-panel rounded-2xl border border-skin-border bg-skin-background p-4 text-sm text-skin-primary shadow-2xl shadow-black/10 ring-1 ring-black/[0.04] outline-none dark:shadow-black/40"
+			class="el-popover-panel rounded-2xl border border-border bg-popover-skin p-4 text-sm text-popover shadow-2xl shadow-black/10 ring-1 ring-border/60 outline-none dark:shadow-black/40"
 			:class="width"
 		>
 			<slot />

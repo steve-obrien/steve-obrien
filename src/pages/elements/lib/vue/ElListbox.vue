@@ -56,7 +56,7 @@ const valueOf = (option) => String(option && typeof option === 'object' ? (optio
 		ref="root"
 		:value="modelValue ?? ''"
 		:orientation="orientation"
-		class="grid gap-1 rounded-2xl border border-skin-border bg-skin-background p-1 shadow-sm"
+		class="grid gap-1 rounded-2xl border border-border bg-background p-1 shadow-sm"
 		:class="orientation === 'horizontal' && 'grid-flow-col'"
 	>
 		<button
@@ -64,7 +64,7 @@ const valueOf = (option) => String(option && typeof option === 'object' ? (optio
 			:key="valueOf(option) || index"
 			role="option"
 			:data-value="valueOf(option)"
-			class="rounded-xl px-3 py-2 text-left text-sm text-skin-primary outline-none transition hover:bg-skin-surface focus:bg-skin-surface aria-selected:bg-skin-primary aria-selected:text-skin-inverse"
+			class="rounded-xl px-3 py-2 text-left text-sm text-foreground outline-none transition hover:bg-secondary-skin focus:bg-secondary-skin aria-selected:bg-primary-skin aria-selected:text-primary"
 		>
 			<slot name="option" :option="option" :index="index">{{ labelOf(option) }}</slot>
 		</button>

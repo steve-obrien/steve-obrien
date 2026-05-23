@@ -8,12 +8,12 @@
 	transition: outline-color 120ms ease, box-shadow 120ms ease;
 }
 .el-stage-node[data-selected] {
-	outline: 2px solid rgb(0 0 255);
+	outline: 2px solid var(--ring);
 	outline-offset: 3px;
 }
 .el-text-node[data-selected] {
-	background-color: rgba(var(--primary), 0.12);
-	outline: 1px solid rgb(var(--primary));
+	background-color: color-mix(in oklch, var(--primary-skin) 12%, transparent);
+	outline: 1px solid var(--primary-skin);
 	border-radius: 3px;
 }
 /* Hover hints + click-to-select only apply while the stage is in pick mode.
@@ -23,7 +23,7 @@
 .el-stage.el-pick-mode .el-text-node { cursor: pointer; }
 .el-stage.el-pick-mode .el-stage-node:not([data-selected]):hover,
 .el-stage.el-pick-mode .el-text-node:not([data-selected]):hover {
-	outline: 1px dashed rgba(var(--primary), 0.6);
+	outline: 1px dashed color-mix(in oklch, var(--primary-skin) 60%, transparent);
 	outline-offset: 3px;
 }
 .el-stage.el-pick-mode .el-stage-node:not([data-selected]):has(.el-stage-node:hover, .el-text-node:hover) {
@@ -35,12 +35,12 @@
 	position: absolute;
 	pointer-events: none;
 	z-index: 10;
-	background: rgb(var(--primary));
+	background: var(--primary-skin);
 	border-radius: 2px;
-	box-shadow: 0 0 0 1px rgba(var(--background), 0.8), 0 0 0 3px rgba(var(--primary), 0.25);
+	box-shadow: 0 0 0 1px color-mix(in oklch, var(--background) 80%, transparent), 0 0 0 3px color-mix(in oklch, var(--primary-skin) 25%, transparent);
 }
 .el-drop-indicator--inside {
 	background: transparent;
-	border: 2px dashed rgb(var(--primary));
-	box-shadow: 0 0 0 4px rgba(var(--primary), 0.08) inset;
+	border: 2px dashed var(--primary-skin);
+	box-shadow: 0 0 0 4px color-mix(in oklch, var(--primary-skin) 8%, transparent) inset;
 }

@@ -11,17 +11,17 @@ const open = ref(false);
 		<nav class="flex flex-col">
 			<a
 				href="#"
-				class="border-b border-skin-border px-4 py-4 text-sm font-medium text-skin-primary hover:bg-skin-surface/60"
+				class="border-b border-border px-4 py-4 text-sm font-medium text-foreground hover:bg-secondary-skin/60"
 				@click.prevent="open = false"
 			>Home</a>
 			<a
 				href="#"
-				class="border-b border-skin-border px-4 py-4 text-sm font-medium text-skin-secondary hover:bg-skin-surface/60 hover:text-skin-primary"
+				class="border-b border-border px-4 py-4 text-sm font-medium text-secondary hover:bg-secondary-skin/60 hover:text-foreground"
 				@click.prevent="open = false"
 			>Projects</a>
 			<a
 				href="#"
-				class="border-b border-skin-border px-4 py-4 text-sm font-medium text-skin-secondary hover:bg-skin-surface/60 hover:text-skin-primary"
+				class="border-b border-border px-4 py-4 text-sm font-medium text-secondary hover:bg-secondary-skin/60 hover:text-foreground"
 				@click.prevent="open = false"
 			>Settings</a>
 		</nav>

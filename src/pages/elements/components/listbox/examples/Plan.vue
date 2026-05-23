@@ -18,6 +18,6 @@ const options = [
 				<span class="block text-xs opacity-75">{{ option.description }}</span>
 			</template>
 		</ElListbox>
-		<p class="text-xs text-skin-muted">Selected value: <code class="text-skin-primary">{{ value }}</code></p>
+		<p class="text-xs text-muted">Selected value: <code class="text-foreground">{{ value }}</code></p>
 	</div>
 </template>

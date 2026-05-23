@@ -280,7 +280,7 @@ const entries = [
 		icon: '▢',
 		accepts: 'children',
 		defaults: {
-			props: { class: 'flex flex-col gap-3 rounded-2xl border border-skin-border bg-skin-background p-6' },
+			props: { class: 'flex flex-col gap-3 rounded-2xl border border-border bg-background p-6' },
 		},
 	},
 	{
@@ -300,7 +300,7 @@ const entries = [
 		icon: 'H',
 		accepts: 'children',
 		defaults: {
-			props: { class: 'text-2xl font-bold tracking-tight text-skin-primary' },
+			props: { class: 'text-2xl font-bold tracking-tight text-foreground' },
 			children: [{ id: null, text: 'Heading' }],
 		},
 	},
@@ -312,7 +312,7 @@ const entries = [
 		icon: '¶',
 		accepts: 'children',
 		defaults: {
-			props: { class: 'text-sm leading-relaxed text-skin-secondary' },
+			props: { class: 'text-sm leading-relaxed text-secondary' },
 			children: [{ id: null, text: 'Body copy lives here.' }],
 		},
 	},
@@ -336,7 +336,7 @@ const entries = [
 		icon: '▣',
 		accepts: 'children',
 		defaults: {
-			props: { class: 'inline-flex rounded-full bg-skin-primary px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-skin-inverse' },
+			props: { class: 'inline-flex rounded-full bg-primary-skin px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary' },
 			children: [{ id: null, text: 'New' }],
 		},
 	},

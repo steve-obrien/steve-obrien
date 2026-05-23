@@ -27,9 +27,9 @@ const doc = computed(() => props.element?.__doc || {});
 
 			<DocSection eyebrow="Usage" title="Plain HTML">
 				<CodeBlock v-if="doc.example" :code="doc.example" lang="html" />
-				<p class="mt-3 text-sm text-skin-secondary">
+				<p class="mt-3 text-sm text-secondary">
 					Register every <code>&lt;element-*&gt;</code> in one import:
-					<code class="rounded bg-skin-surface px-1 py-0.5 ring-1 ring-skin-border">import '@elements/headless'</code>.
+					<code class="rounded bg-secondary-skin px-1 py-0.5 ring-1 ring-border">import '@elements/headless'</code>.
 				</p>
 			</DocSection>
 
@@ -39,7 +39,7 @@ const doc = computed(() => props.element?.__doc || {});
 			<ComponentKeyboard :component="element" />
 
 			<DocSection eyebrow="Related" title="See also">
-				<RouterLink to="/elements/headless" class="inline-flex items-center gap-1 text-sm font-medium text-skin-primary hover:underline">
+				<RouterLink to="/elements/headless" class="inline-flex items-center gap-1 text-sm font-medium text-foreground hover:underline">
 					← Headless overview
 				</RouterLink>
 			</DocSection>

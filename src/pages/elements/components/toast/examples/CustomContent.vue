@@ -31,14 +31,14 @@ function dismiss(toastId) {
 		<ElToastStack :toasts="toasts" position="bottom-left" @dismiss="dismiss">
 			<template #default="{ toast, dismiss: dismissToast }">
 				<div class="flex items-center gap-3">
-					<img :src="toast.avatar" alt="" class="size-10 rounded-full object-cover ring-1 ring-skin-border" />
+					<img :src="toast.avatar" alt="" class="size-10 rounded-full object-cover ring-1 ring-border" />
 					<div class="min-w-0 flex-1">
-						<p class="text-sm font-semibold text-skin-primary">{{ toast.title }}</p>
-						<p class="mt-0.5 text-sm text-skin-secondary">{{ toast.description }}</p>
+						<p class="text-sm font-semibold text-foreground">{{ toast.title }}</p>
+						<p class="mt-0.5 text-sm text-secondary">{{ toast.description }}</p>
 					</div>
 					<button
 						type="button"
-						class="rounded-full bg-skin-surface px-3 py-1 text-xs font-medium text-skin-primary hover:bg-skin-border/60"
+						class="rounded-full bg-secondary-skin px-3 py-1 text-xs font-medium text-foreground hover:bg-accent-skin"
 						@click="dismissToast(toast.id)"
 					>
 						Done

@@ -22,7 +22,7 @@ const ariaLabel = computed(() => {
 		type="button"
 		:aria-label="ariaLabel"
 		:title="ariaLabel"
-		class="grid size-9 place-items-center rounded-full text-skin-secondary transition hover:bg-skin-surface hover:text-skin-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skin-primary/40"
+		class="grid size-9 place-items-center rounded-full text-secondary transition hover:bg-secondary-skin hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
 		@click="cycleMode"
 	>
 		<!-- Sun (light) -->

@@ -16,27 +16,27 @@ const initialSpec = {
 			id: 'card',
 			label: 'Card',
 			component: 'div',
-			props: { class: 'flex flex-col items-start gap-4 w-[380px] rounded-3xl border border-skin-border bg-skin-background p-7 shadow-xl shadow-black/10 ring-1 ring-black/[0.04]' },
+			props: { class: 'flex flex-col items-start gap-4 w-[380px] rounded-3xl border border-border bg-background p-7 shadow-xl shadow-black/10 ring-1 ring-border/60' },
 			children: [
 				{
 					id: 'badge',
 					label: 'Badge',
 					component: 'span',
-					props: { class: 'inline-flex w-fit rounded-full bg-skin-primary px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-skin-inverse' },
+					props: { class: 'inline-flex w-fit rounded-full bg-primary-skin px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary' },
 					children: [{ text: 'Lifetime' }],
 				},
 				{
 					id: 'title',
 					label: 'Title',
 					component: 'h2',
-					props: { class: 'text-2xl font-bold tracking-tight text-skin-primary' },
+					props: { class: 'text-2xl font-bold tracking-tight text-foreground' },
 					children: [
 						{ text: 'Welcome to ' },
 						{
 							id: 'title-em',
 							label: 'Emphasised span',
 							component: 'span',
-							props: { class: 'italic text-skin-primary underline decoration-skin-primary/30 underline-offset-4' },
+							props: { class: 'italic text-foreground underline decoration-primary-skin/30 underline-offset-4' },
 							children: [{ text: 'Elements' }],
 						},
 					],
@@ -45,7 +45,7 @@ const initialSpec = {
 					id: 'price',
 					label: 'Price',
 					component: 'p',
-					props: { class: 'text-sm text-skin-secondary' },
+					props: { class: 'text-sm text-secondary' },
 					children: [{ text: '$149 once · forever yours' }],
 				},
 				{

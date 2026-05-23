@@ -129,13 +129,13 @@ const codeFilename = computed(() => {
 </script>
 
 <template>
-	<figure class="my-6 overflow-hidden rounded-2xl border border-skin-border bg-skin-background">
-		<figcaption v-if="title || description" class="border-b border-skin-border bg-skin-surface/40 px-5 py-3">
-			<p v-if="title" class="text-sm font-semibold tracking-tight text-skin-primary">{{ title }}</p>
-			<p v-if="description" class="mt-0.5 text-sm text-skin-secondary">{{ description }}</p>
+	<figure class="my-6 overflow-hidden rounded-2xl border border-border bg-background">
+		<figcaption v-if="title || description" class="border-b border-border bg-secondary-skin/40 px-5 py-3">
+			<p v-if="title" class="text-sm font-semibold tracking-tight text-foreground">{{ title }}</p>
+			<p v-if="description" class="mt-0.5 text-sm text-secondary">{{ description }}</p>
 		</figcaption>
 
-		<div class="grid w-full grid-cols-1 items-start gap-6 bg-gradient-to-br from-skin-surface/40 via-skin-background to-skin-surface/30 p-10 sm:grid-cols-[1fr_240px]">
+		<div class="grid w-full grid-cols-1 items-start gap-6 bg-gradient-to-br from-secondary-skin/40 via-background to-secondary-skin/30 p-10 sm:grid-cols-[1fr_240px]">
 			<div class="flex items-center justify-center">
 				<!-- SFC mode: render the playground SFC; it owns the data + slots. -->
 				<component v-if="useSfc" :is="component" ref="playgroundRef" />
@@ -153,7 +153,7 @@ const codeFilename = computed(() => {
 			</div>
 
 			<aside class="space-y-4 text-left">
-				<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-skin-muted">Properties</p>
+				<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Properties</p>
 				<template v-if="data">
 					<InspectorField
 						v-for="f in schema"
@@ -166,15 +166,15 @@ const codeFilename = computed(() => {
 			</aside>
 		</div>
 
-		<div class="flex items-center gap-1 border-t border-skin-border bg-skin-surface/40 px-3 py-1.5">
+		<div class="flex items-center gap-1 border-t border-border bg-secondary-skin/40 px-3 py-1.5">
 			<button
 				v-for="t in tabs"
 				:key="t.key"
 				type="button"
 				class="rounded-md px-2.5 py-1 text-xs font-medium transition"
 				:class="tab === t.key
-					? 'bg-skin-background text-skin-primary shadow-sm ring-1 ring-skin-border'
-					: 'text-skin-secondary hover:bg-skin-background hover:text-skin-primary'"
+					? 'bg-background text-foreground shadow-sm ring-1 ring-border'
+					: 'text-secondary hover:bg-background hover:text-foreground'"
 				@click="tab = t.key"
 			>{{ t.label }}</button>
 		</div>

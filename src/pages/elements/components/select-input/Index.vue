@@ -60,7 +60,7 @@ const props = [
 							description="Three balanced sizes."
 							:options="['sm', 'md', 'lg']"
 						/>
-						<p class="mt-3 text-xs text-skin-muted">Value: <code class="text-skin-primary">{{ size }}</code></p>
+						<p class="mt-3 text-xs text-muted">Value: <code class="text-foreground">{{ size }}</code></p>
 					</div>
 				</Demo>
 			</DocSection>

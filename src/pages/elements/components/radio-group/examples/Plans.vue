@@ -13,6 +13,6 @@ const options = [
 <template>
 	<div class="grid w-full max-w-md gap-3">
 		<ElRadioGroup v-model="plan" :options="options" label="Plan" />
-		<p class="text-xs text-skin-muted">Selected value: <code class="text-skin-primary">{{ plan }}</code></p>
+		<p class="text-xs text-muted">Selected value: <code class="text-foreground">{{ plan }}</code></p>
 	</div>
 </template>

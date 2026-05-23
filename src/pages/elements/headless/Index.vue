@@ -60,8 +60,8 @@ function eventSummary(cls) {
 			tag="@elements/headless"
 		>
 			<DocSection eyebrow="Why" title="The headless layer">
-				<div class="rounded-2xl border border-skin-border bg-skin-surface/40 p-6">
-					<p class="text-sm leading-relaxed text-skin-secondary">
+				<div class="rounded-2xl border border-border bg-secondary-skin/40 p-6">
+					<p class="text-sm leading-relaxed text-secondary">
 						Every interactive component in this library starts as a custom element —
 						<code>&lt;element-dropdown&gt;</code>, <code>&lt;element-dialog&gt;</code>,
 						<code>&lt;element-popover&gt;</code> and so on. They carry the behavioural contract (state, ARIA wiring,
@@ -69,7 +69,7 @@ function eventSummary(cls) {
 						Django template, or wrap them in any framework. The Vue components in this library are thin wrappers
 						around exactly these elements.
 					</p>
-					<ul class="mt-4 grid gap-2 text-sm text-skin-secondary sm:grid-cols-2">
+					<ul class="mt-4 grid gap-2 text-sm text-secondary sm:grid-cols-2">
 						<li>✓ ~2kb gzipped per element, SSR-safe (guards <code>customElements</code>)</li>
 						<li>✓ Light DOM by default — Tailwind classes cascade in normally</li>
 						<li>✓ ARIA + roving tabindex + focus management built in</li>
@@ -88,14 +88,14 @@ function eventSummary(cls) {
 						v-for="el in elements"
 						:key="el.to"
 						:to="el.to"
-						class="group block rounded-2xl border border-skin-border bg-skin-background p-5 transition hover:-translate-y-0.5 hover:border-skin-primary/40 hover:shadow-md"
+						class="group block rounded-2xl border border-border bg-background p-5 transition hover:-translate-y-0.5 hover:border-primary-skin/40 hover:shadow-md"
 					>
 						<div class="flex items-center justify-between">
-							<code class="text-sm font-semibold tracking-tight text-skin-primary">&lt;{{ el.cls.__doc.name }}&gt;</code>
-							<span class="text-skin-muted transition group-hover:translate-x-0.5 group-hover:text-skin-primary">→</span>
+							<code class="text-sm font-semibold tracking-tight text-foreground">&lt;{{ el.cls.__doc.name }}&gt;</code>
+							<span class="text-muted transition group-hover:translate-x-0.5 group-hover:text-foreground">→</span>
 						</div>
-						<p class="mt-1.5 text-sm leading-relaxed text-skin-secondary">{{ el.cls.__doc.description }}</p>
-						<dl class="mt-3 space-y-1 text-[11px] text-skin-muted">
+						<p class="mt-1.5 text-sm leading-relaxed text-secondary">{{ el.cls.__doc.description }}</p>
+						<dl class="mt-3 space-y-1 text-[11px] text-muted">
 							<div class="flex gap-2">
 								<dt class="font-semibold uppercase tracking-wider">Attrs</dt>
 								<dd class="font-mono">{{ attrSummary(el.cls) }}</dd>
@@ -107,14 +107,14 @@ function eventSummary(cls) {
 						</dl>
 					</RouterLink>
 				</div>
-				<p class="mt-3 text-[11px] text-skin-muted">
+				<p class="mt-3 text-[11px] text-muted">
 					Cards reflect each class's static <code class="font-mono">__doc</code>. Click for the full slots / attributes / events / keyboard reference.
 				</p>
 			</DocSection>
 
 			<DocSection eyebrow="Events" title="The el:* convention">
-				<div class="rounded-2xl border border-skin-border bg-skin-surface/40 p-6">
-					<p class="text-sm leading-relaxed text-skin-secondary">
+				<div class="rounded-2xl border border-border bg-secondary-skin/40 p-6">
+					<p class="text-sm leading-relaxed text-secondary">
 						Every element emits <code>el:open</code> / <code>el:close</code> when it shows or hides, plus an
 						element-specific verb (<code>el:select</code>, <code>el:change</code>, <code>el:show</code>) for the action it
 						mediates. All events <strong>bubble</strong> and use the <code>detail</code> field for data:
@@ -126,7 +126,7 @@ function eventSummary(cls) {
 			</DocSection>
 
 			<DocSection eyebrow="Teleport / portals" title="External popups">
-				<p class="text-sm text-skin-secondary">
+				<p class="text-sm text-secondary">
 					When a popup needs to escape its host (e.g. you teleport a menu to <code>document.body</code> to dodge an
 					ancestor with <code>overflow: hidden</code>), set <code>data-menu-id</code> on
 					<code>&lt;element-dropdown&gt;</code> or <code>&lt;element-combobox&gt;</code>, and

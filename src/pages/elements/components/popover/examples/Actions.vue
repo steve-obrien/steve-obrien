@@ -5,11 +5,11 @@ import { ElPopover } from '@elements/vue';
 <template>
 	<ElPopover label="Actions ▾" align="right">
 		<div class="flex flex-col gap-1">
-			<button class="rounded-md px-2 py-1.5 text-left text-sm text-skin-primary hover:bg-skin-surface">Rename</button>
-			<button class="rounded-md px-2 py-1.5 text-left text-sm text-skin-primary hover:bg-skin-surface">Duplicate</button>
-			<button class="rounded-md px-2 py-1.5 text-left text-sm text-skin-primary hover:bg-skin-surface">Move to…</button>
-			<hr class="my-1 border-t border-skin-border" />
-			<button class="rounded-md px-2 py-1.5 text-left text-sm text-red-500 hover:bg-red-500/10">Delete</button>
+			<button class="rounded-md px-2 py-1.5 text-left text-sm text-foreground hover:bg-secondary-skin">Rename</button>
+			<button class="rounded-md px-2 py-1.5 text-left text-sm text-foreground hover:bg-secondary-skin">Duplicate</button>
+			<button class="rounded-md px-2 py-1.5 text-left text-sm text-foreground hover:bg-secondary-skin">Move to…</button>
+			<hr class="my-1 border-t border-border" />
+			<button class="rounded-md px-2 py-1.5 text-left text-sm text-destructive-skin hover:bg-destructive-skin/10">Delete</button>
 		</div>
 	</ElPopover>
 </template>
