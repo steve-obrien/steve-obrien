@@ -55,20 +55,20 @@ function move(i, dir) {
 						class="h-8 flex-1 rounded-md border border-border bg-background px-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/40"
 						@input="setRow(i, 'label', $event.target.value)"
 					/>
-					<button type="button" class="grid size-7 place-items-center rounded-md text-secondary hover:bg-secondary-skin hover:text-foreground" title="Move up" @click="move(i, -1)">↑</button>
-					<button type="button" class="grid size-7 place-items-center rounded-md text-secondary hover:bg-secondary-skin hover:text-foreground" title="Move down" @click="move(i, 1)">↓</button>
-					<button type="button" class="grid size-7 place-items-center rounded-md text-destructive-skin hover:bg-destructive-skin/10" title="Remove" @click="remove(i)">×</button>
+					<button type="button" class="grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground" title="Move up" @click="move(i, -1)">↑</button>
+					<button type="button" class="grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground" title="Move down" @click="move(i, 1)">↓</button>
+					<button type="button" class="grid size-7 place-items-center rounded-md text-destructive hover:bg-destructive/10" title="Remove" @click="remove(i)">×</button>
 				</div>
 				<input
 					:value="it.value"
 					:placeholder="valuePlaceholder"
-					class="h-7 w-full rounded-md border border-border bg-background px-2 font-mono text-[12px] text-secondary outline-none focus:ring-2 focus:ring-ring/40"
+					class="h-7 w-full rounded-md border border-border bg-background px-2 font-mono text-[12px] text-muted-foreground outline-none focus:ring-2 focus:ring-ring/40"
 					@input="setRow(i, 'value', $event.target.value)"
 				/>
 			</div>
 			<button
 				type="button"
-				class="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-border bg-background py-2 text-xs font-medium text-secondary hover:border-primary-skin/40 hover:text-foreground"
+				class="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-border bg-background py-2 text-xs font-medium text-muted-foreground hover:border-primary/40 hover:text-foreground"
 				@click="add"
 			>{{ addLabel }}</button>
 		</div>

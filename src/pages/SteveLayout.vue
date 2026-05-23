@@ -29,9 +29,9 @@ const props = defineProps({
 			<slot />
 		</main>
 		<footer class="mx-auto w-full max-w-6xl space-y-4 px-6 py-8">
-			<p class="text-sm text-secondary">No AI's were harmed in the making of this site</p>
+			<p class="text-sm text-muted-foreground">No AI's were harmed in the making of this site</p>
 			<div class="flex flex-wrap items-center justify-between gap-4">
-				<p class="text-sm text-secondary">
+				<p class="text-sm text-muted-foreground">
 					&copy; {{ new Date().getFullYear() }} Steve O'Brien. All rights reserved.
 				</p>
 				<SocialLinks />

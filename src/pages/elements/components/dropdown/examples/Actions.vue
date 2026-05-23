@@ -30,7 +30,7 @@ const lastAction = ref('');
 			@select="(v) => lastAction = v"
 		>
 			<template #item="{ item }">
-				<span class="flex items-center gap-2.5" :class="item.tone === 'danger' && 'text-destructive-skin'">
+				<span class="flex items-center gap-2.5" :class="item.tone === 'danger' && 'text-destructive'">
 					<svg
 						viewBox="0 0 24 24"
 						class="size-4 opacity-80"
@@ -45,7 +45,7 @@ const lastAction = ref('');
 				</span>
 			</template>
 		</ElDropdown>
-		<p v-if="lastAction" class="text-xs text-muted">
+		<p v-if="lastAction" class="text-xs text-muted-foreground">
 			Last action: <code class="text-foreground">{{ lastAction }}</code>
 		</p>
 	</div>

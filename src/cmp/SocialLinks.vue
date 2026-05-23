@@ -27,7 +27,7 @@ const socialLinks = [
 			target="_blank"
 			rel="noreferrer"
 			:aria-label="link.label"
-			class="inline-flex rounded-full p-2 text-secondary transition-colors hover:bg-secondary-skin hover:text-foreground"
+			class="inline-flex rounded-full p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
 		>
 			<svg
 				v-if="link.icon === 'linkedin'"

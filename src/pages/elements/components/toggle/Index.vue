@@ -76,10 +76,10 @@ const keys = [
 			</DocSection>
 
 			<DocSection title="Keyboard">
-				<ul class="space-y-2 rounded-2xl border border-border bg-secondary-skin/40 p-5 text-sm">
+				<ul class="space-y-2 rounded-2xl border border-border bg-secondary/40 p-5 text-sm">
 					<li v-for="row in keys" :key="row.k" class="flex items-start gap-4">
 						<kbd class="rounded bg-background px-2 py-0.5 font-mono text-xs ring-1 ring-border">{{ row.k }}</kbd>
-						<span class="text-secondary">{{ row.d }}</span>
+						<span class="text-muted-foreground">{{ row.d }}</span>
 					</li>
 				</ul>
 			</DocSection>

@@ -113,7 +113,7 @@ defineExpose({
 			<slot name="trigger" />
 		</span>
 		<div
-			class="flex h-full flex-col bg-card-skin/95 ring-1 ring-border backdrop-blur-sm"
+			class="flex h-full flex-col bg-card/95 ring-1 ring-border backdrop-blur-sm"
 		>
 			<header v-if="title || $slots.header" class="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-4">
 				<slot name="header">
@@ -122,7 +122,7 @@ defineExpose({
 				<button
 					data-close
 					type="button"
-					class="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-secondary ring-1 ring-border transition hover:bg-secondary-skin hover:text-foreground"
+					class="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground ring-1 ring-border transition hover:bg-secondary hover:text-foreground"
 					aria-label="Close"
 				>
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5" aria-hidden="true">

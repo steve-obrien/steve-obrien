@@ -60,12 +60,12 @@ function expandPreview() {
 <template>
 	<div>
 		<div
-			class="flex items-center justify-between bg-secondary-skin/40 px-3 py-1.5 text-xs"
+			class="flex items-center justify-between bg-secondary/40 px-3 py-1.5 text-xs"
 			:class="borderTop && 'border-t border-border'"
 		>
 			<button
 				type="button"
-				class="inline-flex items-center gap-1.5 rounded-md px-2 py-1 font-medium text-secondary hover:bg-background hover:text-foreground"
+				class="inline-flex items-center gap-1.5 rounded-md px-2 py-1 font-medium text-muted-foreground hover:bg-background hover:text-foreground"
 				@click="toggleCode"
 			>
 				<svg viewBox="0 0 16 16" class="size-3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -74,11 +74,11 @@ function expandPreview() {
 				{{ toggleLabel }}
 			</button>
 			<div class="flex items-center gap-2">
-				<span v-if="filename" class="font-mono text-[11px] text-muted">{{ filename }}</span>
-				<span class="font-mono text-[11px] uppercase tracking-wider text-muted">{{ lang }}</span>
+				<span v-if="filename" class="font-mono text-[11px] text-muted-foreground">{{ filename }}</span>
+				<span class="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">{{ lang }}</span>
 				<button
 					type="button"
-					class="rounded-md px-2 py-1 font-medium text-secondary hover:bg-background hover:text-foreground"
+					class="rounded-md px-2 py-1 font-medium text-muted-foreground hover:bg-background hover:text-foreground"
 					@click="copy"
 				>{{ copied ? 'Copied' : 'Copy' }}</button>
 			</div>

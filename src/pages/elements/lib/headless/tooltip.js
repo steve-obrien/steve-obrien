@@ -19,8 +19,8 @@ element-tooltip {
 	font-size: 0.75rem;
 	line-height: 1rem;
 	font-weight: 500;
-	background: var(--primary-skin);
-	color: var(--primary);
+	background: var(--primary);
+	color: var(--primary-foreground);
 	box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.25);
 	white-space: nowrap;
 	pointer-events: none;

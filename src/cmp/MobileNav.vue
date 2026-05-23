@@ -10,7 +10,7 @@
 		<Transition enter-active-class="transform transition ease-in-out duration-500 sm:duration-700" enter-from-class="translate-x-full" enter-to-class="translate-x-0" leave-active-class="transform transition ease-in-out duration-500 sm:duration-700" leave-from-class="translate-x-0" leave-to-class="translate-x-full">
 			<div
 				v-if="isOpen"
-				class="fixed top-0 right-0 z-50 ml-auto h-full w-full max-w-sm bg-card-skin/95 text-card shadow-lg ring-1 ring-border backdrop-blur-sm"
+				class="fixed top-0 right-0 z-50 ml-auto h-full w-full max-w-sm bg-card/95 text-card-foreground shadow-lg ring-1 ring-border backdrop-blur-sm"
 			>
 				<div class="flex flex-col">
 					<RouterLink
@@ -20,8 +20,8 @@
 						:to="link.to"
 						class="border-b border-border px-4 py-5 text-sm font-medium transition-colors"
 						:class="route.path === link.to 
-							? 'border-l-4 border-l-primary-skin bg-secondary-skin font-bold'
-							: 'text-secondary hover:bg-accent-skin hover:text-accent'"
+							? 'border-l-4 border-l-primary bg-secondary font-bold'
+							: 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'"
 					>
 						{{ link.label }}
 					</RouterLink>

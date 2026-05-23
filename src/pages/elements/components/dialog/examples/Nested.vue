@@ -15,7 +15,7 @@ const projectName = ref('');
 		title="Delete project?"
 		description="This action cannot be undone."
 	>
-		<p class="text-sm text-secondary">All issues, comments, and uploads will be removed.</p>
+		<p class="text-sm text-muted-foreground">All issues, comments, and uploads will be removed.</p>
 		<template #footer>
 			<ElButton variant="secondary" @click="outer = false">Cancel</ElButton>
 			<ElButton variant="danger" @click="confirm = true">Continue</ElButton>

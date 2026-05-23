@@ -34,11 +34,11 @@ function dismiss(toastId) {
 					<img :src="toast.avatar" alt="" class="size-10 rounded-full object-cover ring-1 ring-border" />
 					<div class="min-w-0 flex-1">
 						<p class="text-sm font-semibold text-foreground">{{ toast.title }}</p>
-						<p class="mt-0.5 text-sm text-secondary">{{ toast.description }}</p>
+						<p class="mt-0.5 text-sm text-muted-foreground">{{ toast.description }}</p>
 					</div>
 					<button
 						type="button"
-						class="rounded-full bg-secondary-skin px-3 py-1 text-xs font-medium text-foreground hover:bg-accent-skin"
+						class="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-foreground hover:bg-accent"
 						@click="dismissToast(toast.id)"
 					>
 						Done

@@ -15,7 +15,7 @@ element-checkbox {
 	border: 1px solid var(--border);
 	border-radius: 0.375rem;
 	background: var(--background);
-	color: var(--primary);
+	color: var(--primary-foreground);
 	cursor: pointer;
 	vertical-align: middle;
 }
@@ -29,8 +29,8 @@ element-checkbox::after {
 	opacity: 0;
 }
 element-checkbox[aria-checked="true"] {
-	border-color: var(--primary-skin);
-	background: var(--primary-skin);
+	border-color: var(--primary);
+	background: var(--primary);
 }
 element-checkbox[aria-checked="true"]::after {
 	opacity: 1;

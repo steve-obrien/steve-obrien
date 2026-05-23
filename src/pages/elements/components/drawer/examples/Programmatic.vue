@@ -12,7 +12,7 @@ const drawerRef = ref(null);
 		<ElButton variant="ghost" @click="drawerRef?.toggle()">Toggle</ElButton>
 	</div>
 	<ElDrawer ref="drawerRef" title="Via template ref">
-		<p class="p-4 text-sm text-secondary">
+		<p class="p-4 text-sm text-muted-foreground">
 			Call <code class="text-foreground">open()</code>, <code class="text-foreground">close()</code>, or
 			<code class="text-foreground">toggle()</code> on the component ref — or bind <code class="text-foreground">v-model</code> from script.
 		</p>

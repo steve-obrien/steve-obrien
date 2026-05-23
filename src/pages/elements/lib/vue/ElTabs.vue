@@ -29,13 +29,13 @@ watch(() => props.modelValue, (v) => {
 	>
 		<div
 			role="tablist"
-			class="inline-flex shrink-0 gap-1 rounded-full border border-border bg-secondary-skin p-1"
+			class="inline-flex shrink-0 gap-1 rounded-full border border-border bg-secondary p-1"
 		>
 			<button
 				v-for="t in tabs"
 				:key="t.key"
 				:data-tab="t.key"
-				class="rounded-full px-4 py-1.5 text-sm font-medium text-secondary transition focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 data-[active]:bg-background data-[active]:text-foreground data-[active]:shadow-sm"
+				class="rounded-full px-4 py-1.5 text-sm font-medium text-muted-foreground transition focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 data-[active]:bg-background data-[active]:text-foreground data-[active]:shadow-sm"
 			>{{ t.label }}</button>
 		</div>
 		<div :class="fill ? 'mt-3 flex min-h-0 flex-1 flex-col overflow-hidden' : 'mt-6'">

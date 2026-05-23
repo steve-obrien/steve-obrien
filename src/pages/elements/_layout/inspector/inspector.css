@@ -12,8 +12,8 @@
 	outline-offset: 3px;
 }
 .el-text-node[data-selected] {
-	background-color: color-mix(in oklch, var(--primary-skin) 12%, transparent);
-	outline: 1px solid var(--primary-skin);
+	background-color: color-mix(in oklch, var(--primary) 12%, transparent);
+	outline: 1px solid var(--primary);
 	border-radius: 3px;
 }
 /* Hover hints + click-to-select only apply while the stage is in pick mode.
@@ -23,7 +23,7 @@
 .el-stage.el-pick-mode .el-text-node { cursor: pointer; }
 .el-stage.el-pick-mode .el-stage-node:not([data-selected]):hover,
 .el-stage.el-pick-mode .el-text-node:not([data-selected]):hover {
-	outline: 1px dashed color-mix(in oklch, var(--primary-skin) 60%, transparent);
+	outline: 1px dashed color-mix(in oklch, var(--primary) 60%, transparent);
 	outline-offset: 3px;
 }
 .el-stage.el-pick-mode .el-stage-node:not([data-selected]):has(.el-stage-node:hover, .el-text-node:hover) {
@@ -35,12 +35,12 @@
 	position: absolute;
 	pointer-events: none;
 	z-index: 10;
-	background: var(--primary-skin);
+	background: var(--primary);
 	border-radius: 2px;
-	box-shadow: 0 0 0 1px color-mix(in oklch, var(--background) 80%, transparent), 0 0 0 3px color-mix(in oklch, var(--primary-skin) 25%, transparent);
+	box-shadow: 0 0 0 1px color-mix(in oklch, var(--background) 80%, transparent), 0 0 0 3px color-mix(in oklch, var(--primary) 25%, transparent);
 }
 .el-drop-indicator--inside {
 	background: transparent;
-	border: 2px dashed var(--primary-skin);
-	box-shadow: 0 0 0 4px color-mix(in oklch, var(--primary-skin) 8%, transparent) inset;
+	border: 2px dashed var(--primary);
+	box-shadow: 0 0 0 4px color-mix(in oklch, var(--primary) 8%, transparent) inset;
 }

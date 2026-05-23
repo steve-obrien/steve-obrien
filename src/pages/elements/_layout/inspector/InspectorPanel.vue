@@ -46,15 +46,15 @@ function onMove(dir) {
 	<div class="flex h-full flex-col">
 		<div class="flex items-center justify-between border-b border-border px-4 py-3">
 			<div>
-				<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Inspector</p>
+				<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Inspector</p>
 				<p class="text-sm font-medium text-foreground">Live properties</p>
 			</div>
 			<button
 				type="button"
 				class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ring-1 transition"
 				:class="ctx.pickMode
-					? 'bg-primary-skin text-primary ring-ring'
-					: 'bg-background text-secondary ring-border hover:bg-secondary-skin'"
+					? 'bg-primary text-primary-foreground ring-ring'
+					: 'bg-background text-muted-foreground ring-border hover:bg-secondary'"
 				:title="ctx.pickMode ? 'Click selects · turn off to interact' : 'Clicks pass through · turn on to select'"
 				@click="togglePick"
 			>
@@ -66,15 +66,15 @@ function onMove(dir) {
 		</div>
 
 		<div class="border-b border-border px-2 py-2">
-			<p class="px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Layers</p>
+			<p class="px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Layers</p>
 			<ul class="space-y-0.5">
 				<li v-for="{ node, depth } in nodes" :key="node.id">
 					<button
 						type="button"
 						class="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-xs transition"
 						:class="ctx.selectedId === node.id
-							? 'bg-primary-skin/10 text-foreground'
-							: 'text-secondary hover:bg-secondary-skin'"
+							? 'bg-primary/10 text-foreground'
+							: 'text-muted-foreground hover:bg-secondary'"
 						:style="{ paddingLeft: 8 + depth * 14 + 'px' }"
 						@click="select(node.id)"
 					>
@@ -91,7 +91,7 @@ function onMove(dir) {
 			<template v-if="selected">
 				<div class="mb-4 flex items-start justify-between gap-3">
 					<div>
-						<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Selected</p>
+						<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Selected</p>
 						<p class="text-base font-semibold tracking-tight text-foreground">{{ selected.label }}</p>
 					</div>
 				</div>
@@ -105,22 +105,22 @@ function onMove(dir) {
 						@update:model-value="(v) => setFieldValue(selected, f, v)"
 					/>
 				</div>
-				<p v-else class="rounded-lg border border-dashed border-border bg-secondary-skin/40 p-4 text-xs text-muted">
+				<p v-else class="rounded-lg border border-dashed border-border bg-secondary/40 p-4 text-xs text-muted-foreground">
 					This node has no editable properties.
 				</p>
 
 				<!-- Actions (builder only) -->
 				<div v-if="enableActions && !isRoot" class="mt-6 space-y-2 border-t border-border pt-4">
-					<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Actions</p>
+					<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Actions</p>
 					<div class="flex flex-wrap gap-1.5">
-						<button class="rounded-md bg-background px-2.5 py-1 text-xs font-medium text-secondary ring-1 ring-border hover:bg-secondary-skin" @click="onMove(-1)">↑ Up</button>
-						<button class="rounded-md bg-background px-2.5 py-1 text-xs font-medium text-secondary ring-1 ring-border hover:bg-secondary-skin" @click="onMove(1)">↓ Down</button>
-						<button class="rounded-md bg-background px-2.5 py-1 text-xs font-medium text-secondary ring-1 ring-border hover:bg-secondary-skin" @click="onDuplicate">⧉ Duplicate</button>
-						<button class="rounded-md bg-destructive-skin/10 px-2.5 py-1 text-xs font-medium text-destructive-skin ring-1 ring-destructive-skin/30 hover:bg-destructive-skin/15 dark:text-destructive-skin" @click="onDelete">✕ Delete</button>
+						<button class="rounded-md bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground ring-1 ring-border hover:bg-secondary" @click="onMove(-1)">↑ Up</button>
+						<button class="rounded-md bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground ring-1 ring-border hover:bg-secondary" @click="onMove(1)">↓ Down</button>
+						<button class="rounded-md bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground ring-1 ring-border hover:bg-secondary" @click="onDuplicate">⧉ Duplicate</button>
+						<button class="rounded-md bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive ring-1 ring-destructive/30 hover:bg-destructive/15 dark:text-destructive" @click="onDelete">✕ Delete</button>
 					</div>
 				</div>
 			</template>
-			<p v-else class="text-xs text-muted">Select a component to edit its properties.</p>
+			<p v-else class="text-xs text-muted-foreground">Select a component to edit its properties.</p>
 		</div>
 	</div>
 </template>

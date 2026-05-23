@@ -12,7 +12,7 @@ const open = ref(false);
 		title="Delete project?"
 		description="This will permanently delete the project and all of its data."
 	>
-		<p class="text-sm text-secondary">There is no undo. Type the project name to confirm.</p>
+		<p class="text-sm text-muted-foreground">There is no undo. Type the project name to confirm.</p>
 		<input
 			class="mt-3 h-10 w-full rounded-full border border-border bg-background px-4 text-sm"
 			placeholder="my-project"

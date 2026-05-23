@@ -22,14 +22,14 @@ onMounted(async () => { await import('../headless/accordion.js'); });
 		<element-accordion-item v-for="(item, i) in items" :key="i" class="block">
 			<button
 				slot="header"
-				class="flex w-full items-center justify-between px-5 py-4 text-left text-sm font-medium text-foreground outline-none transition hover:bg-secondary-skin focus-visible:bg-secondary-skin"
+				class="flex w-full items-center justify-between px-5 py-4 text-left text-sm font-medium text-foreground outline-none transition hover:bg-secondary focus-visible:bg-secondary"
 			>
 				<span>{{ item.title }}</span>
 				<svg viewBox="0 0 20 20" class="size-4 transition aria-expanded-rotate" fill="none">
 					<path d="M6 8l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
 				</svg>
 			</button>
-			<div slot="content" class="px-5 pb-5 text-sm leading-relaxed text-secondary">{{ item.content }}</div>
+			<div slot="content" class="px-5 pb-5 text-sm leading-relaxed text-muted-foreground">{{ item.content }}</div>
 		</element-accordion-item>
 	</element-accordion>
 </template>

@@ -3,21 +3,21 @@
 		type="button"
 		command="open"
 		commandfor="demo-dialog"
-		class="inline-flex h-10 items-center rounded-full bg-primary-skin px-4 text-sm font-medium text-primary hover:opacity-90"
+		class="inline-flex h-10 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground hover:opacity-90"
 	>
 		Open (commandfor)
 	</button>
 	<button
 		type="button"
 		id="dialog-open"
-		class="inline-flex h-10 items-center rounded-full bg-secondary-skin px-4 text-sm font-medium text-foreground ring-1 ring-border hover:bg-accent-skin"
+		class="inline-flex h-10 items-center rounded-full bg-secondary px-4 text-sm font-medium text-foreground ring-1 ring-border hover:bg-accent"
 	>
 		Open (script)
 	</button>
 	<button
 		type="button"
 		id="dialog-close"
-		class="inline-flex h-10 items-center rounded-full px-4 text-sm font-medium text-secondary hover:bg-secondary-skin hover:text-foreground"
+		class="inline-flex h-10 items-center rounded-full px-4 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
 	>
 		Close
 	</button>
@@ -26,7 +26,7 @@
 <element-dialog id="demo-dialog">
 	<div class="w-[min(92vw,24rem)] rounded-2xl border border-border bg-background p-6 shadow-2xl shadow-black/30 ring-1 ring-border/60">
 		<h2 class="text-lg font-semibold tracking-tight text-foreground">No trigger slot</h2>
-		<p class="mt-2 text-sm text-secondary">
+		<p class="mt-2 text-sm text-muted-foreground">
 			Open from a button elsewhere via <code class="text-foreground">commandfor</code> or
 			<code class="text-foreground">.open()</code> on the host.
 		</p>
@@ -34,7 +34,7 @@
 			<button
 				data-close
 				type="button"
-				class="inline-flex h-9 items-center rounded-full bg-primary-skin px-4 text-sm font-medium text-primary hover:opacity-90"
+				class="inline-flex h-9 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground hover:opacity-90"
 			>
 				Done
 			</button>

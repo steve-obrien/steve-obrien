@@ -7,13 +7,13 @@
 			class="h-10 w-full rounded-full border border-border bg-background px-4 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/40"
 		/>
 		<ul slot="list" class="z-50 max-h-[min(12rem,var(--el-floating-available-height))] overflow-auto rounded-2xl border border-border bg-background p-1 shadow-lg">
-			<li data-value="1" data-label="Ada Lovelace" data-email="ada@example.com" class="cursor-pointer rounded-xl px-3 py-2 text-sm text-foreground transition hover:bg-secondary-skin data-[active]:bg-secondary-skin aria-selected:bg-secondary-skin">Ada Lovelace</li>
-			<li data-value="2" data-label="Grace Hopper" data-email="grace@example.com" class="cursor-pointer rounded-xl px-3 py-2 text-sm text-foreground transition hover:bg-secondary-skin data-[active]:bg-secondary-skin aria-selected:bg-secondary-skin">Grace Hopper</li>
-			<li data-value="3" data-label="Katherine Johnson" data-email="katherine@example.com" class="cursor-pointer rounded-xl px-3 py-2 text-sm text-foreground transition hover:bg-secondary-skin data-[active]:bg-secondary-skin aria-selected:bg-secondary-skin">Katherine Johnson</li>
+			<li data-value="1" data-label="Ada Lovelace" data-email="ada@example.com" class="cursor-pointer rounded-xl px-3 py-2 text-sm text-foreground transition hover:bg-secondary data-[active]:bg-secondary aria-selected:bg-secondary">Ada Lovelace</li>
+			<li data-value="2" data-label="Grace Hopper" data-email="grace@example.com" class="cursor-pointer rounded-xl px-3 py-2 text-sm text-foreground transition hover:bg-secondary data-[active]:bg-secondary aria-selected:bg-secondary">Grace Hopper</li>
+			<li data-value="3" data-label="Katherine Johnson" data-email="katherine@example.com" class="cursor-pointer rounded-xl px-3 py-2 text-sm text-foreground transition hover:bg-secondary data-[active]:bg-secondary aria-selected:bg-secondary">Katherine Johnson</li>
 		</ul>
 	</element-autocomplete>
-	<p class="text-xs text-muted">Typed text: <code id="people-query" class="text-foreground">—</code></p>
-	<p class="text-xs text-muted">Selected: <code id="people-selected" class="text-foreground">—</code></p>
+	<p class="text-xs text-muted-foreground">Typed text: <code id="people-query" class="text-foreground">—</code></p>
+	<p class="text-xs text-muted-foreground">Selected: <code id="people-selected" class="text-foreground">—</code></p>
 </div>
 
 <script type="module">

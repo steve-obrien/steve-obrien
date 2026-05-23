@@ -64,7 +64,7 @@ const valueOf = (option) => String(option && typeof option === 'object' ? (optio
 			:key="valueOf(option) || index"
 			role="option"
 			:data-value="valueOf(option)"
-			class="rounded-xl px-3 py-2 text-left text-sm text-foreground outline-none transition hover:bg-secondary-skin focus:bg-secondary-skin aria-selected:bg-primary-skin aria-selected:text-primary"
+			class="rounded-xl px-3 py-2 text-left text-sm text-foreground outline-none transition hover:bg-secondary focus:bg-secondary aria-selected:bg-primary aria-selected:text-primary-foreground"
 		>
 			<slot name="option" :option="option" :index="index">{{ labelOf(option) }}</slot>
 		</button>

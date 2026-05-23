@@ -17,6 +17,8 @@ export { default as ElToastStack } from './ElToastStack.vue';
 export { default as ElToastItem } from './ElToastItem.vue';
 export { default as ElCommandPalette } from './ElCommandPalette.vue';
 export { useToasts } from './useToasts.js';
+// Visual primitives
+export { default as ElCard } from './ElCard.vue';
 // Form primitives
 export { default as ElField } from './ElField.vue';
 export { default as ElTextInput } from './ElTextInput.vue';

@@ -29,7 +29,7 @@ const doc = ElPopover.__doc;
 					description="Edit props in the inspector — the live panel and source/data tabs stay in sync."
 				>
 					<template #trigger>Quick facts</template>
-					<p class="text-sm text-secondary">Popover body content.</p>
+					<p class="text-sm text-muted-foreground">Popover body content.</p>
 				</Playground>
 			</DocSection>
 

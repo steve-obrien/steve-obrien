@@ -28,6 +28,12 @@ export const sideNavLinks = [
 		],
 	},
 	{
+		label: 'Visual',
+		items: [
+			{ to: '/elements/visual/card', label: 'Card', tag: 'New' },
+		],
+	},
+	{
 		label: 'Forms',
 		items: [
 			{ to: '/elements/components/checkbox', label: 'Checkbox', tag: 'New' },

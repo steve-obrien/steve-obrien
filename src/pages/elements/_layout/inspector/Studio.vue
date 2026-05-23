@@ -243,14 +243,14 @@ const tabs = [
 
 <template>
 	<div class="el-studio flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
-		<div class="flex shrink-0 items-center justify-between border-b border-border bg-secondary-skin/40 px-4 py-2">
+		<div class="flex shrink-0 items-center justify-between border-b border-border bg-secondary/40 px-4 py-2">
 			<div class="flex min-w-0 items-center gap-3">
-				<p class="truncate text-xs font-semibold uppercase tracking-[0.18em] text-muted">{{ title }}</p>
-				<span v-if="state.dragEntry" class="shrink-0 rounded-full bg-primary-skin/10 px-2 py-0.5 text-[10px] font-medium text-foreground">drag onto the stage</span>
+				<p class="truncate text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{{ title }}</p>
+				<span v-if="state.dragEntry" class="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-foreground">drag onto the stage</span>
 			</div>
 			<button
 				type="button"
-				class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium text-secondary ring-1 ring-border hover:bg-background hover:text-foreground"
+				class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium text-muted-foreground ring-1 ring-border hover:bg-background hover:text-foreground"
 				@click="reset"
 			>Reset</button>
 		</div>
@@ -268,7 +268,7 @@ const tabs = [
 						<!-- Stage -->
 						<div
 							ref="stageEl"
-							class="el-stage relative min-h-[280px] overflow-auto bg-gradient-to-br from-secondary-skin/40 via-background to-secondary-skin/30 p-10 xl:min-h-0"
+							class="el-stage relative min-h-[280px] overflow-auto bg-gradient-to-br from-secondary/40 via-background to-secondary/30 p-10 xl:min-h-0"
 							:class="state.pickMode && 'el-pick-mode'"
 							@dragover="onDragOver"
 							@dragleave="onDragLeave"
@@ -276,8 +276,8 @@ const tabs = [
 						>
 							<div v-if="!tree.children?.length" class="pointer-events-none absolute inset-6 grid place-items-center rounded-2xl border-2 border-dashed border-border text-center">
 								<div>
-									<p class="text-sm font-medium text-secondary">Drop components here</p>
-									<p class="mt-1 text-xs text-muted">Drag from the palette on the left. Click a component to inspect.</p>
+									<p class="text-sm font-medium text-muted-foreground">Drop components here</p>
+									<p class="mt-1 text-xs text-muted-foreground">Drag from the palette on the left. Click a component to inspect.</p>
 								</div>
 							</div>
 
@@ -307,10 +307,10 @@ const tabs = [
 				<template #data>
 					<div class="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
 						<div class="flex items-center justify-between">
-							<p class="text-sm text-secondary">Edit the JSON below — the stage updates as soon as the structure parses cleanly.</p>
+							<p class="text-sm text-muted-foreground">Edit the JSON below — the stage updates as soon as the structure parses cleanly.</p>
 							<button
 								type="button"
-								class="rounded-md px-2.5 py-1 text-xs font-medium text-secondary ring-1 ring-border hover:bg-secondary-skin hover:text-foreground"
+								class="rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground ring-1 ring-border hover:bg-secondary hover:text-foreground"
 								@click="copy(jsonText, 'data')"
 							>{{ copied === 'data' ? 'Copied' : 'Copy JSON' }}</button>
 						</div>
@@ -323,10 +323,10 @@ const tabs = [
 							@focus="jsonFocused = true"
 							@blur="jsonFocused = false"
 						></textarea>
-						<p v-if="jsonError" class="rounded-lg border border-destructive-skin/40 bg-destructive-skin/10 px-3 py-2 text-xs font-mono text-destructive-skin dark:text-destructive-skin">
+						<p v-if="jsonError" class="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs font-mono text-destructive dark:text-destructive">
 							{{ jsonError }}
 						</p>
-						<p v-else class="text-xs text-muted">Two-way: changes here update the stage, edits in the inspector flow back into the JSON.</p>
+						<p v-else class="text-xs text-muted-foreground">Two-way: changes here update the stage, edits in the inspector flow back into the JSON.</p>
 					</div>
 				</template>
 
@@ -334,10 +334,10 @@ const tabs = [
 				<template #html>
 					<div class="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
 						<div class="flex items-center justify-between">
-							<p class="text-sm text-secondary">A copy-paste ready snapshot of the rendered stage — strip the inspector chrome, keep your classes.</p>
+							<p class="text-sm text-muted-foreground">A copy-paste ready snapshot of the rendered stage — strip the inspector chrome, keep your classes.</p>
 							<button
 								type="button"
-								class="rounded-md px-2.5 py-1 text-xs font-medium text-secondary ring-1 ring-border hover:bg-secondary-skin hover:text-foreground"
+								class="rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground ring-1 ring-border hover:bg-secondary hover:text-foreground"
 								@click="copy(htmlOutput, 'html')"
 							>{{ copied === 'html' ? 'Copied' : 'Copy HTML' }}</button>
 						</div>
@@ -348,20 +348,20 @@ const tabs = [
 				<!-- ------------------------------------------------------------ Renderer -->
 				<template #renderer>
 					<div class="flex min-h-0 flex-1 flex-col gap-4 overflow-auto">
-						<div class="rounded-2xl border border-border bg-gradient-to-br from-secondary-skin/40 via-background to-secondary-skin/30 p-10">
+						<div class="rounded-2xl border border-border bg-gradient-to-br from-secondary/40 via-background to-secondary/30 p-10">
 							<div class="mb-4 flex items-center gap-2">
-								<span class="inline-flex h-1.5 w-1.5 rounded-full bg-success-skin"></span>
-								<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Rehydrated via &lt;ElRenderer&gt;</p>
+								<span class="inline-flex h-1.5 w-1.5 rounded-full bg-success"></span>
+								<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Rehydrated via &lt;ElRenderer&gt;</p>
 							</div>
 							<div class="flex items-center justify-center">
 								<ElRenderer :spec="serializedSpec" />
 							</div>
 						</div>
-						<details class="rounded-2xl border border-border bg-secondary-skin/40 p-4 open:bg-secondary-skin/60">
+						<details class="rounded-2xl border border-border bg-secondary/40 p-4 open:bg-secondary/60">
 							<summary class="cursor-pointer text-sm font-medium text-foreground">Spec passed to ElRenderer</summary>
 							<pre class="mt-3 overflow-auto rounded-xl bg-[#0b1020] p-4 font-mono text-[11.5px] leading-relaxed text-white/90"><code>{{ JSON.stringify(serializedSpec, null, 2) }}</code></pre>
 						</details>
-						<p class="text-xs text-muted">This is the same data you'd load from a database to rebuild the section anywhere.</p>
+						<p class="text-xs text-muted-foreground">This is the same data you'd load from a database to rebuild the section anywhere.</p>
 					</div>
 				</template>
 			</ElTabs>

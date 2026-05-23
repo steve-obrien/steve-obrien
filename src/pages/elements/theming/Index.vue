@@ -7,72 +7,72 @@ import CodeBlock from '../_layout/CodeBlock.vue';
 const tokenPairs = [
 	{
 		name: 'Background',
-		skin: '--background',
+		surface: '--background',
 		foreground: '--foreground',
 		utilities: 'bg-background text-foreground',
 		use: 'The app canvas and ordinary page text.',
 	},
 	{
 		name: 'Card',
-		skin: '--card-skin',
-		foreground: '--card',
-		utilities: 'bg-card-skin text-card',
+		surface: '--card',
+		foreground: '--card-foreground',
+		utilities: 'bg-card text-card-foreground',
 		use: 'Raised or grouped content, panels, toast bodies, and dialogs.',
 	},
 	{
 		name: 'Popover',
-		skin: '--popover-skin',
-		foreground: '--popover',
-		utilities: 'bg-popover-skin text-popover',
+		surface: '--popover',
+		foreground: '--popover-foreground',
+		utilities: 'bg-popover text-popover-foreground',
 		use: 'Floating menus, combobox panels, dropdowns, and command palettes.',
 	},
 	{
 		name: 'Primary',
-		skin: '--primary-skin',
-		foreground: '--primary',
-		utilities: 'bg-primary-skin text-primary',
+		surface: '--primary',
+		foreground: '--primary-foreground',
+		utilities: 'bg-primary text-primary-foreground',
 		use: 'Primary actions and high emphasis selected states.',
 	},
 	{
 		name: 'Secondary',
-		skin: '--secondary-skin',
-		foreground: '--secondary',
-		utilities: 'bg-secondary-skin text-secondary',
+		surface: '--secondary',
+		foreground: '--secondary-foreground',
+		utilities: 'bg-secondary text-secondary-foreground',
 		use: 'Quiet buttons, subtle panels, inactive controls, and helper UI.',
 	},
 	{
 		name: 'Muted',
-		skin: '--muted-skin',
-		foreground: '--muted',
-		utilities: 'bg-muted-skin text-muted',
+		surface: '--muted',
+		foreground: '--muted-foreground',
+		utilities: 'bg-muted text-muted-foreground',
 		use: 'Low-emphasis backgrounds and supporting copy.',
 	},
 	{
 		name: 'Accent',
-		skin: '--accent-skin',
-		foreground: '--accent',
-		utilities: 'bg-accent-skin text-accent',
+		surface: '--accent',
+		foreground: '--accent-foreground',
+		utilities: 'bg-accent text-accent-foreground',
 		use: 'Hover, focus, active rows, and soft selected states.',
 	},
 	{
 		name: 'Destructive',
-		skin: '--destructive-skin',
-		foreground: '--destructive',
-		utilities: 'bg-destructive-skin text-destructive',
+		surface: '--destructive',
+		foreground: '--destructive-foreground',
+		utilities: 'bg-destructive text-destructive-foreground',
 		use: 'Delete, remove, error, and irreversible actions.',
 	},
 	{
 		name: 'Success',
-		skin: '--success-skin',
-		foreground: '--success',
-		utilities: 'bg-success-skin text-success',
+		surface: '--success',
+		foreground: '--success-foreground',
+		utilities: 'bg-success text-success-foreground',
 		use: 'Saved, complete, connected, and positive confirmation states.',
 	},
 	{
 		name: 'Warning',
-		skin: '--warning-skin',
-		foreground: '--warning',
-		utilities: 'bg-warning-skin text-warning',
+		surface: '--warning',
+		foreground: '--warning-foreground',
+		utilities: 'bg-warning text-warning-foreground',
 		use: 'Attention, pending review, expiring, and recoverable risk states.',
 	},
 ];
@@ -100,46 +100,46 @@ const utilityTokens = [
 
 const decisionRows = [
 	['Page background', 'bg-background text-foreground', 'Use once at layout level.'],
-	['Dialog, drawer, toast, card', 'bg-card-skin text-card', 'Use for contained surfaces that are not floating menus.'],
-	['Popover, dropdown, combobox menu', 'bg-popover-skin text-popover', 'Use for layers attached to a trigger.'],
-	['Primary button', 'bg-primary-skin text-primary', 'The flipped pair: skin paints, base token reads on top.'],
-	['Secondary button', 'bg-secondary-skin text-foreground', 'Quiet control with normal readable text.'],
-	['Menu item hover', 'hover:bg-accent-skin hover:text-accent', 'Use accent for temporary interaction states.'],
-	['Helper copy', 'text-muted', 'Use for hints, captions, placeholders, and metadata.'],
-	['Danger action', 'text-destructive-skin or bg-destructive-skin text-destructive', 'Text-only for subtle danger, filled for destructive confirmation.'],
-	['Success status', 'bg-success-skin text-success', 'Use for positive, completed, or saved states.'],
-	['Warning status', 'bg-warning-skin text-warning', 'Use when attention is needed but the action is recoverable.'],
+	['Dialog, drawer, toast, card', 'bg-card text-card-foreground', 'Use for contained surfaces that are not floating menus.'],
+	['Popover, dropdown, combobox menu', 'bg-popover text-popover-foreground', 'Use for layers attached to a trigger.'],
+	['Primary button', 'bg-primary text-primary-foreground', 'Use the shadcn pair: base token paints, foreground token reads on top.'],
+	['Secondary button', 'bg-secondary text-secondary-foreground', 'Quiet control with a paired readable foreground.'],
+	['Menu item hover', 'hover:bg-accent hover:text-accent-foreground', 'Use accent for temporary interaction states.'],
+	['Helper copy', 'text-muted-foreground', 'Use for hints, captions, placeholders, and metadata.'],
+	['Danger action', 'text-destructive or bg-destructive text-destructive-foreground', 'Text-only for subtle danger, filled for destructive confirmation.'],
+	['Success status', 'bg-success text-success-foreground', 'Use for positive, completed, or saved states.'],
+	['Warning status', 'bg-warning text-warning-foreground', 'Use when attention is needed but the action is recoverable.'],
 	['Focus state', 'focus-visible:ring-ring', 'Use for keyboard focus, usually with a transparent offset.'],
 ];
 
 const themeCode = `:root {
 \t--background: oklch(1 0 0);
 \t--foreground: oklch(0.145 0 0);
-\t--primary-skin: oklch(0.205 0 0);
-\t--primary: oklch(0.985 0 0);
-\t--success-skin: oklch(0.627 0.194 149.214);
-\t--success: oklch(0.985 0 0);
-\t--warning-skin: oklch(0.84 0.16 84);
-\t--warning: oklch(0.28 0.07 46);
+\t--primary: oklch(0.205 0 0);
+\t--primary-foreground: oklch(0.985 0 0);
+\t--success: oklch(0.627 0.194 149.214);
+\t--success-foreground: oklch(0.985 0 0);
+\t--warning: oklch(0.84 0.16 84);
+\t--warning-foreground: oklch(0.28 0.07 46);
 }`;
 
-const usageCode = `<button class="rounded-full bg-primary-skin px-4 py-2 text-primary">
+const usageCode = `<button class="rounded-full bg-primary px-4 py-2 text-primary-foreground">
 \tSave changes
 </button>
 
-<div class="rounded-2xl border border-border bg-card-skin p-4 text-card">
-\t<p class="text-sm text-secondary">Use secondary text inside a card.</p>
+<div class="rounded-2xl border border-border bg-card p-4 text-card-foreground">
+\t<p class="text-sm text-muted-foreground">Use secondary text inside a card.</p>
 </div>
 
-<div class="rounded-2xl bg-popover-skin p-2 text-popover shadow-2xl">
-\t<button class="rounded-xl px-3 py-2 hover:bg-accent-skin hover:text-accent">
+<div class="rounded-2xl bg-popover p-2 text-popover-foreground shadow-2xl">
+\t<button class="rounded-xl px-3 py-2 hover:bg-accent hover:text-accent-foreground">
 \t\tOpen project
 \t</button>
 </div>`;
 
 function swatchStyle(pair) {
 	return {
-		background: `var(${pair.skin})`,
+		background: `var(${pair.surface})`,
 		color: `var(${pair.foreground})`,
 	};
 }
@@ -155,43 +155,44 @@ function utilitySwatchStyle(token) {
 	<ElementsLayout>
 		<DocPage
 			name="Theming"
-			tagline="Elements use css variable design tokens, the surface colour carries the -skin suffix and the readable foreground keeps the plain token name you'd expect from tailwindcss."
+			tagline="Elements use shadcn-style css variable design tokens: base tokens paint surfaces, and matching -foreground tokens keep text readable."
 			tag="style.css"
 			eyebrow="Foundation"
 		>
-			<DocSection eyebrow="Model" title="Skin paints, token reads">
+			<DocSection eyebrow="Model" title="Surface and foreground pairs">
 				<div class="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-					<div class="rounded-3xl border border-border bg-card-skin p-6 text-card shadow-xl shadow-black/5">
-						<p class="text-sm leading-6 text-secondary">
-							Use <code class="rounded bg-secondary-skin px-1.5 py-0.5 font-mono text-xs">*-skin</code>
-							when you are painting a surface. Use the plain token when text or icons need to sit on that surface.
+					<div class="rounded-3xl border border-border bg-card p-6 text-card-foreground shadow-xl shadow-black/5">
+						<p class="text-sm leading-6 text-muted-foreground">
+							Use the base token when you are painting a surface. Use the matching
+							<code class="rounded bg-secondary px-1.5 py-0.5 font-mono text-xs">*-foreground</code>
+							token when text or icons need to sit on that surface.
 						</p>
 						<div class="mt-6 grid gap-3 sm:grid-cols-2">
-							<div class="rounded-2xl bg-primary-skin p-4 text-primary">
+							<div class="rounded-2xl bg-primary p-4 text-primary-foreground">
 								<p class="text-xs font-semibold uppercase tracking-[0.16em] opacity-75">Filled action</p>
-								<p class="mt-2 text-lg font-semibold">bg-primary-skin</p>
-								<p class="mt-1 text-sm opacity-80">text-primary</p>
+								<p class="mt-2 text-lg font-semibold">bg-primary</p>
+								<p class="mt-1 text-sm opacity-80">text-primary-foreground</p>
 							</div>
-							<div class="rounded-2xl border border-border bg-secondary-skin p-4 text-foreground">
-								<p class="text-xs font-semibold uppercase tracking-[0.16em] text-muted">Quiet surface</p>
-								<p class="mt-2 text-lg font-semibold">bg-secondary-skin</p>
-								<p class="mt-1 text-sm text-secondary">text-secondary or text-foreground</p>
+							<div class="rounded-2xl border border-border bg-secondary p-4 text-foreground">
+								<p class="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Quiet surface</p>
+								<p class="mt-2 text-lg font-semibold">bg-secondary</p>
+								<p class="mt-1 text-sm text-muted-foreground">text-secondary-foreground or text-foreground</p>
 							</div>
 						</div>
 					</div>
-					<div class="rounded-3xl border border-border bg-secondary-skin/50 p-6">
-						<p class="text-sm font-semibold text-foreground">Mapping from shadcn</p>
+					<div class="rounded-3xl border border-border bg-secondary/50 p-6">
+						<p class="text-sm font-semibold text-foreground">Same convention as shadcn</p>
 						<dl class="mt-4 space-y-3 text-sm">
 							<div class="rounded-2xl border border-border bg-background p-3">
-								<dt class="font-mono text-xs text-muted">shadcn --primary</dt>
-								<dd class="mt-1 font-mono text-foreground">Elements --primary-skin</dd>
-							</div>
-							<div class="rounded-2xl border border-border bg-background p-3">
-								<dt class="font-mono text-xs text-muted">shadcn --primary-foreground</dt>
+								<dt class="font-mono text-xs text-muted-foreground">shadcn --primary</dt>
 								<dd class="mt-1 font-mono text-foreground">Elements --primary</dd>
 							</div>
 							<div class="rounded-2xl border border-border bg-background p-3">
-								<dt class="font-mono text-xs text-muted">Same pattern</dt>
+								<dt class="font-mono text-xs text-muted-foreground">shadcn --primary-foreground</dt>
+								<dd class="mt-1 font-mono text-foreground">Elements --primary-foreground</dd>
+							</div>
+							<div class="rounded-2xl border border-border bg-background p-3">
+								<dt class="font-mono text-xs text-muted-foreground">Added pairs</dt>
 								<dd class="mt-1 font-mono text-foreground">success, warning, destructive, card, popover</dd>
 							</div>
 						</dl>
@@ -201,48 +202,48 @@ function utilitySwatchStyle(token) {
 
 			<DocSection eyebrow="At a glance" title="Read the theme as a product surface">
 				<div class="overflow-hidden rounded-3xl border border-border bg-background shadow-2xl shadow-black/5">
-					<div class="border-b border-border bg-card-skin px-5 py-4">
+					<div class="border-b border-border bg-card px-5 py-4">
 						<div class="flex flex-wrap items-center justify-between gap-3">
 							<div>
 								<p class="text-sm font-semibold text-foreground">Project dashboard</p>
-								<p class="text-xs text-muted">Example composition using only semantic tokens.</p>
+								<p class="text-xs text-muted-foreground">Example composition using only semantic tokens.</p>
 							</div>
 							<div class="flex items-center gap-2">
-								<span class="rounded-full bg-success-skin px-2.5 py-1 text-xs font-medium text-success">Saved</span>
-								<button class="rounded-full bg-primary-skin px-4 py-2 text-sm font-medium text-primary shadow-sm">Publish</button>
+								<span class="rounded-full bg-success px-2.5 py-1 text-xs font-medium text-success-foreground">Saved</span>
+								<button class="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm">Publish</button>
 							</div>
 						</div>
 					</div>
 					<div class="grid gap-4 p-5 lg:grid-cols-[1fr_18rem]">
 						<div class="space-y-4">
-							<div class="rounded-2xl border border-border bg-card-skin p-4 text-card">
+							<div class="rounded-2xl border border-border bg-card p-4 text-card-foreground">
 								<div class="flex items-start justify-between gap-4">
 									<div>
-										<p class="text-xs font-semibold uppercase tracking-[0.16em] text-muted">Revenue</p>
+										<p class="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Revenue</p>
 										<p class="mt-2 text-3xl font-semibold tracking-tight">GBP 42,860</p>
 									</div>
-									<span class="rounded-full bg-success-skin/15 px-2.5 py-1 text-xs font-medium text-success-skin">+12.4%</span>
+									<span class="rounded-full bg-success/15 px-2.5 py-1 text-xs font-medium text-success">+12.4%</span>
 								</div>
 								<div class="mt-5 grid grid-cols-6 gap-1">
-									<span v-for="height in [32, 48, 38, 64, 52, 78]" :key="height" class="rounded-t-lg bg-primary-skin/80" :style="{ height: `${height}px` }"></span>
+									<span v-for="height in [32, 48, 38, 64, 52, 78]" :key="height" class="rounded-t-lg bg-primary/80" :style="{ height: `${height}px` }"></span>
 								</div>
 							</div>
 							<div class="grid gap-4 sm:grid-cols-2">
-								<div class="rounded-2xl border border-border bg-secondary-skin/70 p-4">
+								<div class="rounded-2xl border border-border bg-secondary/70 p-4">
 									<p class="text-sm font-medium text-foreground">Quiet panel</p>
-									<p class="mt-1 text-sm text-secondary">Secondary skins group nearby controls without demanding attention.</p>
+									<p class="mt-1 text-sm text-muted-foreground">Secondary surfaces group nearby controls without demanding attention.</p>
 								</div>
-								<div class="rounded-2xl border border-warning-skin/40 bg-warning-skin/15 p-4 text-warning">
+								<div class="rounded-2xl border border-warning/40 bg-warning/15 p-4 text-warning">
 									<p class="text-sm font-semibold">Review needed</p>
 									<p class="mt-1 text-sm opacity-80">Warning tokens should feel noticeable, not alarming.</p>
 								</div>
 							</div>
 						</div>
-						<div class="space-y-3 rounded-2xl border border-border bg-popover-skin p-3 text-popover shadow-xl shadow-black/10">
-							<p class="px-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted">Command menu</p>
-							<button class="block w-full rounded-xl bg-accent-skin px-3 py-2 text-left text-sm font-medium text-accent">Open project</button>
-							<button class="block w-full rounded-xl px-3 py-2 text-left text-sm text-secondary hover:bg-accent-skin hover:text-accent">Invite teammate</button>
-							<button class="block w-full rounded-xl px-3 py-2 text-left text-sm text-destructive-skin hover:bg-destructive-skin hover:text-destructive">Delete project</button>
+						<div class="space-y-3 rounded-2xl border border-border bg-popover p-3 text-popover-foreground shadow-xl shadow-black/10">
+							<p class="px-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Command menu</p>
+							<button class="block w-full rounded-xl bg-accent px-3 py-2 text-left text-sm font-medium text-accent-foreground">Open project</button>
+							<button class="block w-full rounded-xl px-3 py-2 text-left text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground">Invite teammate</button>
+							<button class="block w-full rounded-xl px-3 py-2 text-left text-sm text-destructive hover:bg-destructive hover:text-destructive-foreground">Delete project</button>
 						</div>
 					</div>
 				</div>
@@ -253,7 +254,7 @@ function utilitySwatchStyle(token) {
 					<article
 						v-for="pair in tokenPairs"
 						:key="pair.name"
-						class="overflow-hidden rounded-2xl border border-border bg-card-skin text-card"
+						class="overflow-hidden rounded-2xl border border-border bg-card text-card-foreground"
 					>
 						<div class="flex min-h-28 items-end p-4" :style="swatchStyle(pair)">
 							<div>
@@ -262,14 +263,14 @@ function utilitySwatchStyle(token) {
 							</div>
 						</div>
 						<div class="space-y-3 p-4">
-							<p class="text-sm text-secondary">{{ pair.use }}</p>
+							<p class="text-sm text-muted-foreground">{{ pair.use }}</p>
 							<div class="grid gap-2 text-xs">
 								<div class="flex items-center justify-between gap-3">
-									<span class="text-muted">Surface</span>
-									<code class="font-mono text-foreground">{{ pair.skin }}</code>
+									<span class="text-muted-foreground">Surface</span>
+									<code class="font-mono text-foreground">{{ pair.surface }}</code>
 								</div>
 								<div class="flex items-center justify-between gap-3">
-									<span class="text-muted">Foreground</span>
+									<span class="text-muted-foreground">Foreground</span>
 									<code class="font-mono text-foreground">{{ pair.foreground }}</code>
 								</div>
 							</div>
@@ -281,17 +282,17 @@ function utilitySwatchStyle(token) {
 					<article
 						v-for="token in utilityTokens"
 						:key="token.name"
-						class="rounded-2xl border border-border bg-card-skin p-4 text-card"
+						class="rounded-2xl border border-border bg-card p-4 text-card-foreground"
 					>
 						<div class="flex items-center gap-3">
 							<span class="size-10 rounded-xl ring-1 ring-border" :style="utilitySwatchStyle(token)"></span>
 							<div>
 								<p class="font-semibold">{{ token.name }}</p>
-								<code class="font-mono text-xs text-muted">{{ token.token }}</code>
+								<code class="font-mono text-xs text-muted-foreground">{{ token.token }}</code>
 							</div>
 						</div>
-						<p class="mt-3 text-sm text-secondary">{{ token.use }}</p>
-						<p class="mt-3 rounded-lg bg-secondary-skin px-2 py-1 font-mono text-xs text-secondary">{{ token.utility }}</p>
+						<p class="mt-3 text-sm text-muted-foreground">{{ token.use }}</p>
+						<p class="mt-3 rounded-lg bg-secondary px-2 py-1 font-mono text-xs text-muted-foreground">{{ token.utility }}</p>
 					</article>
 				</div>
 			</DocSection>
@@ -299,7 +300,7 @@ function utilitySwatchStyle(token) {
 			<DocSection eyebrow="Decision guide" title="Which token should I use?">
 				<div class="overflow-x-auto overflow-y-hidden rounded-2xl border border-border">
 					<table class="w-full min-w-[42rem] text-left text-sm">
-						<thead class="bg-secondary-skin text-xs uppercase tracking-[0.14em] text-muted">
+						<thead class="bg-secondary text-xs uppercase tracking-[0.14em] text-muted-foreground">
 							<tr>
 								<th class="px-4 py-3 font-semibold">Intent</th>
 								<th class="px-4 py-3 font-semibold">Utility</th>
@@ -309,8 +310,8 @@ function utilitySwatchStyle(token) {
 						<tbody class="divide-y divide-border bg-background">
 							<tr v-for="row in decisionRows" :key="row[0]">
 								<td class="px-4 py-3 font-medium text-foreground">{{ row[0] }}</td>
-								<td class="px-4 py-3"><code class="font-mono text-xs text-secondary">{{ row[1] }}</code></td>
-								<td class="px-4 py-3 text-secondary">{{ row[2] }}</td>
+								<td class="px-4 py-3"><code class="font-mono text-xs text-muted-foreground">{{ row[1] }}</code></td>
+								<td class="px-4 py-3 text-muted-foreground">{{ row[2] }}</td>
 							</tr>
 						</tbody>
 					</table>

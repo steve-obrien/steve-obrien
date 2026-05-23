@@ -2,28 +2,28 @@
 	<button
 		type="button"
 		id="drawer-open"
-		class="inline-flex h-10 items-center rounded-full bg-primary-skin px-4 text-sm font-medium text-primary transition hover:opacity-90"
+		class="inline-flex h-10 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90"
 	>
 		Open
 	</button>
 	<button
 		type="button"
 		id="drawer-close"
-		class="inline-flex h-10 items-center rounded-full bg-secondary-skin px-4 text-sm font-medium text-foreground ring-1 ring-border transition hover:bg-accent-skin"
+		class="inline-flex h-10 items-center rounded-full bg-secondary px-4 text-sm font-medium text-foreground ring-1 ring-border transition hover:bg-accent"
 	>
 		Close
 	</button>
 	<button
 		type="button"
 		id="drawer-toggle"
-		class="inline-flex h-10 items-center rounded-full px-4 text-sm font-medium text-secondary transition hover:bg-secondary-skin hover:text-foreground"
+		class="inline-flex h-10 items-center rounded-full px-4 text-sm font-medium text-muted-foreground transition hover:bg-secondary hover:text-foreground"
 	>
 		Toggle
 	</button>
 </div>
 
 <element-drawer id="demo-drawer" side="right">
-	<div class="bg-card-skin h-full p-4 text-sm text-secondary dark:bg-card-skin">
+	<div class="bg-card h-full p-4 text-sm text-muted-foreground dark:bg-card">
 		<p class="font-semibold text-foreground">Via JavaScript</p>
 		<p class="mt-2">Call <code>show()</code>, <code>hide()</code>, or <code>toggle()</code> on the element — or set the <code>open</code> attribute.</p>
 		<button type="button" data-close class="mt-4 text-sm font-medium text-foreground hover:underline">Dismiss</button>

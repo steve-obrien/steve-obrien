@@ -312,7 +312,7 @@ const entries = [
 		icon: '¶',
 		accepts: 'children',
 		defaults: {
-			props: { class: 'text-sm leading-relaxed text-secondary' },
+			props: { class: 'text-sm leading-relaxed text-muted-foreground' },
 			children: [{ id: null, text: 'Body copy lives here.' }],
 		},
 	},
@@ -336,7 +336,7 @@ const entries = [
 		icon: '▣',
 		accepts: 'children',
 		defaults: {
-			props: { class: 'inline-flex rounded-full bg-primary-skin px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary' },
+			props: { class: 'inline-flex rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground' },
 			children: [{ id: null, text: 'New' }],
 		},
 	},

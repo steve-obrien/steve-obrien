@@ -22,7 +22,7 @@ const initialSpec = {
 					id: 'badge',
 					label: 'Badge',
 					component: 'span',
-					props: { class: 'inline-flex w-fit rounded-full bg-primary-skin px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary' },
+					props: { class: 'inline-flex w-fit rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground' },
 					children: [{ text: 'Lifetime' }],
 				},
 				{
@@ -36,7 +36,7 @@ const initialSpec = {
 							id: 'title-em',
 							label: 'Emphasised span',
 							component: 'span',
-							props: { class: 'italic text-foreground underline decoration-primary-skin/30 underline-offset-4' },
+							props: { class: 'italic text-foreground underline decoration-primary/30 underline-offset-4' },
 							children: [{ text: 'Elements' }],
 						},
 					],
@@ -45,7 +45,7 @@ const initialSpec = {
 					id: 'price',
 					label: 'Price',
 					component: 'p',
-					props: { class: 'text-sm text-secondary' },
+					props: { class: 'text-sm text-muted-foreground' },
 					children: [{ text: '$149 once · forever yours' }],
 				},
 				{

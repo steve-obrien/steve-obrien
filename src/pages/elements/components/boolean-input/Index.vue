@@ -57,7 +57,7 @@ const props = [
 							label="Notifications"
 							description="Send a weekly digest of new components."
 						/>
-						<p class="mt-3 text-xs text-muted">Value: <code class="text-foreground">{{ enabled }}</code></p>
+						<p class="mt-3 text-xs text-muted-foreground">Value: <code class="text-foreground">{{ enabled }}</code></p>
 					</div>
 				</Demo>
 			</DocSection>

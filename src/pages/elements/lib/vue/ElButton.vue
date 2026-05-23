@@ -45,12 +45,12 @@ const props = defineProps({
 		_edit: { description: 'Disable the button — non-interactive, lowered opacity.' },
 	},
 });
-const active = 'select-none active:data-disabled:bg-secondary-skin active:shadow-[inset_0_1px_3px_rgba(0,0,0,0.2)] active:border-t-border active:data-disabled:shadow-none active:data-disabled:border-t-border focus-visible:outline-2 focus-visible:outline-ring focus-visible:-outline-offset-1 data-disabled:text-muted';
+const active = 'select-none active:data-disabled:bg-secondary active:shadow-[inset_0_1px_3px_rgba(0,0,0,0.2)] active:border-t-border active:data-disabled:shadow-none active:data-disabled:border-t-border focus-visible:outline-2 focus-visible:outline-ring focus-visible:-outline-offset-1 data-disabled:text-muted-foreground';
 const variants = {
-	primary: 'bg-primary-skin text-primary hover:opacity-90 ring-1 ring-ring/10',
-	secondary: 'bg-secondary-skin text-foreground ring-1 ring-border hover:bg-accent-skin',
-	ghost: 'text-foreground hover:bg-secondary-skin',
-	danger: 'bg-secondary-skin ring-1 ring-border hover:bg-accent-skin text-destructive-skin',
+	primary: 'bg-primary text-primary-foreground hover:opacity-90 ring-1 ring-ring/10',
+	secondary: 'bg-secondary text-secondary-foreground ring-1 ring-border hover:bg-accent hover:text-accent-foreground',
+	ghost: 'text-foreground hover:bg-secondary hover:text-secondary-foreground',
+	danger: 'bg-secondary ring-1 ring-border hover:bg-accent text-destructive',
 };
 const sizes = {
 	sm: 'h-8 px-3 text-xs',

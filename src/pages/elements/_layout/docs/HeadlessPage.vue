@@ -27,9 +27,9 @@ const doc = computed(() => props.element?.__doc || {});
 
 			<DocSection eyebrow="Usage" title="Plain HTML">
 				<CodeBlock v-if="doc.example" :code="doc.example" lang="html" />
-				<p class="mt-3 text-sm text-secondary">
+				<p class="mt-3 text-sm text-muted-foreground">
 					Register every <code>&lt;element-*&gt;</code> in one import:
-					<code class="rounded bg-secondary-skin px-1 py-0.5 ring-1 ring-border">import '@elements/headless'</code>.
+					<code class="rounded bg-secondary px-1 py-0.5 ring-1 ring-border">import '@elements/headless'</code>.
 				</p>
 			</DocSection>
 

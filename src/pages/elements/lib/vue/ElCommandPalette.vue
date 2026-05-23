@@ -192,7 +192,7 @@ function matchesShortcut(event, shortcut) {
 			<div
 				role="dialog"
 				aria-modal="true"
-				class="relative mx-auto mt-[12vh] w-[min(92vw,38rem)] origin-top overflow-hidden rounded-[1.25rem] border border-border bg-popover-skin/95 text-popover shadow-[0_24px_80px_rgba(0,0,0,0.28),0_2px_12px_rgba(0,0,0,0.12)] ring-1 ring-border/60 backdrop-blur-xl dark:bg-popover-skin/[0.92]"
+				class="relative mx-auto mt-[12vh] w-[min(92vw,38rem)] origin-top overflow-hidden rounded-[1.25rem] border border-border bg-popover/95 text-popover-foreground shadow-[0_24px_80px_rgba(0,0,0,0.28),0_2px_12px_rgba(0,0,0,0.12)] ring-1 ring-border/60 backdrop-blur-xl dark:bg-popover/[0.92]"
 				:class="{
 					'command-panel-entering': motion === 'entering',
 					'command-panel-leaving': motion === 'leaving',
@@ -204,7 +204,7 @@ function matchesShortcut(event, shortcut) {
 					v-model="query"
 					type="text"
 					:placeholder="placeholder"
-					class="h-14 w-full border-b border-border/70 bg-transparent px-5 text-[1.05rem] outline-none placeholder:text-muted"
+					class="h-14 w-full border-b border-border/70 bg-transparent px-5 text-[1.05rem] outline-none placeholder:text-muted-foreground"
 				/>
 				<div role="listbox" class="max-h-80 overflow-auto p-2">
 					<button
@@ -213,15 +213,15 @@ function matchesShortcut(event, shortcut) {
 						role="option"
 						type="button"
 						class="block w-full rounded-xl px-3 py-2 text-left transition"
-						:class="index === activeIndex ? 'bg-accent-skin text-accent' : 'text-secondary hover:bg-accent-skin hover:text-accent'"
+						:class="index === activeIndex ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'"
 						:aria-selected="index === activeIndex"
 						@mouseenter="activeIndex = index"
 						@click="select(command)"
 					>
 						<span class="block text-sm font-medium">{{ command.label }}</span>
-						<span v-if="command.description" class="mt-0.5 block text-xs text-muted">{{ command.description }}</span>
+						<span v-if="command.description" class="mt-0.5 block text-xs text-muted-foreground">{{ command.description }}</span>
 					</button>
-					<p v-if="!filtered.length" class="px-3 py-6 text-center text-sm text-muted">No commands found.</p>
+					<p v-if="!filtered.length" class="px-3 py-6 text-center text-sm text-muted-foreground">No commands found.</p>
 				</div>
 			</div>
 		</div>

@@ -39,7 +39,7 @@ function onAction(event) {
 			<ElButton variant="secondary" @click="showAvatarToast">Avatar toast</ElButton>
 			<ElButton variant="secondary" @click="showUpdateToast">Software update</ElButton>
 		</div>
-		<p class="text-xs text-muted">Action: <code class="text-foreground">{{ lastAction }}</code></p>
+		<p class="text-xs text-muted-foreground">Action: <code class="text-foreground">{{ lastAction }}</code></p>
 		<ElToastStack
 			:toasts="toasts"
 			position="bottom-right"

@@ -61,7 +61,7 @@ const props = [
 							description="Shown publicly on your profile."
 							placeholder="Steve O'Brien"
 						/>
-						<p class="mt-3 text-xs text-muted">Value: <code class="text-foreground">{{ name }}</code></p>
+						<p class="mt-3 text-xs text-muted-foreground">Value: <code class="text-foreground">{{ name }}</code></p>
 					</div>
 				</Demo>
 			</DocSection>

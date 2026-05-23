@@ -23,12 +23,12 @@ defineProps({
 
 <template>
 	<figure class="my-6 overflow-hidden rounded-2xl border border-border bg-background">
-		<figcaption v-if="title || description" class="border-b border-border bg-secondary-skin/40 px-5 py-3">
+		<figcaption v-if="title || description" class="border-b border-border bg-secondary/40 px-5 py-3">
 			<p v-if="title" class="text-sm font-semibold tracking-tight text-foreground">{{ title }}</p>
-			<p v-if="description" class="mt-0.5 text-sm text-secondary">{{ description }}</p>
+			<p v-if="description" class="mt-0.5 text-sm text-muted-foreground">{{ description }}</p>
 		</figcaption>
 
-		<div class="flex min-h-[200px] items-center justify-center bg-linear-to-br from-secondary-skin/40 via-background to-secondary-skin/30 p-10">
+		<div class="flex min-h-[200px] items-center justify-center bg-linear-to-br from-secondary/40 via-background to-secondary/30 p-10">
 			<slot />
 		</div>
 

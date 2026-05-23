@@ -26,8 +26,8 @@ const valueOf = (o) => (o && typeof o === 'object' ? (o.value ?? o.label) : o);
 				:disabled="disabled"
 				class="rounded-full px-2.5 py-1 text-xs font-medium ring-1 transition disabled:opacity-50"
 				:class="modelValue === valueOf(opt)
-					? 'bg-primary-skin text-primary ring-ring'
-					: 'bg-background text-secondary ring-border hover:bg-secondary-skin'"
+					? 'bg-primary text-primary-foreground ring-ring'
+					: 'bg-background text-muted-foreground ring-border hover:bg-secondary'"
 				@click="emit('update:modelValue', valueOf(opt))"
 			>{{ labelOf(opt) }}</button>
 		</div>

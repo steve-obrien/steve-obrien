@@ -29,14 +29,14 @@ defineExpose({ data });
 		>
 			<template #item="{ item }">
 				<div class="flex min-w-0 items-center gap-3">
-					<img :src="item.avatar" alt="" class="size-8 rounded-full bg-secondary-skin object-cover" />
+					<img :src="item.avatar" alt="" class="size-8 rounded-full bg-secondary object-cover" />
 					<span class="min-w-0">
 						<span class="block truncate font-medium">{{ item.label }}</span>
-						<span class="block truncate text-xs text-muted">{{ item.role }}</span>
+						<span class="block truncate text-xs text-muted-foreground">{{ item.role }}</span>
 					</span>
 				</div>
 			</template>
 		</ElCombobox>
-		<p class="text-xs text-muted">Selected value: <code class="text-foreground">{{ data.modelValue || '—' }}</code></p>
+		<p class="text-xs text-muted-foreground">Selected value: <code class="text-foreground">{{ data.modelValue || '—' }}</code></p>
 	</div>
 </template>

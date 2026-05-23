@@ -66,13 +66,13 @@ const roleOf = (item) => {
 				:aria-checked="item?.checked == null ? null : String(item.checked)"
 				:aria-disabled="item?.disabled ? 'true' : null"
 				:disabled="item?.disabled || null"
-				class="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm text-foreground outline-none transition hover:bg-secondary-skin focus:bg-secondary-skin aria-disabled:cursor-not-allowed aria-disabled:opacity-50 data-[tone=danger]:text-destructive-skin"
+				class="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm text-foreground outline-none transition hover:bg-secondary focus:bg-secondary aria-disabled:cursor-not-allowed aria-disabled:opacity-50 data-[tone=danger]:text-destructive"
 				:data-tone="item?.tone || null"
 			>
 				<span class="min-w-0">
 					<slot name="item" :item="item" :index="index">{{ labelOf(item) }}</slot>
 				</span>
-				<span v-if="item?.type === 'checkbox' || item?.type === 'radio'" aria-hidden="true" class="text-xs text-muted">✓</span>
+				<span v-if="item?.type === 'checkbox' || item?.type === 'radio'" aria-hidden="true" class="text-xs text-muted-foreground">✓</span>
 			</button>
 		</template>
 	</element-menu>

@@ -2,10 +2,10 @@
 	<header class="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-8 mb-20">
 
 		<div class="flex justify-center md:flex-1">
-			<nav class="hidden items-center gap-4 rounded-full p-1 text-sm font-medium text-secondary backdrop-blur-sm md:flex">
+			<nav class="hidden items-center gap-4 rounded-full p-1 text-sm font-medium text-muted-foreground backdrop-blur-sm md:flex">
 				<a class="flex flex-1 items-center pr-2 text-foreground" href="/">
 					<!-- <div class="h-14 max-w-20 flex items-center rounded-full py-3 pr-1">
-						<img width="512" height="512" :src="meImg" class="rounded-full bg-muted-skin object-cover" alt="Steve O'Brien" sizes="2.25rem" />
+						<img width="512" height="512" :src="meImg" class="rounded-full bg-muted object-cover" alt="Steve O'Brien" sizes="2.25rem" />
 					</div> -->
 					<div class="h-14 w-20  flex items-center justify-center">
 						<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-auto text-foreground" width="456" height="328" viewBox="0 0 456 328">
@@ -21,7 +21,7 @@
 				:key="link.to"
 				:to="link.to"
 				class="rounded-full px-4 py-2 text-sm font-medium transition-colors"
-				:class="route.path === link.to ? 'bg-primary-skin text-primary' : 'text-secondary hover:text-foreground'">
+				:class="route.path === link.to ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'">
 					{{ link.label }}
 				</RouterLink>
 				<BtnLightDarkMode />
@@ -29,7 +29,7 @@
 			</nav>
 		</div>
 		<div class="flex-1 w-full md:justify-center md:hidden">
-			<div class="mr-2 flex h-10 items-center gap-4 rounded-full bg-background/90 text-sm font-medium text-secondary ring-1 ring-border/60 backdrop-blur-sm">
+			<div class="mr-2 flex h-10 items-center gap-4 rounded-full bg-background/90 text-sm font-medium text-muted-foreground ring-1 ring-border/60 backdrop-blur-sm">
 				<a class="flex-1 items-center pr-2 text-foreground" href="/">
 					<div class="h-14 w-20 flex items-center justify-center">
 						<svg xmlns="http://www.w3.org/2000/svg" class="w-full h-auto text-foreground" width="456" height="328" viewBox="0 0 456 328">

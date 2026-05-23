@@ -65,10 +65,10 @@ const selected = (option) => String(props.modelValue ?? '') === valueOf(option);
 				:key="valueOf(option) || index"
 				role="radio"
 				:data-value="valueOf(option)"
-				class="inline-flex items-center gap-3 rounded-xl border border-border bg-background px-3 py-2 text-left text-sm text-foreground outline-none transition hover:bg-secondary-skin focus:ring-2 focus:ring-ring/40 aria-checked:border-primary-skin aria-checked:bg-secondary-skin"
+				class="inline-flex items-center gap-3 rounded-xl border border-border bg-background px-3 py-2 text-left text-sm text-foreground outline-none transition hover:bg-secondary focus:ring-2 focus:ring-ring/40 aria-checked:border-primary aria-checked:bg-secondary"
 			>
 				<span class="grid size-4 place-items-center rounded-full border border-border" aria-hidden="true">
-					<span class="size-2 rounded-full bg-primary-skin" :class="selected(option) ? 'opacity-100' : 'opacity-0'"></span>
+					<span class="size-2 rounded-full bg-primary" :class="selected(option) ? 'opacity-100' : 'opacity-0'"></span>
 				</span>
 				<slot name="option" :option="option" :index="index">{{ labelOf(option) }}</slot>
 			</button>

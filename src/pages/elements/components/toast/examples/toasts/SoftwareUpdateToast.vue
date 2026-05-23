@@ -33,10 +33,10 @@ function remindLater(value) {
 <template>
 	<div class="grid gap-3">
 		<div class="flex items-start gap-3">
-			<div class="grid size-10 shrink-0 place-items-center rounded-xl bg-primary-skin text-sm font-semibold text-primary">OS</div>
+			<div class="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground">OS</div>
 			<div class="min-w-0 flex-1">
 				<p class="text-sm font-semibold text-foreground">Install {{ version }}</p>
-				<p class="mt-1 text-sm text-secondary">
+				<p class="mt-1 text-sm text-muted-foreground">
 					<span v-if="size">A {{ size }} update is ready.</span>
 					<span v-else>An update is ready.</span>
 					Restart may be required.
@@ -45,7 +45,7 @@ function remindLater(value) {
 			<button
 				type="button"
 				aria-label="Dismiss update"
-				class="-mr-1 -mt-1 rounded-full px-2 text-lg leading-none text-muted transition hover:bg-secondary-skin hover:text-foreground"
+				class="-mr-1 -mt-1 rounded-full px-2 text-lg leading-none text-muted-foreground transition hover:bg-secondary hover:text-foreground"
 				@click="emit('dismiss')"
 			>×</button>
 		</div>

@@ -11,10 +11,10 @@ const info = computed(() => inspectComponent(props.component));
 
 <template>
 	<section v-if="info?.slots?.length" class="space-y-3">
-		<h3 class="text-sm font-semibold uppercase tracking-[0.18em] text-muted">{{ title }}</h3>
+		<h3 class="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">{{ title }}</h3>
 		<div class="overflow-hidden rounded-2xl border border-border">
 			<table class="w-full text-left text-sm">
-				<thead class="bg-secondary-skin text-xs uppercase tracking-wider text-muted">
+				<thead class="bg-secondary text-xs uppercase tracking-wider text-muted-foreground">
 					<tr>
 						<th class="px-4 py-2 font-medium">Name</th>
 						<th class="px-4 py-2 font-medium">Scope</th>
@@ -24,8 +24,8 @@ const info = computed(() => inspectComponent(props.component));
 				<tbody class="divide-y divide-border">
 					<tr v-for="s in info.slots" :key="s.name">
 						<td class="px-4 py-3 font-mono text-[12.5px] text-foreground">#{{ s.name }}</td>
-						<td class="px-4 py-3 font-mono text-[12.5px] text-secondary">{{ s.payload || '—' }}</td>
-						<td class="px-4 py-3 text-secondary">{{ s.description || '—' }}</td>
+						<td class="px-4 py-3 font-mono text-[12.5px] text-muted-foreground">{{ s.payload || '—' }}</td>
+						<td class="px-4 py-3 text-muted-foreground">{{ s.description || '—' }}</td>
 					</tr>
 				</tbody>
 			</table>

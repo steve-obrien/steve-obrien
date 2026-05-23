@@ -16,6 +16,6 @@ const items = [
 <template>
 	<div class="grid w-full max-w-sm gap-3">
 		<ElMenu :items="items" @select="selected = $event.value" />
-		<p class="text-xs text-muted">Selected: <code class="text-foreground">{{ selected }}</code></p>
+		<p class="text-xs text-muted-foreground">Selected: <code class="text-foreground">{{ selected }}</code></p>
 	</div>
 </template>

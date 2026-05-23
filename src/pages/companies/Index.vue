@@ -28,12 +28,12 @@ const projects = [
 </script>
 
 <template>
-	<SteveLayout bg-class="bg-secondary-skin">
+	<SteveLayout bg-class="bg-secondary">
 		<section class="space-y-8">
 			<div class="space-y-3">
-				<p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Companies</p>
+				<p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Companies</p>
 				<h1 class="text-4xl font-medium tracking-tight sm:text-5xl font-serif">Building &amp; scaling.</h1>
-				<p class="max-w-3xl text-lg leading-relaxed text-secondary">
+				<p class="max-w-3xl text-lg leading-relaxed text-muted-foreground">
 					A selection of companies I have founded, led, advised and currently or previously been involved with.
 				</p>
 			</div>

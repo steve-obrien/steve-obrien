@@ -92,15 +92,15 @@ function move(rowIndex, dir) {
 				class="space-y-2 rounded-lg border border-border bg-background p-2"
 			>
 				<div class="flex items-center justify-between gap-2">
-					<span class="text-[11px] font-semibold uppercase tracking-wider text-muted">Row {{ rowIndex + 1 }}</span>
+					<span class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Row {{ rowIndex + 1 }}</span>
 					<span class="flex items-center gap-1">
-						<button type="button" class="grid size-7 place-items-center rounded-md text-secondary hover:bg-secondary-skin hover:text-foreground" title="Move up" @click="move(rowIndex, -1)">↑</button>
-						<button type="button" class="grid size-7 place-items-center rounded-md text-secondary hover:bg-secondary-skin hover:text-foreground" title="Move down" @click="move(rowIndex, 1)">↓</button>
-						<button type="button" class="grid size-7 place-items-center rounded-md text-destructive-skin hover:bg-destructive-skin/10" title="Remove" @click="remove(rowIndex)">×</button>
+						<button type="button" class="grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground" title="Move up" @click="move(rowIndex, -1)">↑</button>
+						<button type="button" class="grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground" title="Move down" @click="move(rowIndex, 1)">↓</button>
+						<button type="button" class="grid size-7 place-items-center rounded-md text-destructive hover:bg-destructive/10" title="Remove" @click="remove(rowIndex)">×</button>
 					</span>
 				</div>
 				<label v-for="field in fields" :key="field.key" class="block">
-					<span class="mb-1 block text-[11px] font-medium text-muted">{{ field.label || field.key }}</span>
+					<span class="mb-1 block text-[11px] font-medium text-muted-foreground">{{ field.label || field.key }}</span>
 					<textarea
 						v-if="field.type === 'json'"
 						:value="fieldValue(row, field)"
@@ -121,7 +121,7 @@ function move(rowIndex, dir) {
 			</div>
 			<button
 				type="button"
-				class="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-border bg-background py-2 text-xs font-medium text-secondary hover:border-primary-skin/40 hover:text-foreground"
+				class="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-border bg-background py-2 text-xs font-medium text-muted-foreground hover:border-primary/40 hover:text-foreground"
 				@click="add"
 			>{{ addLabel }}</button>
 		</div>

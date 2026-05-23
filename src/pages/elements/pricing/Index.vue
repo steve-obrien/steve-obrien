@@ -95,13 +95,13 @@ const comparisonRows = [
 
 
 		<section class="-mt-6 pb-16 pt-10 text-center">
-			<p class="text-xs font-semibold uppercase tracking-[0.22em] text-muted">Pricing</p>
+			<p class="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Pricing</p>
 			<h1 class="mt-3 text-5xl font-bold leading-[1.05] tracking-tight text-foreground sm:text-6xl">Pay once. Use forever.</h1>
-			<p class="mx-auto mt-5 max-w-2xl text-lg text-secondary">
+			<p class="mx-auto mt-5 max-w-2xl text-lg text-muted-foreground">
 				No subscriptions. No expiry. One payment unlocks every premium component, blueprint, and update — for life.
 			</p>
-			<div class="mt-6 inline-flex items-center gap-2 rounded-full border border-border bg-secondary-skin/60 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-muted">
-				<span class="size-1.5 rounded-full bg-success-skin"></span>
+			<div class="mt-6 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/60 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+				<span class="size-1.5 rounded-full bg-success"></span>
 				Lifetime licence · Lifetime updates
 			</div>
 		</section>
@@ -111,12 +111,12 @@ const comparisonRows = [
 				v-for="t in tiers"
 				:key="t.name"
 				class="relative flex flex-col rounded-3xl border bg-background p-7 transition"
-				:class="t.highlight ? 'border-primary-skin shadow-2xl shadow-black/10 ring-1 ring-ring/10' : 'border-border'"
+				:class="t.highlight ? 'border-primary shadow-2xl shadow-black/10 ring-1 ring-ring/10' : 'border-border'"
 			>
-				<span v-if="t.highlight" class="absolute -top-3 left-7 rounded-full bg-primary-skin px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-primary">Most popular</span>
+				<span v-if="t.highlight" class="absolute -top-3 left-7 rounded-full bg-primary px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground">Most popular</span>
 				<div>
 					<p class="text-sm font-semibold tracking-tight text-foreground">{{ t.name }}</p>
-					<p class="mt-1 text-sm text-secondary">{{ t.tagline }}</p>
+					<p class="mt-1 text-sm text-muted-foreground">{{ t.tagline }}</p>
 				</div>
 				<div class="mt-6 flex items-baseline gap-1">
 					<template v-if="t.priceLabel">
@@ -124,14 +124,14 @@ const comparisonRows = [
 					</template>
 					<template v-else>
 						<span class="text-5xl font-bold tracking-tight text-foreground">£{{ t.price }}</span>
-						<span class="text-sm text-secondary">once</span>
+						<span class="text-sm text-muted-foreground">once</span>
 					</template>
 				</div>
-				<p v-if="t.priceSuffix" class="mt-1 text-xs font-medium uppercase tracking-wider text-muted">{{ t.priceSuffix }}</p>
+				<p v-if="t.priceSuffix" class="mt-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">{{ t.priceSuffix }}</p>
 				<ul class="mt-6 space-y-2.5 text-sm">
-					<li v-for="f in t.features" :key="f" class="flex items-start gap-2 text-secondary">
+					<li v-for="f in t.features" :key="f" class="flex items-start gap-2 text-muted-foreground">
 						<svg viewBox="0 0 20 20" class="mt-0.5 size-4 shrink-0" fill="none">
-							<path d="M5 10.5l3 3 7-7.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" :class="t.highlight ? 'text-foreground' : 'text-success-skin'" />
+							<path d="M5 10.5l3 3 7-7.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" :class="t.highlight ? 'text-foreground' : 'text-success'" />
 						</svg>
 						<span>{{ f }}</span>
 					</li>
@@ -151,25 +151,25 @@ const comparisonRows = [
 
 		<section class="mt-24 border-t border-border pt-16">
 			<div class="mb-10 text-center">
-				<p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted">What's inside Pro</p>
+				<p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">What's inside Pro</p>
 				<h2 class="mt-2 text-3xl font-bold tracking-tight text-foreground">The components that put real apps together.</h2>
 			</div>
 			<div class="grid gap-6 sm:grid-cols-2">
-				<div v-for="p in proPerks" :key="p.title" class="rounded-2xl border border-border bg-secondary-skin/40 p-6">
+				<div v-for="p in proPerks" :key="p.title" class="rounded-2xl border border-border bg-secondary/40 p-6">
 					<h3 class="text-base font-semibold tracking-tight text-foreground">{{ p.title }}</h3>
-					<p class="mt-2 text-sm leading-relaxed text-secondary">{{ p.body }}</p>
+					<p class="mt-2 text-sm leading-relaxed text-muted-foreground">{{ p.body }}</p>
 				</div>
 			</div>
 		</section>
 
 		<section class="mt-24 border-t border-border pt-16">
 			<div class="mb-8 text-center">
-				<p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Compare</p>
+				<p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Compare</p>
 				<h2 class="mt-2 text-3xl font-bold tracking-tight text-foreground">What you get at each tier.</h2>
 			</div>
 			<div class="overflow-hidden rounded-2xl border border-border">
 				<table class="w-full text-left text-sm">
-					<thead class="bg-secondary-skin text-xs uppercase tracking-wider text-muted">
+					<thead class="bg-secondary text-xs uppercase tracking-wider text-muted-foreground">
 						<tr>
 							<th class="px-4 py-3 font-medium">Feature</th>
 							<th class="px-4 py-3 text-center font-medium">Starter</th>
@@ -180,9 +180,9 @@ const comparisonRows = [
 					<tbody class="divide-y divide-border">
 						<tr v-for="r in comparisonRows" :key="r.feature">
 							<td class="px-4 py-3 text-foreground">{{ r.feature }}</td>
-							<td class="px-4 py-3 text-center text-secondary">{{ r.starter ? '✓' : '—' }}</td>
-							<td class="px-4 py-3 text-center text-secondary">{{ r.pro ? '✓' : '—' }}</td>
-							<td class="px-4 py-3 text-center text-secondary">{{ r.studio ? '✓' : '—' }}</td>
+							<td class="px-4 py-3 text-center text-muted-foreground">{{ r.starter ? '✓' : '—' }}</td>
+							<td class="px-4 py-3 text-center text-muted-foreground">{{ r.pro ? '✓' : '—' }}</td>
+							<td class="px-4 py-3 text-center text-muted-foreground">{{ r.studio ? '✓' : '—' }}</td>
 						</tr>
 					</tbody>
 				</table>
@@ -191,7 +191,7 @@ const comparisonRows = [
 
 		<section class="mt-24 border-t border-border pt-16">
 			<div class="mb-8 text-center">
-				<p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted">FAQ</p>
+				<p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">FAQ</p>
 				<h2 class="mt-2 text-3xl font-bold tracking-tight text-foreground">Questions, answered.</h2>
 			</div>
 			<div class="mx-auto max-w-2xl">
@@ -200,14 +200,14 @@ const comparisonRows = [
 		</section>
 
 		<section id="checkout" class="mt-24 border-t border-border pt-16 text-center">
-			<div class="mx-auto max-w-2xl rounded-3xl border border-border bg-gradient-to-br from-secondary-skin to-transparent p-10">
+			<div class="mx-auto max-w-2xl rounded-3xl border border-border bg-gradient-to-br from-secondary to-transparent p-10">
 				<h2 class="text-3xl font-bold tracking-tight text-foreground">One payment. Forever yours.</h2>
-				<p class="mt-3 text-secondary">Stop rebuilding the same dropdown for the tenth time. Buy once, get every component, every blueprint, every update we ever ship.</p>
+				<p class="mt-3 text-muted-foreground">Stop rebuilding the same dropdown for the tenth time. Buy once, get every component, every blueprint, every update we ever ship.</p>
 				<div class="mt-6 flex flex-wrap items-center justify-center gap-3">
 					<ElButton size="lg">Get Pro — $149 once</ElButton>
 					<ElButton variant="secondary" size="lg" :as="'router-link'" :to="'/elements/components/button'">Try the free tier</ElButton>
 				</div>
-				<p class="mt-4 text-xs text-muted">14-day refund. No subscriptions, ever.</p>
+				<p class="mt-4 text-xs text-muted-foreground">14-day refund. No subscriptions, ever.</p>
 			</div>
 		</section>
 	</ElementsLayout>
