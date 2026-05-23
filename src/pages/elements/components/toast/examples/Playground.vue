@@ -4,7 +4,6 @@ import { ElButton, ElToastStack } from '@elements/vue';
 
 let id = 0;
 const data = reactive({
-	position: 'top-left',
 	duration: 3600,
 	autoDismiss: false,
 	toasts: [],
