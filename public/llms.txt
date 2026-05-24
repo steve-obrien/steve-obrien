@@ -1,0 +1,49 @@
+# Elements
+
+Elements is a component framework for building application UI with LLMs and humans working together.
+
+Primary docs:
+- Overview: /elements
+- AI builder guide: /elements/ai
+- Theming: /elements/theming
+- Studio: /elements/components/studio
+- Blocks: /elements/blocks/dashboard
+- Components: /elements/components/button
+- Headless web components: /elements/headless
+
+Philosophy:
+- Prefer composition over invention.
+- Use Elements primitives for behaviour and accessibility.
+- Use visual primitives for surfaces and layout polish.
+- Use blocks for complete app screens and common product patterns.
+- Keep generated UI editable in Studio.
+- Use token-based theming names such as bg-background, text-foreground, bg-card, text-card-foreground, bg-popover, text-popover-foreground, bg-primary, text-primary-foreground, bg-secondary, text-secondary-foreground, text-muted-foreground, border-border, border-input, ring-ring, bg-success, bg-warning, and bg-destructive.
+- Do not use raw colours unless defining a theme.
+- Prefer component props for behaviour and classes for layout, spacing, and small visual adjustments.
+- Give generated nodes stable ids and human labels when returning Studio specs.
+
+Current component families:
+- Behaviour components: Button, Dropdown, Dialog, Drawer, Tabs, Toggle, Tooltip, Accordion, Menu, Listbox, Combobox, Autocomplete, Popover, Toast, Command palette.
+- Form components: Checkbox, Radio group, Text input, Password input, Textarea, Code input, JSON input, JSON list input, Number input, Select input, Native select, Boolean input, Color input.
+- Visual components: Card.
+- Blocks: Dashboard, Chat, Mail, Forms, Login.
+
+LLM generation rules:
+1. Choose an existing block when the request matches a known app pattern.
+2. Choose existing components before writing custom HTML.
+3. Keep accessibility inside components; do not recreate keyboard navigation by hand.
+4. Prefer native form behaviour where it is useful, especially on mobile.
+5. Use Code input for prompts, templates, snippets, and structured text that benefits from a code editor.
+6. Use JSON input for editable schemas, tool payloads, app config, and other parsed structured data.
+7. Use JSON list input for schema-aware arrays of objects, especially inspector editors for menu items, commands, options, toasts, and people lists.
+8. Return an editable Studio spec when the user may want to inspect or revise the UI later.
+9. Use clear layer labels and stable ids in specs.
+10. Do not invent new theme colour names; use the theme page token names.
+11. Keep generated interfaces dense, practical, and product-like unless the user asks for a marketing page.
+
+Future AI-specific areas:
+- AI chat tools that return editable UI.
+- Voice tools and multimodal controls.
+- Agent task runners that stream status into UI.
+- Server-backed autocomplete and search patterns.
+- Tool-call result renderers.

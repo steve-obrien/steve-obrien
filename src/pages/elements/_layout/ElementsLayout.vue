@@ -23,9 +23,11 @@ const showSidebar = computed(() => !props.fullWidth && (
 
 const topLinks = [
 	{ to: '/elements', label: 'Overview', exact: true },
+	{ to: '/elements/ai', label: 'AI' },
 	{ to: '/elements/theming', label: 'Theming' },
 	{ to: '/elements/components/button', label: 'Components', match: '/elements/components' },
 	{ to: '/elements/visual/card', label: 'Visual', match: '/elements/visual' },
+	{ to: '/elements/blocks/dashboard', label: 'Blocks', match: '/elements/blocks' },
 	{ to: '/elements/pricing', label: 'Pricing' },
 ];
 
@@ -95,9 +97,11 @@ const mobileMenuOpen = ref(false);
 				</div>
 				<div class="flex items-center gap-5">
 					<RouterLink to="/elements" class="hover:text-foreground">Overview</RouterLink>
+					<RouterLink to="/elements/ai" class="hover:text-foreground">AI</RouterLink>
 					<RouterLink to="/elements/theming" class="hover:text-foreground">Theming</RouterLink>
 					<RouterLink to="/elements/components/button" class="hover:text-foreground">Components</RouterLink>
 					<RouterLink to="/elements/visual/card" class="hover:text-foreground">Visual</RouterLink>
+					<RouterLink to="/elements/blocks/dashboard" class="hover:text-foreground">Blocks</RouterLink>
 					<RouterLink to="/elements/pricing" class="hover:text-foreground">Pricing</RouterLink>
 					<a href="https://github.com/steve-obrien" target="_blank" rel="noopener" class="hover:text-foreground">GitHub</a>
 				</div>

@@ -18,7 +18,7 @@ const props = defineProps({
 	items: {
 		type: Array,
 		required: true,
-		_edit: { component: 'ElJsonListInput', description: 'Menu rows. Use separator: true for dividers.' },
+		_edit: { component: 'ElJsonListInput', description: 'Menu rows. Use separator: true for dividers.', props: { compact: true } },
 	},
 	orientation: {
 		type: String,

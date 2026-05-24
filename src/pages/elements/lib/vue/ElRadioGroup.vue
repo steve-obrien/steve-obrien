@@ -20,7 +20,18 @@ const props = defineProps({
 	options: {
 		type: Array,
 		required: true,
-		_edit: { component: 'ElListInput', description: 'Radio options.' },
+		_edit: {
+			component: 'ElJsonListInput',
+			description: 'Radio options.',
+			props: {
+				compact: true,
+				addLabel: '+ Add option',
+				schema: [
+					{ key: 'label', label: 'Label', placeholder: 'Option label', default: (index) => `Option ${index + 1}` },
+					{ key: 'value', label: 'Value', placeholder: 'option-value', default: (index) => `option-${index + 1}` },
+				],
+			},
+		},
 	},
 	label: {
 		type: String,

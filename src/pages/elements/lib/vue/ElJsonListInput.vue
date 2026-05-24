@@ -1,22 +1,66 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import ElField from './ElField.vue';
+import ElJsonInput from './ElJsonInput.vue';
+
+defineOptions({
+	__doc: {
+		name: 'JSON list input',
+		tag: '<ElJsonListInput>',
+		description: 'A schema-aware editor for arrays of objects. Edit rows through form controls, or toggle to raw JSON for bulk changes.',
+		events: [
+			{ name: 'update:modelValue', payload: 'Array<object>', description: 'Fired when rows are added, removed, reordered, edited, or replaced from valid raw JSON.' },
+		],
+	},
+});
 
 const props = defineProps({
 	modelValue: {
 		type: Array,
 		default: () => [],
-		_edit: { component: 'ElJsonListInput' },
+		_edit: { component: 'ElJsonListInput', props: { compact: true } },
 	},
-	label: String,
-	description: String,
-	addLabel: { type: String, default: '+ Add row' },
+	label: {
+		type: String,
+		default: '',
+		_edit: { description: 'Visible field label.' },
+	},
+	description: {
+		type: String,
+		default: '',
+		_edit: { description: 'Optional helper copy below the label.' },
+	},
+	addLabel: {
+		type: String,
+		default: '+ Add row',
+		_edit: { description: 'Button label for adding a row.' },
+	},
 	schema: {
 		type: Array,
 		default: () => [],
+		_edit: {
+			component: 'ElJsonInput',
+			props: {
+				label: 'Schema',
+				description: 'Fields used by the visual editor.',
+				rows: 8,
+			},
+		},
+	},
+	jsonToggle: {
+		type: Boolean,
+		default: true,
+		_edit: { description: 'Show the visual/raw JSON mode switch.' },
+	},
+	compact: {
+		type: Boolean,
+		default: false,
+		_edit: { description: 'Reduce vertical spacing for inspectors and narrow tool panels.' },
 	},
 });
 const emit = defineEmits(['update:modelValue']);
+const mode = ref('fields');
+const rawError = ref('');
 
 const update = (next) => emit('update:modelValue', next);
 
@@ -81,49 +125,105 @@ function move(rowIndex, dir) {
 	[next[rowIndex], next[nextIndex]] = [next[nextIndex], next[rowIndex]];
 	update(next);
 }
+
+function setRawJson(value) {
+	if (!Array.isArray(value)) {
+		rawError.value = 'JSON list input expects an array of objects.';
+		return;
+	}
+
+	rawError.value = '';
+	update(value);
+}
 </script>
 
 <template>
 	<ElField :label="label" :description="description">
-		<div class="space-y-2">
-			<div
-				v-for="(row, rowIndex) in modelValue"
-				:key="rowIndex"
-				class="space-y-2 rounded-lg border border-border bg-background p-2"
-			>
-				<div class="flex items-center justify-between gap-2">
-					<span class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Row {{ rowIndex + 1 }}</span>
-					<span class="flex items-center gap-1">
-						<button type="button" class="grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground" title="Move up" @click="move(rowIndex, -1)">↑</button>
-						<button type="button" class="grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground" title="Move down" @click="move(rowIndex, 1)">↓</button>
-						<button type="button" class="grid size-7 place-items-center rounded-md text-destructive hover:bg-destructive/10" title="Remove" @click="remove(rowIndex)">×</button>
-					</span>
+		<div :class="compact ? 'space-y-1.5' : 'space-y-2'">
+			<div v-if="jsonToggle" class="flex justify-end">
+				<div class="inline-flex rounded-lg border border-border bg-secondary/60 p-0.5">
+					<button
+						type="button"
+						class="rounded-md px-2.5 py-1 text-xs font-medium transition"
+						:class="mode === 'fields' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+						@click="mode = 'fields'"
+					>
+						Fields
+					</button>
+					<button
+						type="button"
+						class="rounded-md px-2.5 py-1 text-xs font-medium transition"
+						:class="mode === 'json' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+						@click="mode = 'json'"
+					>
+						JSON
+					</button>
 				</div>
-				<label v-for="field in fields" :key="field.key" class="block">
-					<span class="mb-1 block text-[11px] font-medium text-muted-foreground">{{ field.label || field.key }}</span>
-					<textarea
-						v-if="field.type === 'json'"
-						:value="fieldValue(row, field)"
-						:placeholder="field.placeholder || field.key"
-						rows="5"
-						class="min-h-24 w-full resize-y rounded-md border border-border bg-background px-2 py-1.5 font-mono text-xs text-foreground outline-none focus:ring-2 focus:ring-ring/40"
-						@change="setField(rowIndex, field, $event.target.value)"
-					></textarea>
-					<input
-						v-else
-						:type="field.type || 'text'"
-						:value="fieldValue(row, field)"
-						:placeholder="field.placeholder || field.key"
-						class="h-8 w-full rounded-md border border-border bg-background px-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/40"
-						@input="setField(rowIndex, field, $event.target.value)"
-					/>
-				</label>
 			</div>
-			<button
-				type="button"
-				class="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-border bg-background py-2 text-xs font-medium text-muted-foreground hover:border-primary/40 hover:text-foreground"
-				@click="add"
-			>{{ addLabel }}</button>
+
+			<div v-if="mode === 'json'">
+				<ElJsonInput
+					:model-value="modelValue"
+					:rows="compact ? 7 : 12"
+					:editor="true"
+					@update:model-value="setRawJson"
+				/>
+				<p v-if="rawError" class="mt-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs font-mono text-destructive">
+					{{ rawError }}
+				</p>
+			</div>
+
+			<template v-else>
+				<div
+					v-for="(row, rowIndex) in modelValue"
+					:key="rowIndex"
+					class="rounded-lg border border-border bg-background"
+					:class="compact ? 'space-y-1 p-1.5' : 'space-y-2 p-2'"
+				>
+					<div class="flex items-center justify-between gap-2">
+						<span class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Row {{ rowIndex + 1 }}</span>
+						<span class="flex items-center gap-1">
+							<button type="button" class="grid place-items-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground" :class="compact ? 'size-6' : 'size-7'" title="Move up" @click="move(rowIndex, -1)">↑</button>
+							<button type="button" class="grid place-items-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground" :class="compact ? 'size-6' : 'size-7'" title="Move down" @click="move(rowIndex, 1)">↓</button>
+							<button type="button" class="grid place-items-center rounded-md text-destructive hover:bg-destructive/10" :class="compact ? 'size-6' : 'size-7'" title="Remove" @click="remove(rowIndex)">×</button>
+						</span>
+					</div>
+					<label
+						v-for="field in fields"
+						:key="field.key"
+						:class="compact ? 'grid grid-cols-[4.75rem_minmax(0,1fr)] items-center gap-1.5' : 'block'"
+					>
+						<span
+							class="text-[11px] font-medium text-muted-foreground"
+							:class="compact ? 'truncate text-right' : 'mb-1 block'"
+						>{{ field.label || field.key }}</span>
+						<textarea
+							v-if="field.type === 'json'"
+							:value="fieldValue(row, field)"
+							:placeholder="field.placeholder || field.key"
+							:rows="compact ? 3 : 5"
+							class="w-full resize-y rounded-md border border-border bg-background px-2 py-1.5 font-mono text-xs text-foreground outline-none focus:ring-2 focus:ring-ring/40"
+							:class="compact ? 'min-h-16' : 'min-h-24'"
+							@change="setField(rowIndex, field, $event.target.value)"
+						></textarea>
+						<input
+							v-else
+							:type="field.type || 'text'"
+							:value="fieldValue(row, field)"
+							:placeholder="field.placeholder || field.key"
+							class="w-full rounded-md border border-border bg-background px-2 text-foreground outline-none focus:ring-2 focus:ring-ring/40"
+							:class="compact ? 'h-7 text-xs' : 'h-8 text-sm'"
+							@input="setField(rowIndex, field, $event.target.value)"
+						/>
+					</label>
+				</div>
+				<button
+					type="button"
+					class="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-border bg-background text-xs font-medium text-muted-foreground hover:border-primary/40 hover:text-foreground"
+					:class="compact ? 'py-1.5' : 'py-2'"
+					@click="add"
+				>{{ addLabel }}</button>
+			</template>
 		</div>
 	</ElField>
 </template>

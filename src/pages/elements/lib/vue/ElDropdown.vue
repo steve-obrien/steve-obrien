@@ -30,8 +30,16 @@ const props = defineProps({
 		type: Array,
 		required: true,
 		_edit: {
-			component: 'ElListInput',
+			component: 'ElJsonListInput',
 			description: 'Menu items shown when the dropdown opens.',
+			props: {
+				compact: true,
+				addLabel: '+ Add item',
+				schema: [
+					{ key: 'label', label: 'Label', placeholder: 'Menu item', default: (index) => `Item ${index + 1}` },
+					{ key: 'value', label: 'Value', placeholder: 'item-value', default: (index) => `item-${index + 1}` },
+				],
+			},
 		},
 	},
 	label: {

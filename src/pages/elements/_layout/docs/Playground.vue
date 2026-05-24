@@ -135,8 +135,8 @@ const codeFilename = computed(() => {
 			<p v-if="description" class="mt-0.5 text-sm text-muted-foreground">{{ description }}</p>
 		</figcaption>
 
-		<div class="grid w-full grid-cols-1 items-start gap-6 bg-gradient-to-br from-secondary/40 via-background to-secondary/30 p-10 sm:grid-cols-[1fr_240px]">
-			<div class="flex items-center justify-center">
+		<div class="grid max-h-[38rem] w-full grid-cols-1 items-stretch bg-gradient-to-br from-secondary/40 via-background to-secondary/30 lg:grid-cols-[minmax(0,1fr)_18rem]">
+			<div class="flex min-h-80 items-center justify-center overflow-auto p-10">
 				<!-- SFC mode: render the playground SFC; it owns the data + slots. -->
 				<component v-if="useSfc" :is="component" ref="playgroundRef" />
 				<!-- Auto mode: render the inspected component, forwarding every parent slot. -->
@@ -152,17 +152,21 @@ const codeFilename = computed(() => {
 				</component>
 			</div>
 
-			<aside class="space-y-4 text-left">
-				<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Properties</p>
-				<template v-if="data">
-					<InspectorField
-						v-for="f in schema"
-						:key="f.key"
-						:field="f"
-						:model-value="data[f.key]"
-						@update:model-value="(v) => data[f.key] = v"
-					/>
-				</template>
+			<aside class="min-h-0 border-t border-border bg-background/70 text-left backdrop-blur lg:border-l lg:border-t-0">
+				<div class="sticky top-0 z-10 border-b border-border bg-background/90 px-4 py-3 backdrop-blur">
+					<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Properties</p>
+				</div>
+				<div class="max-h-72 space-y-4 overflow-y-auto p-4 lg:max-h-[34rem]">
+					<template v-if="data">
+						<InspectorField
+							v-for="f in schema"
+							:key="f.key"
+							:field="f"
+							:model-value="data[f.key]"
+							@update:model-value="(v) => data[f.key] = v"
+						/>
+					</template>
+				</div>
 			</aside>
 		</div>
 

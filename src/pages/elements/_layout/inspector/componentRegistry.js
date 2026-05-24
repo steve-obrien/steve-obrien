@@ -11,13 +11,18 @@ import {
 	ElAccordion,
 	ElCombobox,
 	ElPopover,
-	ElListInput,
+	ElCard,
+	ElJsonListInput,
 	ElTextInput,
 	ElTextareaInput,
 	ElNumberInput,
 	ElSelectInput,
+	ElNativeSelect,
+	ElPasswordInput,
 	ElBooleanInput,
 	ElColorInput,
+	ElCodeInput,
+	ElJsonInput,
 } from '../../lib/vue';
 
 // Components the studio can drag onto the stage.
@@ -191,6 +196,31 @@ const entries = [
 			children: [{ id: null, text: 'Popover content.' }],
 		},
 	},
+	{
+		id: 'el-card',
+		label: 'Card',
+		group: 'Visual',
+		component: markRaw(ElCard),
+		icon: '▣',
+		accepts: 'children',
+		defaults: {
+			props: { padding: 'md', glass: true, class: 'w-full max-w-sm' },
+			children: [
+				{
+					id: null,
+					component: 'h3',
+					props: { class: 'text-lg font-semibold tracking-tight' },
+					children: [{ id: null, text: 'Card title' }],
+				},
+				{
+					id: null,
+					component: 'p',
+					props: { class: 'mt-2 text-sm leading-6 text-muted-foreground' },
+					children: [{ id: null, text: 'Drop content into this visual surface.' }],
+				},
+			],
+		},
+	},
 
 	// ---------------- Forms ---------------------------------------------------
 	{
@@ -236,6 +266,39 @@ const entries = [
 		},
 	},
 	{
+		id: 'el-native-select',
+		label: 'Native select',
+		group: 'Forms',
+		component: markRaw(ElNativeSelect),
+		icon: '⌄',
+		accepts: 'none',
+		defaults: {
+			props: {
+				label: 'Workspace',
+				options: [
+					{ label: 'Design system', value: 'design' },
+					{ label: 'Marketing site', value: 'marketing' },
+				],
+				modelValue: 'design',
+			},
+		},
+	},
+	{
+		id: 'el-password-input',
+		label: 'Password input',
+		group: 'Forms',
+		component: markRaw(ElPasswordInput),
+		icon: '••',
+		accepts: 'none',
+		defaults: {
+			props: {
+				label: 'Password',
+				description: 'Use a strong password.',
+				modelValue: 'correct-horse',
+			},
+		},
+	},
+	{
 		id: 'el-boolean-input',
 		label: 'Boolean input',
 		group: 'Forms',
@@ -254,19 +317,56 @@ const entries = [
 		defaults: { props: { label: 'Accent', modelValue: '#0ea5e9' } },
 	},
 	{
-		id: 'el-list-input',
-		label: 'List input',
+		id: 'el-json-list-input',
+		label: 'JSON list input',
 		group: 'Forms',
-		component: markRaw(ElListInput),
+		component: markRaw(ElJsonListInput),
 		icon: '≡',
 		accepts: 'none',
 		defaults: {
 			props: {
 				label: 'Items',
+				addLabel: '+ Add item',
 				modelValue: [
 					{ label: 'Item 1', value: 'one' },
 					{ label: 'Item 2', value: 'two' },
 				],
+				schema: [
+					{ key: 'label', label: 'Label', placeholder: 'Item label', default: (index) => `Item ${index + 1}` },
+					{ key: 'value', label: 'Value', placeholder: 'item-value', default: (index) => `item-${index + 1}` },
+				],
+			},
+		},
+	},
+	{
+		id: 'el-code-input',
+		label: 'Code input',
+		group: 'Forms',
+		component: markRaw(ElCodeInput),
+		icon: '</>',
+		accepts: 'none',
+		defaults: {
+			props: {
+				label: 'Code',
+				lang: 'json',
+				modelValue: '{\\n\\t\"name\": \"Elements\"\\n}',
+				rows: 8,
+			},
+		},
+	},
+	{
+		id: 'el-json-input',
+		label: 'JSON input',
+		group: 'Forms',
+		component: markRaw(ElJsonInput),
+		icon: '{}',
+		accepts: 'none',
+		defaults: {
+			props: {
+				label: 'JSON',
+				description: 'Valid JSON emits parsed data.',
+				modelValue: { name: 'Elements', editable: true },
+				rows: 8,
 			},
 		},
 	},

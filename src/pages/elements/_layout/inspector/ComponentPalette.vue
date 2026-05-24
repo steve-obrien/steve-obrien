@@ -4,6 +4,9 @@ import { groupedRegistry } from './componentRegistry.js';
 import { useInspector } from './useInspector.js';
 
 const ctx = useInspector();
+defineProps({
+	showHeader: { type: Boolean, default: true },
+});
 const groups = computed(() => Object.entries(groupedRegistry));
 
 function onDragStart(event, entry) {
@@ -16,7 +19,7 @@ function onDragEnd() { if (ctx) ctx.dragEntry = null; }
 
 <template>
 	<div class="flex h-full flex-col">
-		<div class="border-b border-border px-4 py-3">
+		<div v-if="showHeader" class="border-b border-border px-4 py-3">
 			<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Palette</p>
 			<p class="text-sm font-medium text-foreground">Drag onto the stage</p>
 		</div>

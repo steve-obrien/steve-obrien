@@ -29,8 +29,16 @@ const props = defineProps({
 		type: Array,
 		default: () => [],
 		_edit: {
-			component: 'ElListInput',
+			component: 'ElJsonListInput',
 			description: 'Suggestions. May be replaced by async lookup results.',
+			props: {
+				compact: true,
+				addLabel: '+ Add suggestion',
+				schema: [
+					{ key: 'label', label: 'Label', placeholder: 'Suggestion label', default: (index) => `Suggestion ${index + 1}` },
+					{ key: 'value', label: 'Value', placeholder: 'suggestion-value', default: (index) => `suggestion-${index + 1}` },
+				],
+			},
 		},
 	},
 	placeholder: {

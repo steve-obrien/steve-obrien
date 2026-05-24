@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import { getEditor, getDefaultEditor } from './editorRegistry.js';
 
 // One generic renderer: the field knows which editor component it wants by
-// name (e.g. 'ElSelectInput', 'ElListInput'). We resolve the name to the real
+// name (e.g. 'ElSelectInput', 'ElJsonListInput'). We resolve the name to the real
 // component via the editor registry — no per-type switch statement, no string
 // mappings like 'select' or 'text' to maintain.
 const props = defineProps({

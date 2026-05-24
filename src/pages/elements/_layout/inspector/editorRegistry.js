@@ -1,6 +1,5 @@
 import { markRaw } from 'vue';
 import {
-	ElListInput,
 	ElTextInput,
 	ElTextareaInput,
 	ElNumberInput,
@@ -9,6 +8,8 @@ import {
 	ElBooleanInput,
 	ElColorInput,
 	ElJsonListInput,
+	ElCodeInput,
+	ElJsonInput,
 } from '../../lib/vue';
 
 // Editor components are referenced by their actual component name in spec
@@ -18,7 +19,6 @@ import {
 // To add your own editor: `registerEditor('MyEditor', MyEditorComponent)`.
 
 const editors = {
-	ElListInput: markRaw(ElListInput),
 	ElTextInput: markRaw(ElTextInput),
 	ElTextareaInput: markRaw(ElTextareaInput),
 	ElNumberInput: markRaw(ElNumberInput),
@@ -27,6 +27,8 @@ const editors = {
 	ElBooleanInput: markRaw(ElBooleanInput),
 	ElColorInput: markRaw(ElColorInput),
 	ElJsonListInput: markRaw(ElJsonListInput),
+	ElCodeInput: markRaw(ElCodeInput),
+	ElJsonInput: markRaw(ElJsonInput),
 };
 
 export function getEditor(name) { return editors[name] || null; }

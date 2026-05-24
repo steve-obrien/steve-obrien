@@ -28,8 +28,16 @@ const props = defineProps({
 		type: Array,
 		required: true,
 		_edit: {
-			component: 'ElListInput',
+			component: 'ElJsonListInput',
 			description: 'Available options. May be replaced by async lookup results.',
+			props: {
+				compact: true,
+				addLabel: '+ Add option',
+				schema: [
+					{ key: 'label', label: 'Label', placeholder: 'Option label', default: (index) => `Option ${index + 1}` },
+					{ key: 'value', label: 'Value', placeholder: 'option-value', default: (index) => `option-${index + 1}` },
+				],
+			},
 		},
 	},
 	placeholder: {

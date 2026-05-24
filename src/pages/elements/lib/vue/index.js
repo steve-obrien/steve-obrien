@@ -25,9 +25,12 @@ export { default as ElTextInput } from './ElTextInput.vue';
 export { default as ElTextareaInput } from './ElTextareaInput.vue';
 export { default as ElNumberInput } from './ElNumberInput.vue';
 export { default as ElSelectInput } from './ElSelectInput.vue';
+export { default as ElNativeSelect } from './ElNativeSelect.vue';
+export { default as ElPasswordInput } from './ElPasswordInput.vue';
 export { default as ElBooleanInput } from './ElBooleanInput.vue';
 export { default as ElColorInput } from './ElColorInput.vue';
-export { default as ElListInput } from './ElListInput.vue';
 export { default as ElJsonListInput } from './ElJsonListInput.vue';
+export { default as ElCodeInput } from './ElCodeInput.vue';
+export { default as ElJsonInput } from './ElJsonInput.vue';
 // Rehydration
 export { default as ElRenderer } from './ElRenderer.vue';

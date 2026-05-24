@@ -15,6 +15,9 @@ import InspectorField from './InspectorField.vue';
 const props = defineProps({
 	tree: { type: Object, required: true },
 	enableActions: { type: Boolean, default: false },
+	showHeader: { type: Boolean, default: true },
+	showLayers: { type: Boolean, default: true },
+	showPick: { type: Boolean, default: true },
 });
 
 const ctx = useInspector();
@@ -44,12 +47,13 @@ function onMove(dir) {
 
 <template>
 	<div class="flex h-full flex-col">
-		<div class="flex items-center justify-between border-b border-border px-4 py-3">
+		<div v-if="showHeader" class="flex items-center justify-between border-b border-border px-4 py-3">
 			<div>
 				<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Inspector</p>
 				<p class="text-sm font-medium text-foreground">Live properties</p>
 			</div>
 			<button
+				v-if="showPick"
 				type="button"
 				class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ring-1 transition"
 				:class="ctx.pickMode
@@ -65,7 +69,7 @@ function onMove(dir) {
 			</button>
 		</div>
 
-		<div class="border-b border-border px-2 py-2">
+		<div v-if="showLayers" class="border-b border-border px-2 py-2">
 			<p class="px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Layers</p>
 			<ul class="space-y-0.5">
 				<li v-for="{ node, depth } in nodes" :key="node.id">

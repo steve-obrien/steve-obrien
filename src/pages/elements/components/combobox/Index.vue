@@ -29,6 +29,7 @@ const peoplePlaygroundInspect = {
 				props: {
 					label: 'People',
 					addLabel: '+ Add person',
+					compact: true,
 					schema: [
 						{ key: 'value', label: 'Value', placeholder: 'person-id', default: (index) => `person-${index + 1}` },
 						{ key: 'label', label: 'Name', placeholder: 'Person name', default: (index) => `Person ${index + 1}` },

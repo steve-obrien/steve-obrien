@@ -2,6 +2,7 @@ export const sideNavLinks = [
 	{
 		label: 'Tooling',
 		items: [
+			{ to: '/elements/ai', label: 'AI builders', tag: 'New' },
 			{ to: '/elements/theming', label: 'Theming', tag: 'New' },
 			{ to: '/elements/components/studio', label: 'Studio', tag: 'Pro' },
 			{ to: '/elements/components/playground', label: 'Playground' },
@@ -34,17 +35,31 @@ export const sideNavLinks = [
 		],
 	},
 	{
+		label: 'Blocks',
+		items: [
+			{ to: '/elements/blocks/dashboard', label: 'Dashboard', tag: 'New' },
+			{ to: '/elements/blocks/chat', label: 'Chat', tag: 'New' },
+			{ to: '/elements/blocks/mail', label: 'Mail', tag: 'New' },
+			{ to: '/elements/blocks/forms', label: 'Forms', tag: 'New' },
+			{ to: '/elements/blocks/login', label: 'Login', tag: 'New' },
+		],
+	},
+	{
 		label: 'Forms',
 		items: [
 			{ to: '/elements/components/checkbox', label: 'Checkbox', tag: 'New' },
 			{ to: '/elements/components/radio-group', label: 'Radio group', tag: 'New' },
 			{ to: '/elements/components/text-input', label: 'Text input' },
+			{ to: '/elements/components/password-input', label: 'Password input', tag: 'New' },
 			{ to: '/elements/components/textarea-input', label: 'Textarea' },
 			{ to: '/elements/components/number-input', label: 'Number input' },
 			{ to: '/elements/components/select-input', label: 'Select input' },
+			{ to: '/elements/components/native-select', label: 'Native select', tag: 'New' },
 			{ to: '/elements/components/boolean-input', label: 'Boolean input' },
 			{ to: '/elements/components/color-input', label: 'Color input' },
-			{ to: '/elements/components/list-input', label: 'List input' },
+			{ to: '/elements/components/json-list-input', label: 'JSON list input', tag: 'New' },
+			{ to: '/elements/components/code-input', label: 'Code input', tag: 'New' },
+			{ to: '/elements/components/json-input', label: 'JSON input', tag: 'New' },
 		],
 	},
 	{

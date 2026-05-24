@@ -26,6 +26,7 @@ const props = defineProps({
 			description: 'Visible toasts. Set duration to 0 for a toast that requires manual dismissal.',
 			props: {
 				addLabel: '+ Add toast',
+				compact: true,
 				schema: [
 					{ key: 'id', label: 'ID', placeholder: 'toast-id', default: (index) => `toast-${index + 1}` },
 					{ key: 'title', label: 'Title', placeholder: 'Successfully saved' },

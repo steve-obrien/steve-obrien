@@ -15,8 +15,8 @@ const features = [
 		body: 'A thin Vue layer wraps every primitive so you get reactive props, v-model, and slots — without re-implementing keyboard and ARIA.',
 	},
 	{
-		title: 'Tailwind CSS 4 ready',
-		body: 'Styled with semantic skin tokens so the same components look right in light, dark, and your own brand themes.',
+		title: 'AI-editable by design',
+		body: 'Components carry docs, inspector hints, and Studio specs so generated apps can be inspected, edited, and improved after the first pass.',
 	},
 	{
 		title: 'Accessibility, by default',
@@ -64,6 +64,7 @@ const components = [
 				</p>
 				<div class="mt-8 flex flex-wrap items-center justify-center gap-3">
 					<ElButton :as="'router-link'" :to="'/elements/components/button'" variant="primary" size="lg">Browse components</ElButton>
+					<ElButton :as="'router-link'" :to="'/elements/ai'" variant="secondary" size="lg">AI builder guide</ElButton>
 					<ElButton :as="'router-link'" :to="'/elements/theming'" variant="secondary" size="lg">View theming</ElButton>
 					<ElButton :as="'router-link'" :to="'/elements/pricing'" variant="secondary" size="lg">See pricing →</ElButton>
 				</div>

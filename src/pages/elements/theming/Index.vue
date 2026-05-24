@@ -102,7 +102,7 @@ const decisionRows = [
 	['Page background', 'bg-background text-foreground', 'Use once at layout level.'],
 	['Dialog, drawer, toast, card', 'bg-card text-card-foreground', 'Use for contained surfaces that are not floating menus.'],
 	['Popover, dropdown, combobox menu', 'bg-popover text-popover-foreground', 'Use for layers attached to a trigger.'],
-	['Primary button', 'bg-primary text-primary-foreground', 'Use the shadcn pair: base token paints, foreground token reads on top.'],
+	['Primary button', 'bg-primary text-primary-foreground', 'Use the token pair: base token paints, foreground token reads on top.'],
 	['Secondary button', 'bg-secondary text-secondary-foreground', 'Quiet control with a paired readable foreground.'],
 	['Menu item hover', 'hover:bg-accent hover:text-accent-foreground', 'Use accent for temporary interaction states.'],
 	['Helper copy', 'text-muted-foreground', 'Use for hints, captions, placeholders, and metadata.'],
@@ -155,7 +155,7 @@ function utilitySwatchStyle(token) {
 	<ElementsLayout>
 		<DocPage
 			name="Theming"
-			tagline="Elements use shadcn-style css variable design tokens: base tokens paint surfaces, and matching -foreground tokens keep text readable."
+			tagline="Elements use css variable design tokens: base tokens paint surfaces, and matching -foreground tokens keep text readable."
 			tag="style.css"
 			eyebrow="Foundation"
 		>
@@ -181,14 +181,14 @@ function utilitySwatchStyle(token) {
 						</div>
 					</div>
 					<div class="rounded-3xl border border-border bg-secondary/50 p-6">
-						<p class="text-sm font-semibold text-foreground">Same convention as shadcn</p>
+						<p class="text-sm font-semibold text-foreground">Token naming convention</p>
 						<dl class="mt-4 space-y-3 text-sm">
 							<div class="rounded-2xl border border-border bg-background p-3">
-								<dt class="font-mono text-xs text-muted-foreground">shadcn --primary</dt>
+								<dt class="font-mono text-xs text-muted-foreground">Surface token</dt>
 								<dd class="mt-1 font-mono text-foreground">Elements --primary</dd>
 							</div>
 							<div class="rounded-2xl border border-border bg-background p-3">
-								<dt class="font-mono text-xs text-muted-foreground">shadcn --primary-foreground</dt>
+								<dt class="font-mono text-xs text-muted-foreground">Foreground token</dt>
 								<dd class="mt-1 font-mono text-foreground">Elements --primary-foreground</dd>
 							</div>
 							<div class="rounded-2xl border border-border bg-background p-3">

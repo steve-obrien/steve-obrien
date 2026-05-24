@@ -22,7 +22,7 @@ const props = defineProps({
 	commands: {
 		type: Array,
 		required: true,
-		_edit: { component: 'ElJsonListInput', description: 'Commands shown in the palette.' },
+		_edit: { component: 'ElJsonListInput', description: 'Commands shown in the palette.', props: { compact: true } },
 	},
 	placeholder: {
 		type: String,

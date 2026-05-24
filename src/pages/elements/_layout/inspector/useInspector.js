@@ -18,7 +18,7 @@ export function uid(prefix = 'n') {
 //     items: {
 //       type: Array,
 //       required: true,
-//       _edit: { component: 'ElListInput', props: { label: 'Items' } },
+//       _edit: { component: 'ElJsonListInput', props: { label: 'Items', compact: true } },
 //     },
 //   });
 //
