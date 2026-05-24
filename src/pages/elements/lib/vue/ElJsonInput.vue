@@ -20,6 +20,16 @@ const props = defineProps({
 		default: null,
 		_edit: { component: 'ElJsonInput', description: 'Any JSON-serializable value.' },
 	},
+	id: {
+		type: String,
+		default: '',
+		_edit: { description: 'ID forwarded to the underlying code input.' },
+	},
+	name: {
+		type: String,
+		default: '',
+		_edit: { description: 'Name forwarded to the underlying code input.' },
+	},
 	label: {
 		type: String,
 		default: '',
@@ -39,6 +49,11 @@ const props = defineProps({
 		type: Boolean,
 		default: true,
 		_edit: { description: 'Attempt to load the enhanced editor from the CDN.' },
+	},
+	invalid: {
+		type: Boolean,
+		default: false,
+		_edit: { description: 'Mark the input invalid.' },
 	},
 });
 
@@ -75,10 +90,13 @@ watch(() => props.modelValue, (value) => {
 	<div>
 		<ElCodeInput
 			:model-value="text"
+			:id="id"
+			:name="name"
 			:label="label"
 			:description="description"
 			:rows="rows"
 			:editor="editor"
+			:invalid="invalid || !!error"
 			lang="json"
 			@update:model-value="onInput"
 			@focus="focused = true"

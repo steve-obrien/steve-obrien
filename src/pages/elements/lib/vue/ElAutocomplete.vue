@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, useId, watch } from 'vue';
 
 const listId = `el-autocomplete-${useId()}`;
+const generatedInputId = `el-autocomplete-input-${useId()}`;
 
 defineOptions({
 	__doc: {
@@ -24,6 +25,16 @@ const props = defineProps({
 		type: String,
 		default: '',
 		_edit: { description: 'Current text value.' },
+	},
+	id: {
+		type: String,
+		default: '',
+		_edit: { description: 'ID applied to the input.' },
+	},
+	name: {
+		type: String,
+		default: '',
+		_edit: { description: 'Form field name. Defaults to the generated id.' },
 	},
 	options: {
 		type: Array,
@@ -56,6 +67,11 @@ const props = defineProps({
 		default: 'viewport',
 		_edit: { options: ['viewport', 'anchor'], description: 'viewport keeps suggestions inside the browser; anchor keeps them attached while scrolling.' },
 	},
+	invalid: {
+		type: Boolean,
+		default: false,
+		_edit: { description: 'Mark the input invalid.' },
+	},
 });
 const emit = defineEmits(['update:modelValue', 'query', 'select', 'commit']);
 
@@ -66,6 +82,8 @@ const currentText = ref('');
 
 const normalised = (option) => (typeof option === 'string' ? { value: option, label: option } : option);
 const items = computed(() => props.options.map(normalised));
+const inputId = computed(() => props.id || generatedInputId);
+const inputName = computed(() => props.name || inputId.value);
 
 function syncInputFromModel() {
 	currentText.value = props.modelValue ?? '';
@@ -114,9 +132,13 @@ watch(() => props.modelValue, syncInputFromModel);
 		<input
 			ref="inputEl"
 			slot="input"
+			:id="inputId"
+			:name="inputName"
 			type="text"
 			:placeholder="placeholder"
-			class="h-10 w-full rounded-full border border-border bg-background px-4 text-sm text-foreground outline-none transition focus:ring-2 focus:ring-ring/60"
+			:aria-invalid="invalid || undefined"
+			class="el-input rounded-full px-4 focus:ring-ring/60"
+			:data-invalid="invalid ? '' : undefined"
 		/>
 		<Teleport to="body" :disabled="!isMounted">
 			<ul

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, useId } from 'vue';
 import ElField from './ElField.vue';
 
 defineOptions({
@@ -15,6 +15,16 @@ defineOptions({
 
 const props = defineProps({
 	modelValue: { type: String, default: '' },
+	id: {
+		type: String,
+		default: '',
+		_edit: { description: 'ID applied to the password input and used by the label.' },
+	},
+	name: {
+		type: String,
+		default: '',
+		_edit: { description: 'Form field name. Defaults to the generated id.' },
+	},
 	label: {
 		type: String,
 		default: 'Password',
@@ -34,6 +44,11 @@ const props = defineProps({
 		type: Boolean,
 		default: false,
 		_edit: { description: 'Disable input and visibility control.' },
+	},
+	invalid: {
+		type: Boolean,
+		default: false,
+		_edit: { description: 'Mark the password input invalid.' },
 	},
 	required: {
 		type: Boolean,
@@ -59,6 +74,9 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue']);
 const visible = ref(false);
+const generatedId = `el-password-input-${useId()}`;
+const inputId = computed(() => props.id || generatedId);
+const inputName = computed(() => props.name || inputId.value);
 
 const SECONDS_PER_YEAR = 31557600;
 
@@ -134,21 +152,27 @@ const strengthTones = ['', 'bg-destructive', 'bg-destructive', 'bg-warning', 'bg
 </script>
 
 <template>
-	<ElField :label="label" :description="description" :required="required">
+	<ElField :label="label" :description="description" :html-for="inputId" :invalid="invalid || compromised" :required="required">
 		<div class="relative">
 			<input
-			:type="visible ? 'text' : 'password'"
-			:value="modelValue"
-			:placeholder="placeholder"
-			:disabled="disabled"
-			class="h-10 w-full rounded-lg border border-input bg-background px-3 pr-11 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:opacity-50"
-			@input="emit('update:modelValue', $event.target.value)" />
+				:id="inputId"
+				:name="inputName"
+				:type="visible ? 'text' : 'password'"
+				:value="modelValue"
+				:placeholder="placeholder"
+				:disabled="disabled"
+				:required="required"
+				:aria-invalid="invalid || compromised || undefined"
+				class="el-input pr-11"
+				@input="emit('update:modelValue', $event.target.value)"
+			/>
 			<button
-			type="button"
-			class="absolute inset-y-1 right-1 grid size-8 place-items-center rounded-md text-muted-foreground transition hover:bg-secondary hover:text-secondary-foreground focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50"
-			:disabled="disabled"
-			:aria-label="visible ? 'Hide password' : 'Show password'"
-			@click="visible = !visible">
+				type="button"
+				class="absolute inset-y-1 right-1 grid size-8 place-items-center rounded-md text-muted-foreground transition hover:bg-secondary hover:text-secondary-foreground focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50"
+				:disabled="disabled"
+				:aria-label="visible ? 'Hide password' : 'Show password'"
+				@click="visible = !visible"
+			>
 				<svg v-if="visible" class="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
 					<path d="M3 3l18 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
 					<path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />

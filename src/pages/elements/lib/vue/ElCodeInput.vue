@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue';
 import ElField from './ElField.vue';
 
 const CODEMIRROR_URL = 'https://esm.sh/codemirror@6.0.1';
@@ -24,6 +24,16 @@ const props = defineProps({
 		type: String,
 		default: '',
 		_edit: { component: 'ElTextareaInput', props: { rows: 8 }, description: 'Code text.' },
+	},
+	id: {
+		type: String,
+		default: '',
+		_edit: { description: 'ID applied to the fallback textarea and used by the label.' },
+	},
+	name: {
+		type: String,
+		default: '',
+		_edit: { description: 'Form field name. Defaults to the generated id.' },
 	},
 	label: {
 		type: String,
@@ -60,6 +70,11 @@ const props = defineProps({
 		default: false,
 		_edit: { description: 'Disable editing.' },
 	},
+	invalid: {
+		type: Boolean,
+		default: false,
+		_edit: { description: 'Mark the editor invalid.' },
+	},
 	required: {
 		type: Boolean,
 		default: false,
@@ -70,6 +85,9 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'focus', 'blur']);
 const mountEl = ref(null);
 const enhanced = ref(false);
+const generatedId = `el-code-input-${useId()}`;
+const inputId = computed(() => props.id || generatedId);
+const inputName = computed(() => props.name || inputId.value);
 let editorView = null;
 
 function update(value) {
@@ -160,15 +178,19 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-	<ElField :label="label" :description="description" :required="required">
-		<div class="overflow-hidden rounded-xl border border-input bg-background focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30">
+	<ElField :label="label" :description="description" :html-for="inputId" :invalid="invalid" :required="required">
+		<div class="overflow-hidden rounded-xl border border-input bg-background focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30 data-[invalid]:border-destructive data-[invalid]:focus-within:border-destructive data-[invalid]:focus-within:ring-destructive/25" :data-invalid="invalid ? '' : undefined">
 			<div v-show="enhanced" ref="mountEl"></div>
 			<textarea
 				v-if="!enhanced"
+				:id="inputId"
+				:name="inputName"
 				:value="modelValue"
 				:placeholder="placeholder"
 				:rows="rows"
 				:disabled="disabled"
+				:required="required"
+				:aria-invalid="invalid || undefined"
 				spellcheck="false"
 				class="block min-h-40 w-full resize-y bg-background p-3 font-mono text-[12.5px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground disabled:opacity-50"
 				@input="update($event.target.value)"

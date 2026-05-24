@@ -41,6 +41,7 @@ const iconPaths = {
 	'Application layout': 'M4 5h16v14H4V5Zm5 0v14M12 9h5M12 13h4',
 	Checkbox: 'M5 12l4 4L19 6',
 	'Radio group': 'M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm0-5a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
+	Field: 'M6 5h12M6 10h12M6 15h8M5 19h14',
 	'Text input': 'M5 7h14M12 7v10M8 17h8',
 	'Password input': 'M7 11V8a5 5 0 0 1 10 0v3M6 11h12v9H6v-9Z',
 	Textarea: 'M5 5h14v14H5V5Zm3 4h8M8 13h8M8 17h5',

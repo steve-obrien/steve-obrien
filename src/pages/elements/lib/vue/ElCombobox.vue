@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, useId, watch } from 'vue';
 
 const listId = `el-combobox-${useId()}`;
+const generatedInputId = `el-combobox-input-${useId()}`;
 
 defineOptions({
 	__doc: {
@@ -23,6 +24,16 @@ const props = defineProps({
 		type: [String, Number],
 		default: '',
 		_edit: { description: 'Committed selected value.' },
+	},
+	id: {
+		type: String,
+		default: '',
+		_edit: { description: 'ID applied to the input.' },
+	},
+	name: {
+		type: String,
+		default: '',
+		_edit: { description: 'Form field name. Defaults to the generated id.' },
 	},
 	options: {
 		type: Array,
@@ -55,6 +66,11 @@ const props = defineProps({
 		default: 'viewport',
 		_edit: { options: ['viewport', 'anchor'], description: 'viewport keeps the list inside the browser; anchor keeps it attached while scrolling.' },
 	},
+	invalid: {
+		type: Boolean,
+		default: false,
+		_edit: { description: 'Mark the input invalid.' },
+	},
 });
 const emit = defineEmits(['update:modelValue', 'query', 'select']);
 
@@ -64,6 +80,8 @@ const isMounted = ref(false);
 
 const normalised = (option) => (typeof option === 'string' ? { value: option, label: option } : option);
 const optionList = computed(() => props.options.map(normalised));
+const inputId = computed(() => props.id || generatedInputId);
+const inputName = computed(() => props.name || inputId.value);
 
 function displayForValue(value) {
 	const selected = optionList.value.find((option) => String(option.value ?? option.label) === String(value));
@@ -108,9 +126,13 @@ watch([() => props.modelValue, optionList], syncInputFromModel);
 		<input
 			ref="inputEl"
 			slot="input"
+			:id="inputId"
+			:name="inputName"
 			type="text"
 			:placeholder="placeholder"
-			class="h-10 w-full rounded-full border border-border bg-background px-4 pr-10 text-sm text-foreground outline-none transition focus:ring-2 focus:ring-ring/60"
+			:aria-invalid="invalid || undefined"
+			class="el-input rounded-full px-4 pr-10 focus:ring-ring/60"
+			:data-invalid="invalid ? '' : undefined"
 		/>
 		<button
 			slot="toggle"

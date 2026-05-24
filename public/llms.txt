@@ -24,7 +24,7 @@ Philosophy:
 
 Current component families:
 - Behaviour components: Button, Dropdown, Dialog, Drawer, Tabs, Toggle, Tooltip, Accordion, Menu, Listbox, Combobox, Autocomplete, Popover, Toast, Command palette.
-- Form components: Checkbox, Radio group, Text input, Password input, Calendar, Textarea, Code input, JSON input, JSON list input, Number input, Select input, Native select, Boolean input, Color input.
+- Form components: Field, Checkbox, Radio group, Text input, Password input, Calendar, Textarea, Code input, JSON input, JSON list input, Number input, Select input, Native select, Boolean input, Color input.
 - Visual components: Card.
 - Blocks: Dashboard, Chat, Mail, Forms, Login, Application layout.
 
@@ -33,13 +33,14 @@ LLM generation rules:
 2. Choose existing components before writing custom HTML.
 3. Keep accessibility inside components; do not recreate keyboard navigation by hand.
 4. Prefer native form behaviour where it is useful, especially on mobile.
-5. Use Code input for prompts, templates, snippets, and structured text that benefits from a code editor.
-6. Use JSON input for editable schemas, tool payloads, app config, and other parsed structured data.
-7. Use JSON list input for schema-aware arrays of objects, especially inspector editors for menu items, commands, options, toasts, and people lists.
-8. Return an editable Studio spec when the user may want to inspect or revise the UI later.
-9. Use clear layer labels and stable ids in specs.
-10. Do not invent new theme colour names; use the theme page token names.
-11. Keep generated interfaces dense, practical, and product-like unless the user asks for a marketing page.
+5. Use Field to wrap custom controls that need consistent labels, required markers, and descriptions.
+6. Use Code input for prompts, templates, snippets, and structured text that benefits from a code editor.
+7. Use JSON input for editable schemas, tool payloads, app config, and other parsed structured data.
+8. Use JSON list input for schema-aware arrays of objects, especially inspector editors for menu items, commands, options, toasts, and people lists.
+9. Return an editable Studio spec when the user may want to inspect or revise the UI later.
+10. Use clear layer labels and stable ids in specs.
+11. Do not invent new theme colour names; use the theme page token names.
+12. Keep generated interfaces dense, practical, and product-like unless the user asks for a marketing page.
 
 Future AI-specific areas:
 - AI chat tools that return editable UI.

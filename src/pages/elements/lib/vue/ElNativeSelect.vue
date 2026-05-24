@@ -1,4 +1,5 @@
 <script setup>
+import { computed, useId } from 'vue';
 import ElField from './ElField.vue';
 
 defineOptions({
@@ -14,6 +15,16 @@ defineOptions({
 
 const props = defineProps({
 	modelValue: { default: '' },
+	id: {
+		type: String,
+		default: '',
+		_edit: { description: 'ID applied to the select and used by the label.' },
+	},
+	name: {
+		type: String,
+		default: '',
+		_edit: { description: 'Form field name. Defaults to the generated id.' },
+	},
 	options: {
 		type: Array,
 		default: () => [],
@@ -49,6 +60,11 @@ const props = defineProps({
 		default: false,
 		_edit: { description: 'Disable the select.' },
 	},
+	invalid: {
+		type: Boolean,
+		default: false,
+		_edit: { description: 'Mark the select invalid.' },
+	},
 	required: {
 		type: Boolean,
 		default: false,
@@ -59,15 +75,22 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue']);
 const labelOf = (option) => (option && typeof option === 'object' ? (option.label ?? option.value) : option);
 const valueOf = (option) => (option && typeof option === 'object' ? (option.value ?? option.label) : option);
+const generatedId = `el-native-select-${useId()}`;
+const inputId = computed(() => props.id || generatedId);
+const inputName = computed(() => props.name || inputId.value);
 </script>
 
 <template>
-	<ElField :label="label" :description="description" :required="required">
+	<ElField :label="label" :description="description" :html-for="inputId" :invalid="invalid" :required="required">
 		<div class="relative">
 			<select
+				:id="inputId"
+				:name="inputName"
 				:value="modelValue"
 				:disabled="disabled"
-				class="h-10 w-full appearance-none rounded-lg border border-input bg-background px-3 pr-10 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:opacity-50"
+				:required="required"
+				:aria-invalid="invalid || undefined"
+				class="el-input appearance-none pr-10"
 				@change="emit('update:modelValue', $event.target.value)"
 			>
 				<option v-if="placeholder" disabled value="">{{ placeholder }}</option>
