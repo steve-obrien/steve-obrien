@@ -1,37 +1,40 @@
-export { default as ElButton } from './ElButton.vue';
-export { default as ElDropdown } from './ElDropdown.vue';
-export { default as ElDialog } from './ElDialog.vue';
-export { default as ElTabs } from './ElTabs.vue';
-export { default as ElToggle } from './ElToggle.vue';
-export { default as ElCheckbox } from './ElCheckbox.vue';
-export { default as ElRadioGroup } from './ElRadioGroup.vue';
-export { default as ElTooltip } from './ElTooltip.vue';
-export { default as ElAccordion } from './ElAccordion.vue';
-export { default as ElMenu } from './ElMenu.vue';
-export { default as ElListbox } from './ElListbox.vue';
-export { default as ElCombobox } from './ElCombobox.vue';
-export { default as ElAutocomplete } from './ElAutocomplete.vue';
-export { default as ElPopover } from './ElPopover.vue';
-export { default as ElDrawer } from './ElDrawer.vue';
-export { default as ElToastStack } from './ElToastStack.vue';
-export { default as ElToastItem } from './ElToastItem.vue';
-export { default as ElCommandPalette } from './ElCommandPalette.vue';
-export { useToasts } from './useToasts.js';
+export { default as ElButton } from '../../components/button/ElButton.vue';
+export { default as ElDropdown } from '../../components/dropdown/ElDropdown.vue';
+export { default as ElDialog } from '../../components/dialog/ElDialog.vue';
+export { default as ElTabs } from '../../components/tabs/ElTabs.vue';
+export { default as ElTooltip } from '../../components/tooltip/ElTooltip.vue';
+export { default as ElAccordion } from '../../components/accordion/ElAccordion.vue';
+export { default as ElMenu } from '../../components/menu/ElMenu.vue';
+export { default as ElPopover } from '../../components/popover/ElPopover.vue';
+export { default as ElDrawer } from '../../components/drawer/ElDrawer.vue';
+export { default as ElToastStack } from '../../components/toast/ElToastStack.vue';
+export { default as ElToastItem } from '../../components/toast/ElToastItem.vue';
+export { default as ElCommandPalette } from '../../components/command-palette/ElCommandPalette.vue';
+export { useToasts } from '../../components/toast/useToasts.js';
+
 // Visual primitives
-export { default as ElCard } from './ElCard.vue';
+export { default as ElCard } from '../../visual/card/ElCard.vue';
+
 // Form primitives
-export { default as ElField } from './ElField.vue';
-export { default as ElTextInput } from './ElTextInput.vue';
-export { default as ElTextareaInput } from './ElTextareaInput.vue';
-export { default as ElNumberInput } from './ElNumberInput.vue';
-export { default as ElSelectInput } from './ElSelectInput.vue';
-export { default as ElNativeSelect } from './ElNativeSelect.vue';
-export { default as ElPasswordInput } from './ElPasswordInput.vue';
-export { default as ElCalendar } from './ElCalendar.vue';
-export { default as ElBooleanInput } from './ElBooleanInput.vue';
-export { default as ElColorInput } from './ElColorInput.vue';
-export { default as ElJsonListInput } from './ElJsonListInput.vue';
-export { default as ElCodeInput } from './ElCodeInput.vue';
-export { default as ElJsonInput } from './ElJsonInput.vue';
+export { default as ElToggle } from '../../forms/toggle/ElToggle.vue';
+export { default as ElCheckbox } from '../../forms/checkbox/ElCheckbox.vue';
+export { default as ElRadioGroup } from '../../forms/radio-group/ElRadioGroup.vue';
+export { default as ElListbox } from '../../forms/listbox/ElListbox.vue';
+export { default as ElCombobox } from '../../forms/combobox/ElCombobox.vue';
+export { default as ElAutocomplete } from '../../forms/autocomplete/ElAutocomplete.vue';
+export { default as ElField } from '../../forms/field/ElField.vue';
+export { default as ElTextInput } from '../../forms/text-input/ElTextInput.vue';
+export { default as ElTextareaInput } from '../../forms/textarea-input/ElTextareaInput.vue';
+export { default as ElNumberInput } from '../../forms/number-input/ElNumberInput.vue';
+export { default as ElSelectInput } from '../../forms/select-input/ElSelectInput.vue';
+export { default as ElNativeSelect } from '../../forms/native-select/ElNativeSelect.vue';
+export { default as ElPasswordInput } from '../../forms/password-input/ElPasswordInput.vue';
+export { default as ElCalendar } from '../../forms/calendar/ElCalendar.vue';
+export { default as ElBooleanInput } from '../../forms/boolean-input/ElBooleanInput.vue';
+export { default as ElColorInput } from '../../forms/color-input/ElColorInput.vue';
+export { default as ElJsonListInput } from '../../forms/json-list-input/ElJsonListInput.vue';
+export { default as ElCodeInput } from '../../forms/code-input/ElCodeInput.vue';
+export { default as ElJsonInput } from '../../forms/json-input/ElJsonInput.vue';
+
 // Rehydration
-export { default as ElRenderer } from './ElRenderer.vue';
+export { default as ElRenderer } from '../../components/playground/ElRenderer.vue';

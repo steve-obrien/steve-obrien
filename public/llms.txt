@@ -6,6 +6,7 @@ Primary docs:
 - Overview: /elements
 - AI builder guide: /elements/ai
 - Theming: /elements/theming
+- Component spec: /elements/component-spec
 - Studio: /elements/components/studio
 - Blocks: /elements/blocks/dashboard
 - Components: /elements/components/button
@@ -21,6 +22,9 @@ Philosophy:
 - Do not use raw colours unless defining a theme.
 - Prefer component props for behaviour and classes for layout, spacing, and small visual adjustments.
 - Give generated nodes stable ids and human labels when returning Studio specs.
+- Components are discovered from src/pages/elements/components/*/El*.vue, src/pages/elements/forms/*/El*.vue, and src/pages/elements/visual/*/El*.vue.
+- Component metadata currently lives in defineOptions({ __doc: ... }). Studio-specific decoration can live in __doc.studio or __studio.
+- Prop inspector metadata currently lives on prop definitions as _edit. Prefer _edit.component over the legacy _edit.editor alias.
 
 Current component families:
 - Behaviour components: Button, Dropdown, Dialog, Drawer, Tabs, Toggle, Tooltip, Accordion, Menu, Listbox, Combobox, Autocomplete, Popover, Toast, Command palette.
@@ -41,6 +45,17 @@ LLM generation rules:
 10. Use clear layer labels and stable ids in specs.
 11. Do not invent new theme colour names; use the theme page token names.
 12. Keep generated interfaces dense, practical, and product-like unless the user asks for a marketing page.
+
+Component discovery and documentation:
+- To add a component, create a folder under /elements/components, /elements/forms, or /elements/visual and add an El*.vue component file.
+- Add an Index.vue beside the component for bespoke documentation. If no Index.vue exists, the docs route is generated from the inspected component metadata and runtime props.
+- Use __doc.name, __doc.tag, __doc.description, __doc.icon, __doc.events, and __doc.slots to make generated docs useful.
+- Use __doc.hidden or __doc.nav.hidden to hide helper components from generated navigation.
+- Use __doc.studio.hidden to hide helper components from the Studio palette while keeping them available to code.
+- Use __doc.icon for the canonical SVG path icon. Sidebar fallback icons are presentation-only.
+- The component row is discovery data: id, path, section, slug, exportName, route, and component or loader.
+- The inspected component row decorates that with __doc, studio metadata, props, label, badge, icon, order, hidden flags, navHidden, and studioHidden.
+- Studio renderer specs are UI trees with id, label, component, props, and children. They are different from component discovery rows.
 
 Future AI-specific areas:
 - AI chat tools that return editable UI.

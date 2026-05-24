@@ -1,62 +1,8 @@
 import { markRaw } from 'vue';
-
-// Studio palette entries are discovered from Vue component files in lib/vue.
-// Add an El*.vue file and, unless it is a helper listed below, Studio can drag
-// it onto the stage without another registry edit.
-const componentModules = import.meta.glob([
-	'../../lib/vue/El*.vue',
-	'!../../lib/vue/ElField.vue',
-	'!../../lib/vue/ElRenderer.vue',
-	'!../../lib/vue/ElToastItem.vue',
-], { eager: true, import: 'default' });
-
-const HIDDEN_COMPONENTS = new Set([
-	'ElField',
-	'ElRenderer',
-	'ElToastItem',
-]);
+import { getComponentRecords } from '../componentManager.js';
+import { getComponentProps, getStudioMeta, inspectComponentRecord } from '../componentInspector.js';
 
 const GROUP_ORDER = ['Elements', 'Forms', 'Visual', 'HTML', 'Content'];
-const NON_FORM_MODEL_COMPONENTS = new Set([
-	'ElCommandPalette',
-	'ElDialog',
-	'ElDrawer',
-	'ElTabs',
-	'ElToastStack',
-]);
-
-const ICONS = {
-	ElAccordion: '☰',
-	ElAutocomplete: '⌕',
-	ElBooleanInput: '☑',
-	ElButton: '◉',
-	ElCalendar: '▦',
-	ElCard: '▣',
-	ElCheckbox: '☑',
-	ElCodeInput: '</>',
-	ElColorInput: '◉',
-	ElCombobox: '◆',
-	ElCommandPalette: '⌘',
-	ElDialog: '□',
-	ElDrawer: '▤',
-	ElDropdown: '▾',
-	ElJsonInput: '{}',
-	ElJsonListInput: '≡',
-	ElListbox: '▤',
-	ElMenu: '☷',
-	ElNativeSelect: '⌄',
-	ElNumberInput: '#',
-	ElPasswordInput: '••',
-	ElPopover: '◇',
-	ElRadioGroup: '◌',
-	ElSelectInput: '◐',
-	ElTabs: '▥',
-	ElTextareaInput: '¶',
-	ElTextInput: 'T',
-	ElToastStack: '◫',
-	ElToggle: '⊙',
-	ElTooltip: '?',
-};
 
 const SAMPLE_PROPS = {
 	ElAccordion: {
@@ -241,25 +187,10 @@ const SAMPLE_CHILDREN = {
 	ElTooltip: [{ id: null, text: 'Hover me' }],
 };
 
-function componentExports() {
-	return Object.entries(componentModules)
-		.map(([path, component]) => [path.split('/').pop().replace(/\.vue$/, ''), component])
-		.filter(([name, component]) => name.startsWith('El') && isVueComponent(component))
-		.filter(([name, component]) => !HIDDEN_COMPONENTS.has(name) && !studioMeta(component).hidden);
-}
-
-function isVueComponent(component) {
-	return !!(component && typeof component === 'object' && (component.props || component.__doc || component.render || component.setup));
-}
-
-function studioMeta(component) {
-	const doc = component.__doc || {};
-	return component.__studio || doc.studio || {};
-}
-
-function buildComponentEntry([exportName, component]) {
-	const meta = studioMeta(component);
-	const label = meta.label || component.__doc?.name || labelFromExport(exportName);
+function buildComponentEntry(record) {
+	const { exportName, component, section } = record;
+	const meta = record.studio || getStudioMeta(component);
+	const label = meta.label || record.label || labelFromExport(exportName);
 	const accepts = meta.accepts || inferAccepts(exportName, component);
 	const defaults = {
 		props: {
@@ -274,9 +205,9 @@ function buildComponentEntry([exportName, component]) {
 	return {
 		id: meta.id || idFromExport(exportName),
 		label,
-		group: meta.group || inferGroup(exportName, component),
+		group: meta.group || groupFromSection(section),
 		component: markRaw(component),
-		icon: meta.icon || ICONS[exportName] || '◦',
+		icon: meta.icon || record.icon || label.charAt(0),
 		accepts,
 		defaults,
 		hints: meta.hints || {},
@@ -285,35 +216,29 @@ function buildComponentEntry([exportName, component]) {
 
 function inferDefaultProps(exportName, component, label) {
 	const props = {};
-	for (const [key, def] of Object.entries(componentProps(component))) {
+	for (const [key, def] of Object.entries(getComponentProps(component))) {
 		if (key === 'class' || key === 'modelModifiers') continue;
 		const value = propDefaultValue(def);
 		if (value !== undefined) props[key] = value;
 	}
 
-	if ('label' in componentProps(component) && props.label == null) props.label = label;
-	if ('placeholder' in componentProps(component) && props.placeholder == null) props.placeholder = 'Type here...';
-	if ('description' in componentProps(component) && props.description == null) props.description = '';
-	if ('modelValue' in componentProps(component) && props.modelValue == null) {
-		props.modelValue = emptyValueForProp(componentProps(component).modelValue);
+	const componentProps = getComponentProps(component);
+	if ('label' in componentProps && props.label == null) props.label = label;
+	if ('placeholder' in componentProps && props.placeholder == null) props.placeholder = 'Type here...';
+	if ('description' in componentProps && props.description == null) props.description = '';
+	if ('modelValue' in componentProps && props.modelValue == null) {
+		props.modelValue = emptyValueForProp(componentProps.modelValue);
 	}
-	if ('options' in componentProps(component) && !props.options) props.options = defaultOptions();
-	if ('items' in componentProps(component) && !props.items) props.items = defaultItems(exportName);
-	if ('commands' in componentProps(component) && !props.commands) props.commands = defaultCommands();
-	if ('tabs' in componentProps(component) && !props.tabs) props.tabs = defaultTabs();
-	if ('toasts' in componentProps(component) && !props.toasts) props.toasts = defaultToasts();
+	if ('options' in componentProps && !props.options) props.options = defaultOptions();
+	if ('items' in componentProps && !props.items) props.items = defaultItems(exportName);
+	if ('commands' in componentProps && !props.commands) props.commands = defaultCommands();
+	if ('tabs' in componentProps && !props.tabs) props.tabs = defaultTabs();
+	if ('toasts' in componentProps && !props.toasts) props.toasts = defaultToasts();
 
 	return {
 		...props,
 		...(SAMPLE_PROPS[exportName] || {}),
 	};
-}
-
-function componentProps(component) {
-	const props = component.props;
-	if (!props) return {};
-	if (Array.isArray(props)) return Object.fromEntries(props.map((key) => [key, {}]));
-	return props;
 }
 
 function propDefaultValue(def) {
@@ -386,18 +311,12 @@ function inferAccepts(exportName, component) {
 	return slots.some((slot) => slot.name === '(default)' || slot.name === 'default') ? 'children' : 'none';
 }
 
-function inferGroup(exportName, component) {
-	const docName = component.__doc?.name || '';
-	if (exportName === 'ElCard') return 'Visual';
-	if (
-		('modelValue' in componentProps(component) && !NON_FORM_MODEL_COMPONENTS.has(exportName)) ||
-		exportName.endsWith('Input') ||
-		['ElCalendar', 'ElCheckbox', 'ElRadioGroup', 'ElNativeSelect', 'ElSelectInput'].includes(exportName) ||
-		/\binput\b/i.test(docName)
-	) {
-		return 'Forms';
-	}
-	return 'Elements';
+function groupFromSection(section) {
+	return {
+		components: 'Elements',
+		forms: 'Forms',
+		visual: 'Visual',
+	}[section] || 'Elements';
 }
 
 function idFromExport(name) {
@@ -510,7 +429,11 @@ const htmlEntries = [
 	},
 ];
 
-const discoveredEntries = componentExports().map(buildComponentEntry).sort(sortEntries);
+const discoveredEntries = getComponentRecords()
+	.map(inspectComponentRecord)
+	.filter((record) => !record.studioHidden)
+	.map(buildComponentEntry)
+	.sort(sortEntries);
 const entries = [...discoveredEntries, ...htmlEntries];
 
 export const componentRegistry = entries;

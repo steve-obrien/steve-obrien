@@ -1,8 +1,10 @@
 import AboutPage from './pages/AboutPage.vue';
 import IdeasPage from './pages/IdeasPage.vue';
 import NotFoundPage from './NotFoundPage.vue';
+import { getFormRedirectRecords, getLazyComponentRecords } from './pages/elements/_layout/componentManager.js';
 
 const pageRouteModules = import.meta.glob('./pages/**/Index.vue');
+const generatedComponentPage = () => import('./pages/elements/_layout/GeneratedComponentPage.vue');
 
 function filePathToRoutePath(globKey) {
 	const m = globKey.match(/^\.\/pages\/(.+)\/Index\.vue$/);
@@ -40,10 +42,31 @@ const manualRoutes = [
 ];
 
 const manualPaths = new Set(manualRoutes.map((r) => r.path));
+const fileBasedPaths = new Set(fileBasedRoutes.map((r) => r.path));
+
+const generatedComponentRoutes = getLazyComponentRecords()
+	.map((record) => {
+		if (fileBasedPaths.has(record.route)) return null;
+		return {
+			path: record.route,
+			component: generatedComponentPage,
+			props: { componentLoader: record.loader },
+			meta: { title: titleFromRoutePath(record.route) },
+		};
+	})
+	.filter(Boolean);
+
+const movedFormRedirects = getFormRedirectRecords()
+	.map((record) => ({
+		path: record.from,
+		redirect: record.to,
+	}));
 
 export const routes = [
 	...manualRoutes,
 	...fileBasedRoutes.filter((r) => !manualPaths.has(r.path)),
+	...generatedComponentRoutes,
+	...movedFormRedirects,
 	{
 		path: '/:pathMatch(.*)*',
 		name: 'NotFound',

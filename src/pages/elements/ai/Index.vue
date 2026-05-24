@@ -133,6 +133,29 @@ const studioCode = `{
 \t}
 }`;
 
+const componentDocCode = `<script setup>
+defineOptions({
+\t__doc: {
+\t\tname: 'Text input',
+\t\ttag: '<ElTextInput>',
+\t\tdescription: 'A labelled single-line text field.',
+\t\ticon: 'M5 7h14M12 7v10M8 17h8',
+\t\tnav: {
+\t\t\tgroup: 'Forms',
+\t\t\tbadge: 'New',
+\t\t},
+\t\tstudio: {
+\t\t\tgroup: 'Forms',
+\t\t\ticon: 'T',
+\t\t\thidden: false,
+\t\t},
+\t\tevents: [
+\t\t\t{ name: 'update:modelValue', payload: 'string', description: 'Fired when text changes.' },
+\t\t],
+\t}
+});
+<\/script>`;
+
 const promptCode = `When building with Elements:
 1. Prefer existing Elements components and blocks before custom markup.
 2. Use Elements theme tokens, not raw colours.
@@ -238,6 +261,22 @@ const promptCode = `When building with Elements:
 						</p>
 					</div>
 					<CodeBlock lang="json" :code="studioCode" />
+				</div>
+			</DocSection>
+
+			<DocSection eyebrow="Component folders" title="Component metadata lives with the component">
+				<div class="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+					<div class="rounded-3xl border border-border bg-card p-6 text-card-foreground">
+						<h3 class="text-lg font-semibold tracking-tight">Discovery convention</h3>
+						<p class="mt-2 text-sm leading-6 text-muted-foreground">
+							Each component can live beside its docs page and examples. A component manager discovers folders and paths, then the inspector reads Vue props and the component's
+							<code class="rounded bg-secondary px-1.5 py-0.5 font-mono text-xs">__doc</code> metadata when a view needs labels, docs, or Studio settings.
+						</p>
+						<p class="mt-3 text-sm leading-6 text-muted-foreground">
+							Set <code class="rounded bg-secondary px-1.5 py-0.5 font-mono text-xs">studio.hidden</code> when a helper component should be exported but not offered in Studio.
+						</p>
+					</div>
+					<CodeBlock lang="vue" :code="componentDocCode" />
 				</div>
 			</DocSection>
 
