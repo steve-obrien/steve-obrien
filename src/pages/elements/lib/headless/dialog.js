@@ -25,6 +25,7 @@ function getTemplate() {
 		margin: auto;
 		background: transparent;
 		color: inherit;
+		outline: none;
 		max-width: 100vw;
 		max-height: 100vh;
 		/* UA default is overflow:auto, which clips box-shadow on slotted content */
@@ -36,6 +37,10 @@ function getTemplate() {
 			display 140ms ease allow-discrete;
 	}
 	dialog[open] { opacity: 1; }
+	dialog:focus,
+	dialog:focus-visible {
+		outline: none;
+	}
 	@starting-style {
 		dialog[open] { opacity: 0; }
 	}

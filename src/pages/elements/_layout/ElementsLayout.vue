@@ -37,22 +37,34 @@ const mobileMenuOpen = ref(false);
 <template>
 	<div class="min-h-screen bg-background text-foreground">
 		<header class="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur">
-			<div class="mx-auto flex h-16 w-full items-center justify-between px-6">
-				<RouterLink to="/elements" class="flex items-center gap-2 text-foreground">
+			<div class="mx-auto flex h-16 w-full min-w-0 items-center justify-between gap-3 px-4 sm:px-6">
+				<RouterLink to="/elements" class="flex min-w-0 items-center gap-2 text-foreground">
 					<span class="grid size-7 place-items-center rounded-lg bg-primary text-primary-foreground text-xs font-bold tracking-tight">E</span>
-					<span class="font-semibold tracking-tight">elements</span>
+					<span class="truncate font-semibold tracking-tight">elements</span>
 					<span class="ml-2 hidden rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground ring-1 ring-border md:inline">v1.0</span>
 				</RouterLink>
 				<!-- Mobile menu-->
-				<ElButton variant="secondary" @click="mobileMenuOpen = true">Menu</ElButton>
+				<ElButton class="shrink-0 lg:hidden" variant="secondary" @click="mobileMenuOpen = true">Menu</ElButton>
 				<Teleport to="body">
-					<ElDrawer v-model="mobileMenuOpen" side="left" title="Filters" width="var(--container-xs)">
-						<div class="space-y-4 p-4 text-sm text-muted-foreground">
-							<SideNav v-if="showSidebar" class="block w-56 shrink-0 " />
+					<ElDrawer v-model="mobileMenuOpen" side="left" title="Menu" width="min(88vw, var(--container-xs))">
+						<div class="space-y-6 p-4 text-sm text-muted-foreground">
+							<nav class="grid gap-1">
+								<RouterLink
+									v-for="l in topLinks"
+									:key="l.to"
+									:to="l.to"
+									class="rounded-lg px-3 py-2 font-medium transition"
+									:class="(l.exact ? route.path === l.to : route.path.startsWith(l.match || l.to))
+										? 'bg-primary text-primary-foreground'
+										: 'text-muted-foreground hover:bg-secondary hover:text-foreground'"
+									@click="mobileMenuOpen = false"
+								>{{ l.label }}</RouterLink>
+							</nav>
+							<SideNav v-if="showSidebar" class="block w-full shrink-0" />
 						</div>
 					</ElDrawer>
 				</Teleport>
-					<nav class=" items-center gap-1 text-sm hidden sm:flex">
+				<nav class="hidden min-w-0 items-center gap-1 text-sm lg:flex">
 					<RouterLink
 						v-for="l in topLinks"
 						:key="l.to"
@@ -62,12 +74,12 @@ const mobileMenuOpen = ref(false);
 							? 'bg-primary text-primary-foreground'
 							: 'text-muted-foreground hover:text-foreground'"
 					>{{ l.label }}</RouterLink>
-					<div class="ml-2 hidden sm:block">
+					<div class="ml-2">
 						<BtnLightDarkMode />
 					</div>
 					<RouterLink
 						to="/elements/pricing"
-						class="ml-2 hidden sm:inline not-first:rounded-full bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 "
+						class="ml-2 rounded-full bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90"
 					>Get access</RouterLink>
 					<RouterLink
 						to="/"
@@ -90,12 +102,12 @@ const mobileMenuOpen = ref(false);
 		</div>
 
 		<footer class="border-t border-border/60">
-			<div class="mx-auto flex w-full max-w-7xl flex-col items-start justify-between gap-4 px-6 py-10 text-sm text-muted-foreground sm:flex-row sm:items-center">
-				<div class="flex items-center gap-3">
+			<div class="mx-auto flex w-full max-w-7xl flex-col items-start justify-between gap-4 px-4 py-10 text-sm text-muted-foreground sm:px-6 lg:flex-row lg:items-center">
+				<div class="flex min-w-0 items-center gap-3">
 					<span class="grid size-6 place-items-center rounded-md bg-primary text-primary-foreground text-[10px] font-bold">E</span>
 					<span>© {{ new Date().getFullYear() }} Elements — by Steve O'Brien</span>
 				</div>
-				<div class="flex items-center gap-5">
+				<div class="flex max-w-full flex-wrap items-center gap-x-5 gap-y-2">
 					<RouterLink to="/elements" class="hover:text-foreground">Overview</RouterLink>
 					<RouterLink to="/elements/ai" class="hover:text-foreground">AI</RouterLink>
 					<RouterLink to="/elements/theming" class="hover:text-foreground">Theming</RouterLink>
