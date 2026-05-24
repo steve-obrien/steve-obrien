@@ -35,6 +35,13 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue']);
 const root = ref(null);
 
+function onLabelClick(event) {
+	if (props.disabled) return;
+	if (event.target === root.value) return;
+	root.value?.focus?.();
+	root.value?.toggle?.();
+}
+
 onMounted(async () => {
 	await import('../headless/checkbox.js');
 	root.value?.addEventListener('el:change', (event) => emit('update:modelValue', event.detail.checked));
@@ -46,7 +53,7 @@ watch(() => props.modelValue, (value) => {
 </script>
 
 <template>
-	<label class="inline-flex items-start gap-3">
+	<label class="inline-flex cursor-pointer items-start gap-3" @click="onLabelClick">
 		<element-checkbox
 			ref="root"
 			:checked="modelValue || null"
