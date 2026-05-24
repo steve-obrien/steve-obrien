@@ -1,8 +1,17 @@
 <script setup>
 import { sideNavLinks } from './sideNavLinks';
 import { RouterLink, useRoute } from 'vue-router';
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 const route = useRoute();
+const props = defineProps({
+	persistScroll: { type: Boolean, default: false },
+	scrollKey: { type: String, default: 'elements-side-nav-scroll' },
+});
+
+const root = ref(null);
+const lockedScroll = ref(null);
+let savedScroll = 0;
 
 const iconPaths = {
 	'AI builders': 'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Zm6 9 .9 2.6 2.6.9-2.6.9L18 20l-.9-2.6-2.6-.9 2.6-.9L18 12Z',
@@ -29,6 +38,7 @@ const iconPaths = {
 	Mail: 'M4 6h16v12H4V6Zm0 0 8 7 8-7',
 	Forms: 'M7 4h10l3 3v13H7V4Zm10 0v4h4M10 12h7M10 16h5',
 	Login: 'M10 17l5-5-5-5M15 12H3M14 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5',
+	'Application layout': 'M4 5h16v14H4V5Zm5 0v14M12 9h5M12 13h4',
 	Checkbox: 'M5 12l4 4L19 6',
 	'Radio group': 'M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm0-5a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
 	'Text input': 'M5 7h14M12 7v10M8 17h8',
@@ -37,6 +47,7 @@ const iconPaths = {
 	'Number input': 'M8 7h8M8 17h8M10 5l-2 14M16 5l-2 14',
 	'Select input': 'M6 8h12M8 13h8M9 17l3 3 3-3',
 	'Native select': 'M6 8h12M8 13h8M9 17l3 3 3-3',
+	Calendar: 'M7 3v4M17 3v4M4 8h16M6 5h12a2 2 0 0 1 2 2v12H4V7a2 2 0 0 1 2-2Zm3 7h2M13 12h2M9 16h2M13 16h2',
 	'Boolean input': 'M8 9h8a3 3 0 0 1 0 6H8a3 3 0 0 1 0-6Z',
 	'Color input': 'M12 21a7 7 0 0 1-7-7c0-5 7-11 7-11s7 6 7 11a7 7 0 0 1-7 7Z',
 	'JSON list input': 'M8 6h11M8 12h11M8 18h11M4 6h.01M4 12h.01M4 18h.01M8 3H6a2 2 0 0 0-2 2',
@@ -48,21 +59,87 @@ const iconPaths = {
 function iconPath(label) {
 	return iconPaths[label] || 'M5 12h14';
 }
+
+function saveScroll() {
+	if (!props.persistScroll || !root.value) return;
+	setSavedScroll(lockedScroll.value ?? root.value.scrollTop);
+}
+
+function rememberScroll() {
+	if (!props.persistScroll || !root.value) return;
+	lockedScroll.value = root.value.scrollTop;
+	saveScroll();
+}
+
+function nextFrame() {
+	if (typeof requestAnimationFrame === 'undefined') return Promise.resolve();
+	return new Promise((resolve) => requestAnimationFrame(resolve));
+}
+
+async function restoreScroll() {
+	if (!props.persistScroll) return;
+	await nextTick();
+	await nextFrame();
+	await nextFrame();
+	const saved = Number(lockedScroll.value ?? getSavedScroll());
+	if (!Number.isFinite(saved)) return;
+	const apply = () => {
+		if (root.value) root.value.scrollTop = saved;
+	};
+	apply();
+	setTimeout(apply, 60);
+	setTimeout(() => {
+		apply();
+		lockedScroll.value = null;
+		saveScroll();
+	}, 180);
+}
+
+function storage() {
+	if (typeof window === 'undefined') return null;
+	try {
+		return window.sessionStorage || null;
+	} catch {
+		return null;
+	}
+}
+
+function getSavedScroll() {
+	const store = storage();
+	return store?.getItem(props.scrollKey) ?? savedScroll;
+}
+
+function setSavedScroll(value) {
+	savedScroll = value;
+	try {
+		storage()?.setItem(props.scrollKey, String(value));
+	} catch {
+		// Ignore storage failures and keep the in-memory fallback.
+	}
+}
+
+onMounted(restoreScroll);
+watch(() => route.fullPath, restoreScroll);
+
+onBeforeUnmount(saveScroll);
 </script>
 
 <template>
-	<aside>
+	<aside ref="root" @scroll.passive="saveScroll">
 		<div v-for="(group, gi) in sideNavLinks" :key="group.label" :class="gi > 0 && 'mt-5'">
 			<p class="px-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{{ group.label }}</p>
 			<nav class="mt-2 space-y-0.5">
 				<RouterLink
-				v-for="c in group.items"
-				:key="c.to"
-				:to="c.to"
-				class="flex items-center justify-between rounded-lg px-3 py-1.5 text-sm font-medium transition"
-				:class="route.path === c.to
-					? 'bg-secondary text-secondary-foreground'
-					: 'text-muted-foreground hover:bg-secondary hover:text-foreground'">
+					v-for="c in group.items"
+					:key="c.to"
+					:to="c.to"
+					class="flex items-center justify-between rounded-lg px-3 py-1.5 text-sm font-medium transition"
+					:class="route.path === c.to
+						? 'bg-secondary text-secondary-foreground'
+						: 'text-muted-foreground hover:bg-secondary hover:text-foreground'"
+					@mousedown.prevent="rememberScroll"
+					@click="rememberScroll"
+				>
 					<span class="flex min-w-0 items-center gap-2">
 						<svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
 							<path :d="iconPath(c.label)" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />

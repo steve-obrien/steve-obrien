@@ -27,6 +27,7 @@ export { default as ElNumberInput } from './ElNumberInput.vue';
 export { default as ElSelectInput } from './ElSelectInput.vue';
 export { default as ElNativeSelect } from './ElNativeSelect.vue';
 export { default as ElPasswordInput } from './ElPasswordInput.vue';
+export { default as ElCalendar } from './ElCalendar.vue';
 export { default as ElBooleanInput } from './ElBooleanInput.vue';
 export { default as ElColorInput } from './ElColorInput.vue';
 export { default as ElJsonListInput } from './ElJsonListInput.vue';

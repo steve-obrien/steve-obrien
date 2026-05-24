@@ -24,9 +24,9 @@ Philosophy:
 
 Current component families:
 - Behaviour components: Button, Dropdown, Dialog, Drawer, Tabs, Toggle, Tooltip, Accordion, Menu, Listbox, Combobox, Autocomplete, Popover, Toast, Command palette.
-- Form components: Checkbox, Radio group, Text input, Password input, Textarea, Code input, JSON input, JSON list input, Number input, Select input, Native select, Boolean input, Color input.
+- Form components: Checkbox, Radio group, Text input, Password input, Calendar, Textarea, Code input, JSON input, JSON list input, Number input, Select input, Native select, Boolean input, Color input.
 - Visual components: Card.
-- Blocks: Dashboard, Chat, Mail, Forms, Login.
+- Blocks: Dashboard, Chat, Mail, Forms, Login, Application layout.
 
 LLM generation rules:
 1. Choose an existing block when the request matches a known app pattern.

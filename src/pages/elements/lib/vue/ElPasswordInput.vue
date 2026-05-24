@@ -60,50 +60,95 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue']);
 const visible = ref(false);
 
-const strength = computed(() => {
-	const value = props.modelValue || '';
-	let score = 0;
-	if (value.length >= 8) score += 1;
-	if (value.length >= 12) score += 1;
-	if (/[A-Z]/.test(value) && /[a-z]/.test(value)) score += 1;
-	if (/\d/.test(value)) score += 1;
-	if (/[^A-Za-z0-9]/.test(value)) score += 1;
-	return Math.min(score, 5);
-});
+const SECONDS_PER_YEAR = 31557600;
 
-const strengthLabel = computed(() => {
-	if (!props.modelValue) return 'No password yet';
-	if (strength.value <= 2) return 'Weak password';
-	if (strength.value <= 4) return 'Good password';
-	return 'Strong password';
-});
+const secondsToHuman = (seconds) => {
+	if (seconds < 1) return 'instantly';
+	if (seconds < 60) return `${Math.round(seconds)} seconds`;
+	if (seconds < 3600) return `${Math.round(seconds / 60)} minutes`;
+	if (seconds < 86400) return `${Math.round(seconds / 3600)} hours`;
+	if (seconds < SECONDS_PER_YEAR) return `${Math.round(seconds / 86400)} days`;
+	const years = seconds / SECONDS_PER_YEAR;
+	if (years < 1_000) return `${Math.round(years)} years`;
+	if (years < 1_000_000) return `${Math.round(years / 1_000)} thousand years`;
+	if (years < 1_000_000_000) return `${Math.round(years / 1_000_000)} million years`;
+	if (years < 1_000_000_000_000) return `${Math.round(years / 1_000_000_000)} billion years`;
+	return 'trillions of years';
+};
 
-const strengthTone = computed(() => {
-	if (!props.modelValue) return 'bg-muted';
-	if (strength.value <= 2) return 'bg-destructive';
-	if (strength.value <= 4) return 'bg-warning';
-	return 'bg-success';
-});
+const scoreFromCrackSeconds = (seconds) => {
+	if (seconds < SECONDS_PER_YEAR) return [1, 'Very weak'];
+	if (seconds < SECONDS_PER_YEAR * 1_000) return [2, 'Weak'];
+	if (seconds < SECONDS_PER_YEAR * 1_000_000) return [3, 'Okay'];
+	if (seconds < SECONDS_PER_YEAR * 1_000_000_000) return [4, 'Strong'];
+	return [5, 'Very strong'];
+};
+
+const estimateCrackTime = (entropy, guessesPerSecond = 1_000_000_000_000) => {
+
+	// Average crack time is half the search space
+	const combinations = 2 ** entropy;
+	const averageSeconds = combinations / guessesPerSecond / 2;
+	return {
+		seconds: averageSeconds,
+		human: secondsToHuman(averageSeconds),
+	};
+};
+
+function passwordStrength(password) {
+	const value = password || '';
+	if (!value) {
+		return {
+			score: 0,
+			label: 'Empty',
+			entropy: 0,
+			crackTime: null,
+		};
+	}
+	const length = value.length;
+	let pool = 0;
+	if (/[a-z]/.test(value)) pool += 26;
+	if (/[A-Z]/.test(value)) pool += 26;
+	if (/\d/.test(value)) pool += 10;
+	if (/[^A-Za-z0-9]/.test(value)) pool += 33;
+	let entropy = Math.log2(pool || 1) * length;
+	if (/^(.)\1+$/.test(value)) entropy *= 0.1;
+	if (/123456|password|qwerty|letmein|admin|welcome/i.test(value)) entropy *= 0.3;
+	if (/(.)\1{2,}/.test(value)) entropy *= 0.8;
+	if (/^\d+$/.test(value)) entropy *= 0.5;
+	const crack = estimateCrackTime(entropy);
+	const [score, label] = scoreFromCrackSeconds(crack.seconds);
+	return {
+		score,
+		label,
+		entropy: Math.round(entropy),
+		crackTime: crack.human,
+		crackSeconds: crack.seconds,
+	};
+}
+
+const passwordInfo = computed(() => passwordStrength(props.modelValue));
+
+// index matches score (1–5)
+const strengthTones = ['', 'bg-destructive', 'bg-destructive', 'bg-warning', 'bg-warning', 'bg-success'];
 </script>
 
 <template>
 	<ElField :label="label" :description="description" :required="required">
 		<div class="relative">
 			<input
-				:type="visible ? 'text' : 'password'"
-				:value="modelValue"
-				:placeholder="placeholder"
-				:disabled="disabled"
-				class="h-10 w-full rounded-lg border border-input bg-background px-3 pr-11 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:opacity-50"
-				@input="emit('update:modelValue', $event.target.value)"
-			/>
+			:type="visible ? 'text' : 'password'"
+			:value="modelValue"
+			:placeholder="placeholder"
+			:disabled="disabled"
+			class="h-10 w-full rounded-lg border border-input bg-background px-3 pr-11 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:opacity-50"
+			@input="emit('update:modelValue', $event.target.value)" />
 			<button
-				type="button"
-				class="absolute inset-y-1 right-1 grid size-8 place-items-center rounded-md text-muted-foreground transition hover:bg-secondary hover:text-secondary-foreground focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50"
-				:disabled="disabled"
-				:aria-label="visible ? 'Hide password' : 'Show password'"
-				@click="visible = !visible"
-			>
+			type="button"
+			class="absolute inset-y-1 right-1 grid size-8 place-items-center rounded-md text-muted-foreground transition hover:bg-secondary hover:text-secondary-foreground focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50"
+			:disabled="disabled"
+			:aria-label="visible ? 'Hide password' : 'Show password'"
+			@click="visible = !visible">
 				<svg v-if="visible" class="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
 					<path d="M3 3l18 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
 					<path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
@@ -119,13 +164,15 @@ const strengthTone = computed(() => {
 		<div v-if="showStrength" class="mt-3 space-y-2">
 			<div class="grid grid-cols-5 gap-1.5">
 				<span
-					v-for="step in 5"
-					:key="step"
-					class="h-1.5 rounded-full transition"
-					:class="step <= strength ? strengthTone : 'bg-muted'"
-				></span>
+				v-for="step in 5"
+				:key="step"
+				class="h-1.5 rounded-full transition"
+				:class="step <= passwordInfo.score ? strengthTones[passwordInfo.score] : 'bg-muted'"></span>
 			</div>
-			<p class="text-xs text-muted-foreground">{{ strengthLabel }}</p>
+			<p class="text-xs text-muted-foreground">
+				{{ modelValue ? `${passwordInfo.label} password` : 'No password yet' }}
+			</p>
+			<p v-if="passwordInfo.crackTime" class="text-xs text-muted-foreground">Time to crack your password: {{ passwordInfo.crackTime }}</p>
 		</div>
 
 		<p v-if="compromised" class="mt-3 rounded-lg border border-warning/40 bg-warning/15 px-3 py-2 text-xs leading-5 text-warning">

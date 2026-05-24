@@ -1,10 +1,11 @@
 <script setup>
 import { RouterLink, useRoute } from 'vue-router';
-import { computed, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useTheme } from '../../../composable/useTheme';
 import BtnLightDarkMode from '../../../cmp/BtnLightDarkMode.vue';
 import { ElDrawer, ElButton } from '@elements/vue';
 import SideNav from './SideNav.vue';
+import ElementsFooter from './ElementsFooter.vue';
 
 const props = defineProps({
 	fullWidth: { type: Boolean, default: false },
@@ -32,6 +33,16 @@ const topLinks = [
 ];
 
 const mobileMenuOpen = ref(false);
+const detailsPanel = ref(null);
+
+function scrollDetailsToTop() {
+	if (detailsPanel.value) detailsPanel.value.scrollTo({ top: 0 });
+}
+
+watch(() => route.fullPath, async () => {
+	await nextTick();
+	scrollDetailsToTop();
+});
 </script>
 
 <template>
@@ -89,35 +100,29 @@ const mobileMenuOpen = ref(false);
 			</div>
 		</header>
 
-		<div class="w-full px-4">
-			<div class="flex gap-12 py-10" :class="fullWidth && 'py-6'">
-				<SideNav v-if="showSidebar" class="hidden w-56 shrink-0 md:block" />
+		<div v-if="showSidebar" class="w-full px-4">
+			<div class="flex gap-12 py-10 md:h-[calc(100vh-4rem)] md:overflow-hidden md:py-0">
+				<SideNav persist-scroll class="hidden w-56 shrink-0 md:block md:h-full md:overflow-y-auto md:py-10 md:pr-2" />
 
-				<main class="min-w-0  flex-1 ">
+				<main ref="detailsPanel" class="min-w-0 flex-1 md:h-full md:overflow-y-auto md:py-10 md:pr-2">
 					<div class="mx-auto w-full max-w-4xl px-6">
-					<slot />
+						<slot />
+					</div>
+					<ElementsFooter class="mt-16" />
+				</main>
+			</div>
+		</div>
+
+		<div v-else class="w-full px-4">
+			<div class="flex gap-12 py-10" :class="fullWidth && 'py-6'">
+				<main class="min-w-0 flex-1">
+					<div class="mx-auto w-full max-w-4xl px-6">
+						<slot />
 					</div>
 				</main>
 			</div>
 		</div>
 
-		<footer class="border-t border-border/60">
-			<div class="mx-auto flex w-full max-w-7xl flex-col items-start justify-between gap-4 px-4 py-10 text-sm text-muted-foreground sm:px-6 lg:flex-row lg:items-center">
-				<div class="flex min-w-0 items-center gap-3">
-					<span class="grid size-6 place-items-center rounded-md bg-primary text-primary-foreground text-[10px] font-bold">E</span>
-					<span>© {{ new Date().getFullYear() }} Elements — by Steve O'Brien</span>
-				</div>
-				<div class="flex max-w-full flex-wrap items-center gap-x-5 gap-y-2">
-					<RouterLink to="/elements" class="hover:text-foreground">Overview</RouterLink>
-					<RouterLink to="/elements/ai" class="hover:text-foreground">AI</RouterLink>
-					<RouterLink to="/elements/theming" class="hover:text-foreground">Theming</RouterLink>
-					<RouterLink to="/elements/components/button" class="hover:text-foreground">Components</RouterLink>
-					<RouterLink to="/elements/visual/card" class="hover:text-foreground">Visual</RouterLink>
-					<RouterLink to="/elements/blocks/dashboard" class="hover:text-foreground">Blocks</RouterLink>
-					<RouterLink to="/elements/pricing" class="hover:text-foreground">Pricing</RouterLink>
-					<a href="https://github.com/steve-obrien" target="_blank" rel="noopener" class="hover:text-foreground">GitHub</a>
-				</div>
-			</div>
-		</footer>
+		<ElementsFooter v-if="!showSidebar" />
 	</div>
 </template>

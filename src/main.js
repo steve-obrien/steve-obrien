@@ -23,7 +23,14 @@ const applyInitialTheme = () => {
 
 export const createApp = ViteSSG(
 	App,
-	{ routes },
+	{
+		routes,
+		scrollBehavior(to, from, savedPosition) {
+			if (savedPosition) return savedPosition;
+			if (to.path.startsWith('/elements') && from.path.startsWith('/elements')) return false;
+			return { top: 0 };
+		},
+	},
 	({ app, isClient }) => {
 		app.component('SteveLayout', SteveLayout);
 

@@ -1,5 +1,6 @@
 <script setup>
 import ElField from './ElField.vue';
+import ElButton from './ElButton.vue';
 
 const props = defineProps({
 	modelValue: { default: null },
@@ -19,17 +20,16 @@ const valueOf = (o) => (o && typeof o === 'object' ? (o.value ?? o.label) : o);
 <template>
 	<ElField :label="label" :description="description" :required="required">
 		<div class="flex flex-wrap gap-1">
-			<button
+			<ElButton
 				v-for="opt in options"
 				:key="valueOf(opt)"
 				type="button"
+				size="sm"
+				:variant="modelValue === valueOf(opt) ? 'primary' : 'secondary'"
 				:disabled="disabled"
-				class="rounded-full px-2.5 py-1 text-xs font-medium ring-1 transition disabled:opacity-50"
-				:class="modelValue === valueOf(opt)
-					? 'bg-primary text-primary-foreground ring-ring'
-					: 'bg-background text-muted-foreground ring-border hover:bg-secondary'"
+				:aria-pressed="modelValue === valueOf(opt)"
 				@click="emit('update:modelValue', valueOf(opt))"
-			>{{ labelOf(opt) }}</button>
+			>{{ labelOf(opt) }}</ElButton>
 		</div>
 	</ElField>
 </template>
