@@ -1,43 +1,41 @@
 <script setup>
-import { computed, useId } from 'vue';
 import ElField from '../field/ElField.vue';
+import { fieldProps } from '../field/fieldProps.js';
+import { useField } from '../field/useField.js';
 
 const props = defineProps({
-	modelValue: { type: Number, default: 0 },
-	id: String,
-	name: String,
-	label: String,
-	description: String,
+	...fieldProps,
+	modelValue: {
+		type: [Number, String],
+		default: '',
+		_edit: { description: 'Current numeric value.' },
+	},
 	min: Number,
 	max: Number,
 	step: Number,
-	placeholder: String,
-	disabled: Boolean,
-	invalid: Boolean,
-	required: Boolean,
 });
 const emit = defineEmits(['update:modelValue']);
-const generatedId = `el-number-input-${useId()}`;
-const inputId = computed(() => props.id || generatedId);
-const inputName = computed(() => props.name || inputId.value);
+const field = useField(props, emit, { idPrefix: 'el-number-input' });
+
+function toNumber(value) {
+	if (value === '') return '';
+	const number = Number(value);
+	return Number.isNaN(number) ? value : number;
+}
 </script>
 
 <template>
-	<ElField :label="label" :description="description" :html-for="inputId" :invalid="invalid" :required="required">
+	<ElField v-bind="field.fieldAttrs.value">
 		<input
-			:id="inputId"
-			:name="inputName"
+			v-bind="field.inputAttrs.value"
 			type="number"
-			:value="modelValue"
 			:min="min"
 			:max="max"
 			:step="step"
-			:placeholder="placeholder"
-			:disabled="disabled"
-			:required="required"
-			:aria-invalid="invalid || undefined"
 			class="el-input"
-			@input="emit('update:modelValue', Number($event.target.value))"
+			@input="field.onInput(toNumber($event.target.value))"
+			@focus="field.onFocus"
+			@blur="field.onBlur"
 		/>
 	</ElField>
 </template>

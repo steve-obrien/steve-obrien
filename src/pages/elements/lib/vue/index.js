@@ -42,6 +42,7 @@ export { fieldProps } from '../../forms/field/fieldProps.js';
 export { formFieldProviderKey, useField } from '../../forms/field/useField.js';
 export { createValidator, emailValidator, requiredValidator, urlValidator } from '../../forms/field/validators.js';
 export { createFormRegistry, forms, getPathValue, setPathValue } from '../../forms/form/formApi.js';
+export { zodSchemaToChildren } from '../../forms/form/schemaAdapter.js';
 
 // Rehydration
 export { default as ElRenderer } from '../../components/playground/ElRenderer.vue';

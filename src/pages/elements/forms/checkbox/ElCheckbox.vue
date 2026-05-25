@@ -1,5 +1,7 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue';
+import { fieldProps } from '../field/fieldProps.js';
+import { useField } from '../field/useField.js';
 
 defineOptions({
 	__doc: {
@@ -11,32 +13,19 @@ defineOptions({
 });
 
 const props = defineProps({
+	...fieldProps,
 	modelValue: {
 		type: Boolean,
 		default: false,
 		_edit: { description: 'Checked state.' },
 	},
-	label: {
-		type: String,
-		default: '',
-		_edit: { description: 'Visible label next to the checkbox.' },
-	},
-	description: {
-		type: String,
-		default: '',
-		_edit: { description: 'Optional helper text.' },
-	},
-	disabled: {
-		type: Boolean,
-		default: false,
-		_edit: { description: 'Disable interaction.' },
-	},
 });
 const emit = defineEmits(['update:modelValue']);
 const root = ref(null);
+const field = useField(props, emit, { idPrefix: 'el-checkbox' });
 
 function onLabelClick(event) {
-	if (props.disabled) return;
+	if (field.disabled.value) return;
 	if (event.target === root.value) return;
 	root.value?.focus?.();
 	root.value?.toggle?.();
@@ -44,25 +33,32 @@ function onLabelClick(event) {
 
 onMounted(async () => {
 	await import('../../lib/headless/checkbox.js');
-	root.value?.addEventListener('el:change', (event) => emit('update:modelValue', event.detail.checked));
+	root.value?.addEventListener('el:change', (event) => field.onInput(Boolean(event.detail.checked)));
 });
 
-watch(() => props.modelValue, (value) => {
+watch(field.value, (value) => {
 	if (root.value && root.value.checked !== value) root.value.checked = value;
-});
+}, { immediate: true });
 </script>
 
 <template>
-	<label class="inline-flex cursor-pointer items-start gap-3" @click="onLabelClick">
+	<label v-if="field.visible.value" class="inline-flex cursor-pointer items-start gap-3" @click="onLabelClick">
 		<element-checkbox
 			ref="root"
-			:checked="modelValue || null"
-			:disabled="disabled || null"
+			:id="field.id.value"
+			:name="field.htmlName.value"
+			:checked="Boolean(field.value.value) || null"
+			:disabled="field.disabled.value || null"
+			:aria-invalid="field.invalid.value || undefined"
+			:data-invalid="field.invalid.value ? '' : undefined"
 			class="mt-0.5"
+			@focus="field.onFocus"
+			@blur="field.onBlur"
 		/>
 		<span class="grid gap-0.5">
 			<span v-if="label" class="text-sm font-medium text-foreground">{{ label }}</span>
 			<span v-if="description" class="text-xs text-muted-foreground">{{ description }}</span>
+			<span v-if="field.errors.value.length" class="text-xs text-destructive">{{ field.errors.value[0].message || field.errors.value[0] }}</span>
 		</span>
 	</label>
 </template>

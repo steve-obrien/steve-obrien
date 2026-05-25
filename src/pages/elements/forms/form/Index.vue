@@ -23,6 +23,10 @@ import ProgrammaticForm from './examples/ProgrammaticForm.vue';
 import ProgrammaticFormSrc from './examples/ProgrammaticForm.vue?raw';
 import ServerDefinedForm from './examples/ServerDefinedForm.vue';
 import ServerDefinedFormSrc from './examples/ServerDefinedForm.vue?raw';
+import StandaloneFields from './examples/StandaloneFields.vue';
+import StandaloneFieldsSrc from './examples/StandaloneFields.vue?raw';
+import ZodSchemaForm from './examples/ZodSchemaForm.vue';
+import ZodSchemaFormSrc from './examples/ZodSchemaForm.vue?raw';
 
 const doc = ElForm.__doc;
 
@@ -61,6 +65,34 @@ const { values } = storeToRefs(store);
 \t<ElTextInput name="name" label="Name" />
 \t<ElEmailInput name="email" label="Email" />
 </ElForm>`;
+
+const zodCode = `import { z } from 'zod';
+
+const accountSchema = z.object({
+\tname: z.string().min(2).describe('Name'),
+\temail: z.string().email().describe('Email address'),
+\twebsite: z.string().url().optional().describe('Website'),
+\tplan: z.enum(['starter', 'team', 'enterprise']).describe('Plan'),
+});
+
+<ElForm
+\tname="account"
+\tv-model="account"
+\t:zod-schema="accountSchema"
+\t:schema-options="{
+\t\tfields: {
+\t\t\tplan: {
+\t\t\t\tprops: {
+\t\t\t\t\toptions: [
+\t\t\t\t\t\t{ label: 'Starter', value: 'starter' },
+\t\t\t\t\t\t{ label: 'Team', value: 'team' },
+\t\t\t\t\t\t{ label: 'Enterprise', value: 'enterprise' },
+\t\t\t\t\t],
+\t\t\t\t},
+\t\t\t},
+\t\t},
+\t}"
+/>`;
 
 const formMethods = [
 	{ name: 'get(name)', returns: 'Field API | Form API | null', description: 'Returns a field or nested form by local name or path. Use isField/isForm to branch safely.' },
@@ -133,6 +165,31 @@ const formMethods = [
 				</Example>
 			</DocSection>
 
+			<DocSection eyebrow="Schema" title="Generate fields from a Zod-like shape">
+				<div class="space-y-4">
+					<p class="text-sm leading-6 text-muted-foreground">
+						ElForm can compile a Zod schema, or a plain Zod-like object, into the
+						same children records used by the Studio renderer. The adapter reads the
+						data shape, chooses form controls, and keeps slots available for local
+						buttons or supporting UI.
+					</p>
+					<p class="text-sm leading-6 text-muted-foreground">
+						The exported
+						<code class="font-mono text-foreground">zodSchemaToChildren(schema, options)</code>
+						helper is available when an app wants to inspect or store the generated
+						children before rendering.
+					</p>
+					<Example
+						:source="ZodSchemaFormSrc"
+						filename="ZodSchemaForm.vue"
+						description="The schema defines the data shape. schemaOptions customises labels, components, options, and input props without changing the model."
+					>
+						<ZodSchemaForm />
+					</Example>
+					<CodeBlock lang="vue" :code="zodCode" />
+				</div>
+			</DocSection>
+
 			<DocSection eyebrow="API" title="Programmatic updates">
 				<Example
 					:source="ProgrammaticFormSrc"
@@ -140,6 +197,16 @@ const formMethods = [
 					description="Named forms are available through forms[name]. Values can be updated externally and validation can be triggered from code."
 				>
 					<ProgrammaticForm />
+				</Example>
+			</DocSection>
+
+			<DocSection eyebrow="Standalone" title="Fields still work without a form">
+				<Example
+					:source="StandaloneFieldsSrc"
+					filename="StandaloneFields.vue"
+					description="Field components keep their normal modelValue/update:modelValue contract when they are not connected to ElForm."
+				>
+					<StandaloneFields />
 				</Example>
 			</DocSection>
 

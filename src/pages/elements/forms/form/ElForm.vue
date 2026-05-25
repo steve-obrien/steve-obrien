@@ -18,6 +18,7 @@ import ElTextareaInput from '../textarea-input/ElTextareaInput.vue';
 import ElToggle from '../toggle/ElToggle.vue';
 import { formFieldProviderKey } from '../field/useField.js';
 import { deletePathValue, forms, getPathValue, setPathValue } from './formApi.js';
+import { zodSchemaToChildren } from './schemaAdapter.js';
 
 const formComponents = {
 	ElAutocomplete,
@@ -65,11 +66,11 @@ function ownField(path, scope) {
 }
 
 function clone(value) {
-	try {
-		return JSON.parse(JSON.stringify(toRaw(value)));
-	} catch {
-		return { ...(toRaw(value) || {}) };
-	}
+	const next = toRaw(value);
+	if (next == null || typeof next !== 'object') return next;
+	if (Array.isArray(next)) return next.map((item) => clone(item));
+	if (next instanceof Date) return new Date(next);
+	return Object.fromEntries(Object.entries(next).map(([key, item]) => [key, clone(item)]));
 }
 
 function snapshot(value) {
@@ -131,6 +132,22 @@ ElFormComponent = defineComponent({
 			_edit: {
 				component: 'ElJsonInput',
 				description: 'Server/studio-style field definitions to render when slot children are not supplied.',
+			},
+		},
+		zodSchema: {
+			type: Object,
+			default: null,
+			_edit: {
+				component: 'ElJsonInput',
+				description: 'Optional Zod or Zod-like object schema used to generate form children.',
+			},
+		},
+		schemaOptions: {
+			type: Object,
+			default: () => ({}),
+			_edit: {
+				component: 'ElJsonInput',
+				description: 'Per-field labels, component overrides, and props used when zodSchema generates children.',
 			},
 		},
 		validateOnSubmit: {
@@ -211,6 +228,17 @@ ElFormComponent = defineComponent({
 		function setChildren(nextChildren = []) {
 			schemaChildren.splice(0, schemaChildren.length, ...snapshot(nextChildren));
 			emitSchemaChange();
+		}
+
+		function generatedChildren() {
+			return [
+				...zodSchemaToChildren(props.zodSchema, props.schemaOptions),
+				...(props.children || []),
+			];
+		}
+
+		function syncGeneratedChildren() {
+			schemaChildren.splice(0, schemaChildren.length, ...snapshot(generatedChildren()));
 		}
 
 		function getChildren() {
@@ -466,9 +494,9 @@ ElFormComponent = defineComponent({
 			Object.assign(values, incoming);
 		}, { deep: true });
 
-		watch(() => props.children, (nextChildren) => {
-			schemaChildren.splice(0, schemaChildren.length, ...snapshot(nextChildren || []));
-		}, { deep: true, immediate: true });
+		watch(() => props.children, syncGeneratedChildren, { deep: true, immediate: true });
+		watch(() => props.zodSchema, syncGeneratedChildren);
+		watch(() => props.schemaOptions, syncGeneratedChildren, { deep: true });
 
 		watch(() => props.name, (nextName, previousName) => {
 			if (previousName && forms[previousName] === provider) delete forms[previousName];
