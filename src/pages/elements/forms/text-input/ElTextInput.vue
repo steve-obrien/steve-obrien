@@ -1,37 +1,48 @@
 <script setup>
-import { computed, useId } from 'vue';
 import ElField from '../field/ElField.vue';
+import { fieldProps } from '../field/fieldProps.js';
+import { useField } from '../field/useField.js';
+
+defineOptions({
+	__doc: {
+		name: 'Text input',
+		tag: '<ElTextInput>',
+		description: 'A styled text field that uses the shared field contract for labels, validation state, and optional form-provider integration.',
+		events: [
+			{ name: 'update:modelValue', payload: 'string', description: 'Fired when the text changes.' },
+			{ name: 'focus', payload: 'FocusEvent', description: 'Fired when the input receives focus.' },
+			{ name: 'blur', payload: 'FocusEvent', description: 'Fired when the input loses focus.' },
+		],
+	},
+});
 
 const props = defineProps({
-	modelValue: { type: String, default: '' },
-	id: String,
-	name: String,
-	label: String,
-	description: String,
-	placeholder: String,
-	disabled: Boolean,
-	invalid: Boolean,
-	required: Boolean,
+	...fieldProps,
+	type: {
+		type: String,
+		default: 'text',
+		_edit: { description: 'Native input type.' },
+	},
+	autocomplete: {
+		type: String,
+		default: '',
+		_edit: { description: 'Native autocomplete hint.' },
+	},
 });
-const emit = defineEmits(['update:modelValue']);
-const generatedId = `el-text-input-${useId()}`;
-const inputId = computed(() => props.id || generatedId);
-const inputName = computed(() => props.name || inputId.value);
+const emit = defineEmits(['update:modelValue', 'focus', 'blur']);
+const field = useField(props, emit, { idPrefix: 'el-text-input' });
 </script>
 
 <template>
-	<ElField :label="label" :description="description" :html-for="inputId" :invalid="invalid" :required="required">
+	<ElField v-bind="field.fieldAttrs.value">
 		<input
-			:id="inputId"
-			:name="inputName"
-			type="text"
-			:value="modelValue"
-			:placeholder="placeholder"
-			:disabled="disabled"
-			:required="required"
-			:aria-invalid="invalid || undefined"
+			v-bind="field.inputAttrs.value"
+			:type="type"
+			:autocomplete="autocomplete || undefined"
 			class="el-input"
-			@input="emit('update:modelValue', $event.target.value)"
+			@input="field.onInput($event.target.value)"
+			@focus="field.onFocus"
+			@blur="field.onBlur"
 		/>
 	</ElField>
 </template>

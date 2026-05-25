@@ -1,6 +1,7 @@
 <script setup>
-import { computed, useId } from 'vue';
 import ElField from '../field/ElField.vue';
+import { fieldProps } from '../field/fieldProps.js';
+import { useField } from '../field/useField.js';
 
 defineOptions({
 	__doc: {
@@ -14,17 +15,7 @@ defineOptions({
 });
 
 const props = defineProps({
-	modelValue: { default: '' },
-	id: {
-		type: String,
-		default: '',
-		_edit: { description: 'ID applied to the select and used by the label.' },
-	},
-	name: {
-		type: String,
-		default: '',
-		_edit: { description: 'Form field name. Defaults to the generated id.' },
-	},
+	...fieldProps,
 	options: {
 		type: Array,
 		default: () => [],
@@ -40,58 +31,28 @@ const props = defineProps({
 			},
 		},
 	},
-	label: {
-		type: String,
-		default: '',
-		_edit: { description: 'Visible field label.' },
-	},
-	description: {
-		type: String,
-		default: '',
-		_edit: { description: 'Optional helper copy below the label.' },
-	},
 	placeholder: {
 		type: String,
 		default: 'Select an option',
 		_edit: { description: 'Disabled placeholder option.' },
-	},
-	disabled: {
-		type: Boolean,
-		default: false,
-		_edit: { description: 'Disable the select.' },
-	},
-	invalid: {
-		type: Boolean,
-		default: false,
-		_edit: { description: 'Mark the select invalid.' },
-	},
-	required: {
-		type: Boolean,
-		default: false,
-		_edit: { description: 'Show the required marker in the label.' },
 	},
 });
 
 const emit = defineEmits(['update:modelValue']);
 const labelOf = (option) => (option && typeof option === 'object' ? (option.label ?? option.value) : option);
 const valueOf = (option) => (option && typeof option === 'object' ? (option.value ?? option.label) : option);
-const generatedId = `el-native-select-${useId()}`;
-const inputId = computed(() => props.id || generatedId);
-const inputName = computed(() => props.name || inputId.value);
+const field = useField(props, emit, { idPrefix: 'el-native-select' });
 </script>
 
 <template>
-	<ElField :label="label" :description="description" :html-for="inputId" :invalid="invalid" :required="required">
+	<ElField v-bind="field.fieldAttrs.value">
 		<div class="relative">
 			<select
-				:id="inputId"
-				:name="inputName"
-				:value="modelValue"
-				:disabled="disabled"
-				:required="required"
-				:aria-invalid="invalid || undefined"
+				v-bind="field.inputAttrs.value"
 				class="el-input appearance-none pr-10"
-				@change="emit('update:modelValue', $event.target.value)"
+				@change="field.onInput($event.target.value)"
+				@focus="field.onFocus"
+				@blur="field.onBlur"
 			>
 				<option v-if="placeholder" disabled value="">{{ placeholder }}</option>
 				<option v-for="option in options" :key="valueOf(option)" :value="valueOf(option)">

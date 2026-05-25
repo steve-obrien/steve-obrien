@@ -1,38 +1,33 @@
 <script setup>
-import { computed, useId } from 'vue';
 import ElField from '../field/ElField.vue';
+import { fieldProps } from '../field/fieldProps.js';
+import { useField } from '../field/useField.js';
 
 const props = defineProps({
-	modelValue: { type: String, default: '' },
-	id: String,
-	name: String,
-	label: String,
-	description: String,
-	placeholder: String,
+	...fieldProps,
 	rows: { type: Number, default: 3 },
-	disabled: Boolean,
-	invalid: Boolean,
-	required: Boolean,
 });
 const emit = defineEmits(['update:modelValue']);
-const generatedId = `el-textarea-input-${useId()}`;
-const inputId = computed(() => props.id || generatedId);
-const inputName = computed(() => props.name || inputId.value);
+const field = useField(props, emit, { idPrefix: 'el-textarea-input' });
 </script>
 
 <template>
-	<ElField :label="label" :description="description" :html-for="inputId" :invalid="invalid" :required="required">
+	<ElField v-bind="field.fieldAttrs.value">
 		<textarea
-			:id="inputId"
-			:name="inputName"
-			:value="modelValue"
+			:id="field.id.value"
+			:name="field.htmlName.value"
+			:value="field.value.value"
 			:placeholder="placeholder"
 			:rows="rows"
-			:disabled="disabled"
-			:required="required"
-			:aria-invalid="invalid || undefined"
+			:disabled="field.disabled.value || undefined"
+			:readonly="field.readOnly.value || undefined"
+			:required="required || undefined"
+			:aria-invalid="field.invalid.value || undefined"
+			:data-invalid="field.invalid.value ? '' : undefined"
 			class="el-textarea"
-			@input="emit('update:modelValue', $event.target.value)"
+			@input="field.onInput($event.target.value)"
+			@focus="field.onFocus"
+			@blur="field.onBlur"
 		></textarea>
 	</ElField>
 </template>

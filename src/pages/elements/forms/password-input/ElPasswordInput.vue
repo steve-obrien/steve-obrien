@@ -1,6 +1,8 @@
 <script setup>
-import { computed, ref, useId } from 'vue';
+import { computed, ref } from 'vue';
 import ElField from '../field/ElField.vue';
+import { fieldProps } from '../field/fieldProps.js';
+import { useField } from '../field/useField.js';
 
 defineOptions({
 	__doc: {
@@ -14,17 +16,7 @@ defineOptions({
 });
 
 const props = defineProps({
-	modelValue: { type: String, default: '' },
-	id: {
-		type: String,
-		default: '',
-		_edit: { description: 'ID applied to the password input and used by the label.' },
-	},
-	name: {
-		type: String,
-		default: '',
-		_edit: { description: 'Form field name. Defaults to the generated id.' },
-	},
+	...fieldProps,
 	label: {
 		type: String,
 		default: 'Password',
@@ -39,21 +31,6 @@ const props = defineProps({
 		type: String,
 		default: 'Enter password',
 		_edit: { description: 'Placeholder text shown before entry.' },
-	},
-	disabled: {
-		type: Boolean,
-		default: false,
-		_edit: { description: 'Disable input and visibility control.' },
-	},
-	invalid: {
-		type: Boolean,
-		default: false,
-		_edit: { description: 'Mark the password input invalid.' },
-	},
-	required: {
-		type: Boolean,
-		default: false,
-		_edit: { description: 'Show the required marker in the label.' },
 	},
 	showStrength: {
 		type: Boolean,
@@ -72,11 +49,13 @@ const props = defineProps({
 	},
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'focus', 'blur']);
 const visible = ref(false);
-const generatedId = `el-password-input-${useId()}`;
-const inputId = computed(() => props.id || generatedId);
-const inputName = computed(() => props.name || inputId.value);
+const field = useField(props, emit, { idPrefix: 'el-password-input' });
+const passwordFieldAttrs = computed(() => ({
+	...field.fieldAttrs.value,
+	invalid: field.invalid.value || props.compromised,
+}));
 
 const SECONDS_PER_YEAR = 31557600;
 
@@ -145,31 +124,28 @@ function passwordStrength(password) {
 	};
 }
 
-const passwordInfo = computed(() => passwordStrength(props.modelValue));
+const passwordInfo = computed(() => passwordStrength(field.value.value));
 
-// index matches score (1–5)
+// index matches score (1-5)
 const strengthTones = ['', 'bg-destructive', 'bg-destructive', 'bg-warning', 'bg-warning', 'bg-success'];
 </script>
 
 <template>
-	<ElField :label="label" :description="description" :html-for="inputId" :invalid="invalid || compromised" :required="required">
+	<ElField v-bind="passwordFieldAttrs">
 		<div class="relative">
 			<input
-				:id="inputId"
-				:name="inputName"
+				v-bind="field.inputAttrs.value"
 				:type="visible ? 'text' : 'password'"
-				:value="modelValue"
-				:placeholder="placeholder"
-				:disabled="disabled"
-				:required="required"
-				:aria-invalid="invalid || compromised || undefined"
+				:aria-invalid="field.invalid.value || compromised || undefined"
 				class="el-input pr-11"
-				@input="emit('update:modelValue', $event.target.value)"
+				@input="field.onInput($event.target.value)"
+				@focus="field.onFocus"
+				@blur="field.onBlur"
 			/>
 			<button
 				type="button"
 				class="absolute inset-y-1 right-1 grid size-8 place-items-center rounded-md text-muted-foreground transition hover:bg-secondary hover:text-secondary-foreground focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50"
-				:disabled="disabled"
+				:disabled="field.disabled.value"
 				:aria-label="visible ? 'Hide password' : 'Show password'"
 				@click="visible = !visible"
 			>
@@ -194,7 +170,7 @@ const strengthTones = ['', 'bg-destructive', 'bg-destructive', 'bg-warning', 'bg
 				:class="step <= passwordInfo.score ? strengthTones[passwordInfo.score] : 'bg-muted'"></span>
 			</div>
 			<p class="text-xs text-muted-foreground">
-				{{ modelValue ? `${passwordInfo.label} password` : 'No password yet' }}
+				{{ field.value.value ? `${passwordInfo.label} password` : 'No password yet' }}
 			</p>
 			<p v-if="passwordInfo.crackTime" class="text-xs text-muted-foreground">Time to crack your password: {{ passwordInfo.crackTime }}</p>
 		</div>

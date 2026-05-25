@@ -23,7 +23,10 @@ export { default as ElListbox } from '../../forms/listbox/ElListbox.vue';
 export { default as ElCombobox } from '../../forms/combobox/ElCombobox.vue';
 export { default as ElAutocomplete } from '../../forms/autocomplete/ElAutocomplete.vue';
 export { default as ElField } from '../../forms/field/ElField.vue';
+export { default as ElForm } from '../../forms/form/ElForm.vue';
 export { default as ElTextInput } from '../../forms/text-input/ElTextInput.vue';
+export { default as ElEmailInput } from '../../forms/email-input/ElEmailInput.vue';
+export { default as ElUrlInput } from '../../forms/url-input/ElUrlInput.vue';
 export { default as ElTextareaInput } from '../../forms/textarea-input/ElTextareaInput.vue';
 export { default as ElNumberInput } from '../../forms/number-input/ElNumberInput.vue';
 export { default as ElSelectInput } from '../../forms/select-input/ElSelectInput.vue';
@@ -35,6 +38,10 @@ export { default as ElColorInput } from '../../forms/color-input/ElColorInput.vu
 export { default as ElJsonListInput } from '../../forms/json-list-input/ElJsonListInput.vue';
 export { default as ElCodeInput } from '../../forms/code-input/ElCodeInput.vue';
 export { default as ElJsonInput } from '../../forms/json-input/ElJsonInput.vue';
+export { fieldProps } from '../../forms/field/fieldProps.js';
+export { formFieldProviderKey, useField } from '../../forms/field/useField.js';
+export { createValidator, emailValidator, requiredValidator, urlValidator } from '../../forms/field/validators.js';
+export { createFormRegistry, forms, getPathValue, setPathValue } from '../../forms/form/formApi.js';
 
 // Rehydration
 export { default as ElRenderer } from '../../components/playground/ElRenderer.vue';
