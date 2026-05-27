@@ -1,43 +1,54 @@
 <script setup>
-import { computed, useId } from 'vue';
-import ElField from '../field/ElField.vue';
+import FieldChrome from '../field/FieldChrome.vue';
+import { fieldProps } from '../field/fieldProps.js';
+import { useField } from '../field/useField.js';
+
+defineOptions({
+	__doc: {
+		name: 'Color input',
+		tag: '<ElColorInput>',
+		description: 'Native colour picker paired with a hex text field, both bound to the same value.',
+		events: [
+			{ name: 'update:modelValue', payload: 'string', description: 'Fired when the colour changes.' },
+			{ name: 'focus', payload: 'FocusEvent', description: 'Fired when either control receives focus.' },
+			{ name: 'blur', payload: 'FocusEvent', description: 'Fired when either control loses focus.' },
+		],
+	},
+});
 
 const props = defineProps({
-	modelValue: { type: String, default: '#000000' },
-	id: String,
-	name: String,
-	label: String,
-	description: String,
-	disabled: Boolean,
-	invalid: Boolean,
+	...fieldProps,
+	modelValue: {
+		type: String,
+		default: '#000000',
+		_edit: { group: 'Control props', description: 'Hex colour value.' },
+	},
 });
-const emit = defineEmits(['update:modelValue']);
-const generatedId = `el-color-input-${useId()}`;
-const inputId = computed(() => props.id || generatedId);
-const inputName = computed(() => props.name || inputId.value);
+const emit = defineEmits(['update:modelValue', 'focus', 'blur']);
+const field = useField(props, emit, { idPrefix: 'el-color-input' });
 </script>
 
 <template>
-	<ElField :label="label" :description="description" :html-for="inputId" :invalid="invalid">
+	<FieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
 		<div class="flex items-center gap-2">
 			<input
-				:id="`${inputId}-swatch`"
+				:id="`${field.id.value}-swatch`"
 				type="color"
-				:value="modelValue"
-				:disabled="disabled"
+				:value="field.value.value"
+				:disabled="field.disabled.value || undefined"
 				class="h-9 w-12 cursor-pointer rounded-lg border border-border bg-background"
-				@input="emit('update:modelValue', $event.target.value)"
+				@input="field.onInput($event.target.value)"
+				@focus="field.onFocus"
+				@blur="field.onBlur"
 			/>
 			<input
-				:id="inputId"
-				:name="inputName"
+				v-bind="field.inputAttrs.value"
 				type="text"
-				:value="modelValue"
-				:disabled="disabled"
-				:aria-invalid="invalid || undefined"
 				class="el-input flex-1 font-mono"
-				@input="emit('update:modelValue', $event.target.value)"
+				@input="field.onInput($event.target.value)"
+				@focus="field.onFocus"
+				@blur="field.onBlur"
 			/>
 		</div>
-	</ElField>
+	</FieldChrome>
 </template>

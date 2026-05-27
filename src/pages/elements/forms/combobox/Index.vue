@@ -54,6 +54,11 @@ const peoplePlaygroundInspect = {
 			default: 'viewport',
 			_edit: { options: ['viewport', 'anchor'], description: 'viewport keeps the list inside the browser; anchor keeps it attached while scrolling.' },
 		},
+		clearable: {
+			type: Boolean,
+			default: true,
+			_edit: { description: 'Show a clear button when an option has been selected.' },
+		},
 	},
 };
 
@@ -62,6 +67,7 @@ const props = [
 	{ name: 'options', type: 'Array<{ value, label }> | string[]', default: '—', description: 'Available options.' },
 	{ name: 'placeholder', type: 'string', default: "'Search…'", description: 'Input placeholder.' },
 	{ name: 'floatingMode', type: "'viewport' | 'anchor'", default: "'viewport'", description: 'Choose whether the list stays in the browser or follows the input while scrolling.' },
+	{ name: 'clearable', type: 'boolean', default: 'true', description: 'Show an inline clear button when an option is selected.' },
 ];
 const keys = [
 	{ k: '↑ / ↓', d: 'Move active option.' },

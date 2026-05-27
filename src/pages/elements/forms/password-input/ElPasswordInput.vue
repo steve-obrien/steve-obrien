@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue';
-import ElField from '../field/ElField.vue';
+import FieldChrome from '../field/FieldChrome.vue';
 import { fieldProps } from '../field/fieldProps.js';
 import { useField } from '../field/useField.js';
 
@@ -131,7 +131,7 @@ const strengthTones = ['', 'bg-destructive', 'bg-destructive', 'bg-warning', 'bg
 </script>
 
 <template>
-	<ElField v-bind="passwordFieldAttrs">
+	<FieldChrome :field-attrs="passwordFieldAttrs" :chrome="chrome">
 		<div class="relative">
 			<input
 				v-bind="field.inputAttrs.value"
@@ -164,10 +164,10 @@ const strengthTones = ['', 'bg-destructive', 'bg-destructive', 'bg-warning', 'bg
 		<div v-if="showStrength" class="mt-3 space-y-2">
 			<div class="grid grid-cols-5 gap-1.5">
 				<span
-				v-for="step in 5"
-				:key="step"
-				class="h-1.5 rounded-full transition"
-				:class="step <= passwordInfo.score ? strengthTones[passwordInfo.score] : 'bg-muted'"></span>
+					v-for="step in 5"
+					:key="step"
+					class="h-1.5 rounded-full transition"
+					:class="step <= passwordInfo.score ? strengthTones[passwordInfo.score] : 'bg-muted'"></span>
 			</div>
 			<p class="text-xs text-muted-foreground">
 				{{ field.value.value ? `${passwordInfo.label} password` : 'No password yet' }}
@@ -178,5 +178,5 @@ const strengthTones = ['', 'bg-destructive', 'bg-destructive', 'bg-warning', 'bg
 		<p v-if="compromised" class="mt-3 rounded-lg border border-warning/40 bg-warning/15 px-3 py-2 text-xs leading-5 text-warning">
 			{{ compromisedMessage }}
 		</p>
-	</ElField>
+	</FieldChrome>
 </template>

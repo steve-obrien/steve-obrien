@@ -39,7 +39,7 @@ function defaultEditorForProp(def) {
 	if (!def) return 'ElTextInput';
 	const t = def?.type ?? def;
 	const types = Array.isArray(t) ? t : [t];
-	if (types.includes(Boolean)) return 'ElBooleanInput';
+	if (types.includes(Boolean)) return 'ElToggle';
 	if (types.includes(Number)) return 'ElNumberInput';
 	if (types.includes(Array) || types.includes(Object) || types.includes(Function)) return null;
 	return 'ElTextInput';
@@ -59,13 +59,14 @@ function resolveComponent(hint, props, def) {
 function normaliseEdit(hint = {}, def) {
 	const props = { ...(hint.props || {}) };
 	for (const [key, value] of Object.entries(hint)) {
-		if (['component', 'editor', 'props', 'label', 'description'].includes(key)) continue;
+		if (['component', 'editor', 'props', 'label', 'description', 'group'].includes(key)) continue;
 		if (!(key in props)) props[key] = value;
 	}
 	return {
 		component: resolveComponent(hint, props, def),
 		label: hint.label ?? props.label,
 		description: hint.description ?? props.description,
+		group: hint.group ?? props.group,
 		props,
 	};
 }
@@ -81,7 +82,7 @@ export function inferSchema(node) {
 
 	const propDefs = componentProps(node.component);
 	for (const [key, def] of Object.entries(propDefs)) {
-		if (key === 'class' || key === 'modelModifiers') continue;
+		if (key === 'class' || key === 'modelModifiers' || key.startsWith('_')) continue;
 
 		// Per-prop hints — `_edit` on the prop definition is the canonical
 		// place (lives with the component, shows up in source). Registry
@@ -95,6 +96,7 @@ export function inferSchema(node) {
 			key,
 			label: edit.label || prettify(key),
 			description: edit.description,
+			group: edit.group,
 			component: edit.component,
 			props: edit.props,
 		});

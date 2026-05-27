@@ -12,6 +12,8 @@ import Basic from './examples/Basic.vue';
 import BasicSrc from './examples/Basic.vue?raw';
 import CustomControl from './examples/CustomControl.vue';
 import CustomControlSrc from './examples/CustomControl.vue?raw';
+import CustomInputComponent from './examples/CustomInputComponent.vue';
+import CustomInputComponentSrc from './examples/CustomInputComponent.vue?raw';
 
 const doc = ElField.__doc;
 const usage = `<script setup>
@@ -53,7 +55,7 @@ const email = ref('');
 					</div>
 					<div class="rounded-2xl border border-border bg-card p-4 text-card-foreground">
 						<p class="font-medium text-foreground">Avoid duplicated chrome</p>
-						<p class="mt-2 text-sm text-muted-foreground">Most Elements form inputs already use ElField internally, so reach for it only when composing your own field.</p>
+						<p class="mt-2 text-sm text-muted-foreground">Packaged inputs share fieldProps and useField, then render this chrome by default. Set chrome="none" when you want to provide the wrapper yourself.</p>
 					</div>
 				</div>
 			</DocSection>
@@ -91,6 +93,42 @@ const email = ref('');
 				>
 					<CustomControl />
 				</Example>
+			</DocSection>
+
+			<DocSection eyebrow="Component pattern" title="Create your own form input">
+				<div class="space-y-4">
+					<p class="text-sm leading-6 text-muted-foreground">
+						A custom input should compose
+						<code class="font-mono text-foreground">fieldProps</code>,
+						call <code class="font-mono text-foreground">useField</code>,
+						and render <code class="font-mono text-foreground">ElFieldChrome</code>.
+						That gives it standalone <code class="font-mono text-foreground">v-model</code>,
+						parent form registration, generated names and IDs, validation state, and optional
+						<code class="font-mono text-foreground">chrome="none"</code> support.
+					</p>
+					<Example
+						:source="CustomInputComponentSrc"
+						filename="CustomInputComponent.vue"
+						description="A slug input with custom presentation, while still using the same form state contract as packaged controls."
+					>
+						<CustomInputComponent />
+					</Example>
+				</div>
+			</DocSection>
+
+			<DocSection eyebrow="Chrome slots" title="Override the wrapper pieces">
+				<div class="space-y-3 text-sm leading-6 text-muted-foreground">
+					<p>
+						ElField is still a visual component, but its label, default content, errors,
+						and description slots are scoped. This gives a light headless-template route:
+						replace only the pieces you need, or set <code class="font-mono text-foreground">chrome="none"</code>
+						on a packaged input and build the whole surrounding layout yourself.
+					</p>
+					<CodeBlock
+						lang="vue"
+						:code="`<ElField label=&quot;Email&quot; :errors=&quot;errors&quot;>\n\t<template #label=&quot;{ label, required }&quot;>\n\t\t<div class=&quot;flex items-center justify-between&quot;>\n\t\t\t<strong>{{ label }}</strong>\n\t\t\t<span v-if=&quot;required&quot;>Required</span>\n\t\t</div>\n\t</template>\n\n\t<input class=&quot;el-input&quot; />\n\n\t<template #errors=&quot;{ errors }&quot;>\n\t\t<ul class=&quot;text-xs text-destructive&quot;>\n\t\t\t<li v-for=&quot;error in errors&quot; :key=&quot;error&quot;>{{ error }}</li>\n\t\t</ul>\n\t</template>\n</ElField>`"
+					/>
+				</div>
 			</DocSection>
 
 			<DocSection eyebrow="Usage" title="Vue">

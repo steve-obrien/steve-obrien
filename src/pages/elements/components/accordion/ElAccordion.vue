@@ -18,7 +18,7 @@ onMounted(async () => { await import('../../lib/headless/accordion.js'); });
 </script>
 
 <template>
-	<element-accordion :multiple="multiple || null" class="block divide-y divide-border rounded-2xl border border-border bg-background">
+	<element-accordion :multiple="multiple || null" class="block divide-y divide-border rounded-2xl border border-border bg-background w-full">
 		<element-accordion-item v-for="(item, i) in items" :key="i" class="block">
 			<button
 				slot="header"

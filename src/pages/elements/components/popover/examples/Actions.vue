@@ -1,15 +1,39 @@
 <script setup>
-import { ElPopover } from '@elements/vue';
+import { ref } from 'vue';
+import { ElMenu, ElPopover } from '@elements/vue';
+
+const popover = ref(null);
+const menu = ref(null);
+const lastAction = ref('');
+
+const actions = [
+	{ label: 'Rename', value: 'rename' },
+	{ label: 'Duplicate', value: 'duplicate' },
+	{ label: 'Move to...', value: 'move' },
+	{ separator: true },
+	{ label: 'Delete', value: 'delete', tone: 'danger' },
+];
+
+function focusMenu() {
+	requestAnimationFrame(() => {
+		menu.value?.querySelector('[role="menuitem"]')?.focus();
+	});
+}
+
+function selectAction({ item }) {
+	lastAction.value = item?.label || '';
+	popover.value?.close();
+}
 </script>
 
 <template>
-	<ElPopover label="Actions ▾" align="right">
-		<div class="flex flex-col gap-1">
-			<button class="rounded-md px-2 py-1.5 text-left text-sm text-foreground hover:bg-secondary">Rename</button>
-			<button class="rounded-md px-2 py-1.5 text-left text-sm text-foreground hover:bg-secondary">Duplicate</button>
-			<button class="rounded-md px-2 py-1.5 text-left text-sm text-foreground hover:bg-secondary">Move to…</button>
-			<hr class="my-1 border-t border-border" />
-			<button class="rounded-md px-2 py-1.5 text-left text-sm text-destructive hover:bg-destructive/10">Delete</button>
-		</div>
-	</ElPopover>
+	<div class="space-y-3">
+		<ElPopover ref="popover" label="Actions" position="bottom-end" width="min-w-[12rem]" padding="p-1" @open="focusMenu">
+			<div ref="menu">
+				<ElMenu :items="actions" :surface="false" @select="selectAction" />
+			</div>
+		</ElPopover>
+
+		<p v-if="lastAction" class="text-sm text-muted-foreground">Selected {{ lastAction }}.</p>
+	</div>
 </template>

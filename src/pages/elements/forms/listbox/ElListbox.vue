@@ -1,5 +1,8 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue';
+import FieldChrome from '../field/FieldChrome.vue';
+import { fieldProps } from '../field/fieldProps.js';
+import { useField } from '../field/useField.js';
 
 defineOptions({
 	__doc: {
@@ -15,10 +18,11 @@ defineOptions({
 });
 
 const props = defineProps({
+	...fieldProps,
 	modelValue: {
 		type: [String, Number],
 		default: '',
-		_edit: { description: 'Selected option value.' },
+		_edit: { group: 'Control props', description: 'Selected option value.' },
 	},
 	options: {
 		type: Array,
@@ -39,22 +43,23 @@ const props = defineProps({
 	orientation: {
 		type: String,
 		default: 'vertical',
-		_edit: { options: ['vertical', 'horizontal'], description: 'Arrow key direction.' },
+		_edit: { group: 'Control props', options: ['vertical', 'horizontal'], description: 'Arrow key direction.' },
 	},
 });
-const emit = defineEmits(['update:modelValue', 'select']);
+const emit = defineEmits(['update:modelValue', 'select', 'focus', 'blur']);
 const root = ref(null);
+const field = useField(props, emit, { idPrefix: 'el-listbox' });
 
 onMounted(async () => {
 	await import('../../lib/headless/listbox.js');
 	root.value?.addEventListener('el:change', (event) => {
 		const option = props.options.find((item) => valueOf(item) === event.detail.value) || null;
-		emit('update:modelValue', event.detail.value);
+		field.onInput(event.detail.value);
 		emit('select', { value: event.detail.value, option });
 	});
 });
 
-watch(() => props.modelValue, (value) => {
+watch(field.value, (value) => {
 	if (root.value && String(root.value.value) !== String(value ?? '')) root.value.value = value ?? '';
 });
 
@@ -63,21 +68,35 @@ const valueOf = (option) => String(option && typeof option === 'object' ? (optio
 </script>
 
 <template>
-	<element-listbox
-		ref="root"
-		:value="modelValue ?? ''"
-		:orientation="orientation"
-		class="grid gap-1 rounded-2xl border border-border bg-background p-1 shadow-sm"
-		:class="orientation === 'horizontal' && 'grid-flow-col'"
-	>
-		<button
-			v-for="(option, index) in options"
-			:key="valueOf(option) || index"
-			role="option"
-			:data-value="valueOf(option)"
-			class="rounded-xl px-3 py-2 text-left text-sm text-foreground outline-none transition hover:bg-secondary focus:bg-secondary aria-selected:bg-primary aria-selected:text-primary-foreground"
+	<FieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
+		<input
+			v-if="field.htmlName.value"
+			type="hidden"
+			:name="field.htmlName.value"
+			:value="field.value.value"
+		/>
+		<element-listbox
+			ref="root"
+			:id="field.id.value"
+			:value="field.value.value ?? ''"
+			:orientation="orientation"
+			:aria-invalid="field.invalid.value || undefined"
+			class="grid gap-1 rounded-2xl border border-border bg-background p-1 shadow-sm data-[invalid]:border-destructive"
+			:class="orientation === 'horizontal' && 'grid-flow-col'"
+			:data-invalid="field.invalid.value ? '' : undefined"
 		>
-			<slot name="option" :option="option" :index="index">{{ labelOf(option) }}</slot>
-		</button>
-	</element-listbox>
+			<button
+				v-for="(option, index) in options"
+				:key="valueOf(option) || index"
+				role="option"
+				:data-value="valueOf(option)"
+				:disabled="field.disabled.value || undefined"
+				class="rounded-xl px-3 py-2 text-left text-sm text-foreground outline-none transition hover:bg-secondary focus:bg-secondary aria-selected:bg-primary aria-selected:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
+				@focus="field.onFocus"
+				@blur="field.onBlur"
+			>
+				<slot name="option" :option="option" :index="index">{{ labelOf(option) }}</slot>
+			</button>
+		</element-listbox>
+	</FieldChrome>
 </template>

@@ -1,7 +1,9 @@
 <script setup>
 import { computed, ref } from 'vue';
-import ElField from '../field/ElField.vue';
+import FieldChrome from '../field/FieldChrome.vue';
 import ElJsonInput from '../json-input/ElJsonInput.vue';
+import { fieldProps } from '../field/fieldProps.js';
+import { useField } from '../field/useField.js';
 
 defineOptions({
 	__doc: {
@@ -15,20 +17,11 @@ defineOptions({
 });
 
 const props = defineProps({
+	...fieldProps,
 	modelValue: {
 		type: Array,
 		default: () => [],
 		_edit: { component: 'ElJsonListInput', props: { compact: true } },
-	},
-	label: {
-		type: String,
-		default: '',
-		_edit: { description: 'Visible field label.' },
-	},
-	description: {
-		type: String,
-		default: '',
-		_edit: { description: 'Optional helper copy below the label.' },
 	},
 	addLabel: {
 		type: String,
@@ -58,15 +51,17 @@ const props = defineProps({
 		_edit: { description: 'Reduce vertical spacing for inspectors and narrow tool panels.' },
 	},
 });
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'focus', 'blur']);
+const field = useField(props, emit, { idPrefix: 'el-json-list-input' });
 const mode = ref('fields');
 const rawError = ref('');
 
-const update = (next) => emit('update:modelValue', next);
+const rows = computed(() => (Array.isArray(field.value.value) ? field.value.value : []));
+const update = (next) => field.onInput(next);
 
 const fields = computed(() => {
 	if (props.schema.length) return props.schema;
-	const keys = [...new Set(props.modelValue.flatMap((row) => (isObject(row) ? Object.keys(row) : [])))];
+	const keys = [...new Set(rows.value.flatMap((row) => (isObject(row) ? Object.keys(row) : [])))];
 	return keys.map((key) => ({
 		key,
 		label: key.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase()),
@@ -86,7 +81,7 @@ function defaultFor(field, index) {
 }
 
 function setRow(rowIndex, key, value) {
-	update(props.modelValue.map((row, index) => (index === rowIndex ? { ...row, [key]: value } : row)));
+	update(rows.value.map((row, index) => (index === rowIndex ? { ...row, [key]: value } : row)));
 }
 
 function setField(rowIndex, field, value) {
@@ -109,19 +104,19 @@ function fieldValue(row, field) {
 }
 
 function remove(rowIndex) {
-	update(props.modelValue.filter((_, index) => index !== rowIndex));
+	update(rows.value.filter((_, index) => index !== rowIndex));
 }
 
 function add() {
-	const index = props.modelValue.length;
+	const index = rows.value.length;
 	const row = Object.fromEntries(fields.value.map((field) => [field.key, defaultFor(field, index)]));
-	update([...props.modelValue, row]);
+	update([...rows.value, row]);
 }
 
 function move(rowIndex, dir) {
 	const nextIndex = rowIndex + dir;
-	if (nextIndex < 0 || nextIndex >= props.modelValue.length) return;
-	const next = [...props.modelValue];
+	if (nextIndex < 0 || nextIndex >= rows.value.length) return;
+	const next = [...rows.value];
 	[next[rowIndex], next[nextIndex]] = [next[nextIndex], next[rowIndex]];
 	update(next);
 }
@@ -138,7 +133,13 @@ function setRawJson(value) {
 </script>
 
 <template>
-	<ElField :label="label" :description="description">
+	<FieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
+		<input
+			v-if="field.htmlName.value"
+			type="hidden"
+			:name="field.htmlName.value"
+			:value="JSON.stringify(rows)"
+		/>
 		<div :class="compact ? 'space-y-1.5' : 'space-y-2'">
 			<div v-if="jsonToggle" class="flex justify-end">
 				<div class="inline-flex rounded-lg border border-border bg-secondary/60 p-0.5">
@@ -163,10 +164,14 @@ function setRawJson(value) {
 
 			<div v-if="mode === 'json'">
 				<ElJsonInput
-					:model-value="modelValue"
+					:model-value="rows"
 					:rows="compact ? 7 : 12"
 					:editor="true"
+					:chrome="'none'"
+					:_register-field="false"
 					@update:model-value="setRawJson"
+					@focus="field.onFocus"
+					@blur="field.onBlur"
 				/>
 				<p v-if="rawError" class="mt-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs font-mono text-destructive">
 					{{ rawError }}
@@ -175,7 +180,7 @@ function setRawJson(value) {
 
 			<template v-else>
 				<div
-					v-for="(row, rowIndex) in modelValue"
+					v-for="(row, rowIndex) in rows"
 					:key="rowIndex"
 					class="rounded-lg border border-border bg-background"
 					:class="compact ? 'space-y-1 p-1.5' : 'space-y-2 p-2'"
@@ -189,31 +194,35 @@ function setRawJson(value) {
 						</span>
 					</div>
 					<label
-						v-for="field in fields"
-						:key="field.key"
+						v-for="column in fields"
+						:key="column.key"
 						:class="compact ? 'grid grid-cols-[4.75rem_minmax(0,1fr)] items-center gap-1.5' : 'block'"
 					>
 						<span
 							class="text-[11px] font-medium text-muted-foreground"
 							:class="compact ? 'truncate text-right' : 'mb-1 block'"
-						>{{ field.label || field.key }}</span>
+						>{{ column.label || column.key }}</span>
 						<textarea
-							v-if="field.type === 'json'"
-							:value="fieldValue(row, field)"
-							:placeholder="field.placeholder || field.key"
+							v-if="column.type === 'json'"
+							:value="fieldValue(row, column)"
+							:placeholder="column.placeholder || column.key"
 							:rows="compact ? 3 : 5"
 							class="w-full resize-y rounded-md border border-border bg-background px-2 py-1.5 font-mono text-xs text-foreground outline-none focus:ring-2 focus:ring-ring/40"
 							:class="compact ? 'min-h-16' : 'min-h-24'"
-							@change="setField(rowIndex, field, $event.target.value)"
+							@change="setField(rowIndex, column, $event.target.value)"
+							@focus="field.onFocus"
+							@blur="field.onBlur"
 						></textarea>
 						<input
 							v-else
-							:type="field.type || 'text'"
-							:value="fieldValue(row, field)"
-							:placeholder="field.placeholder || field.key"
+							:type="column.type || 'text'"
+							:value="fieldValue(row, column)"
+							:placeholder="column.placeholder || column.key"
 							class="w-full rounded-md border border-border bg-background px-2 text-foreground outline-none focus:ring-2 focus:ring-ring/40"
 							:class="compact ? 'h-7 text-xs' : 'h-8 text-sm'"
-							@input="setField(rowIndex, field, $event.target.value)"
+							@input="setField(rowIndex, column, $event.target.value)"
+							@focus="field.onFocus"
+							@blur="field.onBlur"
 						/>
 					</label>
 				</div>
@@ -225,5 +234,5 @@ function setRawJson(value) {
 				>{{ addLabel }}</button>
 			</template>
 		</div>
-	</ElField>
+	</FieldChrome>
 </template>

@@ -1,8 +1,10 @@
 <script setup>
 import { computed, onMounted, ref, useId, watch } from 'vue';
+import FieldChrome from '../field/FieldChrome.vue';
+import { fieldProps } from '../field/fieldProps.js';
+import { useField } from '../field/useField.js';
 
 const listId = `el-autocomplete-${useId()}`;
-const generatedInputId = `el-autocomplete-input-${useId()}`;
 
 defineOptions({
 	__doc: {
@@ -21,20 +23,11 @@ defineOptions({
 });
 
 const props = defineProps({
+	...fieldProps,
 	modelValue: {
 		type: String,
 		default: '',
-		_edit: { description: 'Current text value.' },
-	},
-	id: {
-		type: String,
-		default: '',
-		_edit: { description: 'ID applied to the input.' },
-	},
-	name: {
-		type: String,
-		default: '',
-		_edit: { description: 'Form field name. Defaults to the generated id.' },
+		_edit: { group: 'Control props', description: 'Current text value.' },
 	},
 	options: {
 		type: Array,
@@ -55,39 +48,33 @@ const props = defineProps({
 	placeholder: {
 		type: String,
 		default: 'Search...',
-		_edit: { description: 'Placeholder shown when the input is empty.' },
+		_edit: { group: 'Control props', description: 'Placeholder shown when the input is empty.' },
 	},
 	placement: {
 		type: String,
 		default: 'bottom',
-		_edit: { options: ['bottom', 'top', 'right', 'left'], description: 'Preferred side before collision handling.' },
+		_edit: { group: 'Control props', options: ['bottom', 'top', 'right', 'left'], description: 'Preferred side before collision handling.' },
 	},
 	floatingMode: {
 		type: String,
 		default: 'viewport',
-		_edit: { options: ['viewport', 'anchor'], description: 'viewport keeps suggestions inside the browser; anchor keeps them attached while scrolling.' },
-	},
-	invalid: {
-		type: Boolean,
-		default: false,
-		_edit: { description: 'Mark the input invalid.' },
+		_edit: { group: 'Control props', options: ['viewport', 'anchor'], description: 'viewport keeps suggestions inside the browser; anchor keeps them attached while scrolling.' },
 	},
 });
-const emit = defineEmits(['update:modelValue', 'query', 'select', 'commit']);
+const emit = defineEmits(['update:modelValue', 'query', 'select', 'commit', 'focus', 'blur']);
 
 const root = ref(null);
 const inputEl = ref(null);
 const isMounted = ref(false);
 const currentText = ref('');
+const field = useField(props, emit, { idPrefix: 'el-autocomplete' });
 
 const normalised = (option) => (typeof option === 'string' ? { value: option, label: option } : option);
 const items = computed(() => props.options.map(normalised));
-const inputId = computed(() => props.id || generatedInputId);
-const inputName = computed(() => props.name || inputId.value);
 
 function syncInputFromModel() {
-	currentText.value = props.modelValue ?? '';
-	if (inputEl.value) inputEl.value.value = props.modelValue ?? '';
+	currentText.value = field.value.value ?? '';
+	if (inputEl.value) inputEl.value.value = field.value.value ?? '';
 }
 
 onMounted(async () => {
@@ -96,14 +83,14 @@ onMounted(async () => {
 	syncInputFromModel();
 	root.value?.addEventListener('el:input', (event) => {
 		currentText.value = event.detail.value;
-		emit('update:modelValue', event.detail.value);
+		field.onInput(event.detail.value);
 	});
 	root.value?.addEventListener('el:query', (event) => emit('query', event.detail.query));
 	root.value?.addEventListener('el:select', (event) => {
 		const index = Number(event.detail.option?.dataset.index);
 		const item = Number.isFinite(index) ? items.value[index] : null;
 		const text = event.detail.label ?? event.detail.value ?? '';
-		emit('update:modelValue', text);
+		field.onInput(text);
 		emit('select', {
 			item,
 			value: event.detail.value,
@@ -117,45 +104,45 @@ onMounted(async () => {
 	root.value?.addEventListener('el:change', (event) => emit('commit', event.detail));
 });
 
-watch(() => props.modelValue, syncInputFromModel);
+watch(field.value, syncInputFromModel);
 </script>
 
 <template>
-	<element-autocomplete
-		ref="root"
-		:data-menu-id="listId"
-		:value="modelValue ?? null"
-		:placement="placement"
-		:floating-mode="floatingMode"
-		class="relative block"
-	>
-		<input
-			ref="inputEl"
-			slot="input"
-			:id="inputId"
-			:name="inputName"
-			type="text"
-			:placeholder="placeholder"
-			:aria-invalid="invalid || undefined"
-			class="el-input rounded-full px-4 focus:ring-ring/60"
-			:data-invalid="invalid ? '' : undefined"
-		/>
-		<Teleport to="body" :disabled="!isMounted">
-			<ul
-				:id="listId"
-				class="z-50 max-h-[min(15rem,var(--el-floating-available-height))] overflow-auto rounded-2xl border border-border bg-popover p-1 text-popover-foreground shadow-2xl shadow-black/10 ring-1 ring-border/60"
-			>
-				<li
-					v-for="(option, index) in items"
-					:key="option.value ?? index"
-					:data-value="option.value"
-					:data-label="option.label"
-					:data-index="index"
-					class="cursor-pointer rounded-xl px-3 py-2 text-sm transition data-[active]:bg-accent aria-selected:bg-accent"
+	<FieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
+		<element-autocomplete
+			ref="root"
+			:data-menu-id="listId"
+			:value="field.value.value ?? null"
+			:placement="placement"
+			:floating-mode="floatingMode"
+			class="relative block"
+		>
+			<input
+				v-bind="field.inputAttrs.value"
+				ref="inputEl"
+				slot="input"
+				type="text"
+				class="el-input rounded-full px-4 focus:ring-ring/60"
+				@focus="field.onFocus"
+				@blur="field.onBlur"
+			/>
+			<Teleport to="body" :disabled="!isMounted">
+				<ul
+					:id="listId"
+					class="el-glass-surface z-50 max-h-[min(15rem,var(--el-floating-available-height))] overflow-auto rounded-2xl p-1"
 				>
-					<slot name="item" :item="option" :index="index">{{ option.label }}</slot>
-				</li>
-			</ul>
-		</Teleport>
-	</element-autocomplete>
+					<li
+						v-for="(option, index) in items"
+						:key="option.value ?? index"
+						:data-value="option.value"
+						:data-label="option.label"
+						:data-index="index"
+						class="cursor-pointer rounded-xl px-3 py-2 text-sm transition data-[active]:bg-accent aria-selected:bg-accent"
+					>
+						<slot name="item" :item="option" :index="index">{{ option.label }}</slot>
+					</li>
+				</ul>
+			</Teleport>
+		</element-autocomplete>
+	</FieldChrome>
 </template>

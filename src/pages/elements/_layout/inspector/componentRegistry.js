@@ -19,10 +19,6 @@ const SAMPLE_PROPS = {
 			{ label: 'Cherry', value: 'cherry' },
 		],
 	},
-	ElBooleanInput: {
-		label: 'Enabled',
-		modelValue: true,
-	},
 	ElCalendar: {
 		label: 'Date',
 		description: 'Pick a date.',
@@ -207,6 +203,8 @@ function buildComponentEntry(record) {
 		label,
 		group: meta.group || groupFromSection(section),
 		component: markRaw(component),
+		componentName: exportName,
+		tag: component.__doc?.tag,
 		icon: meta.icon || record.icon || label.charAt(0),
 		accepts,
 		defaults,
@@ -444,11 +442,43 @@ export const groupedRegistry = entries.reduce((acc, entry) => {
 
 export function lookupEntry(component) {
 	if (component == null) return entries.find((e) => e.id === 'html-text');
-	return entries.find((e) => e.component === component);
+	const direct = entries.find((e) => e.component === component);
+	if (direct) return direct;
+	if (typeof component === 'string') return lookupByName(component);
+	return lookupByName(component?.name || component?.__name || component?.__doc?.tag || component?.__doc?.name);
 }
 
 export function lookupById(typeId) {
 	return entries.find((e) => e.id === typeId);
+}
+
+export function lookupByName(name) {
+	if (!name) return null;
+	const normalized = normalizeName(name);
+	return entries.find((entry) => {
+		const names = [
+			entry.id,
+			entry.label,
+			entry.componentName,
+			entry.tag,
+			typeof entry.component === 'string' ? entry.component : null,
+			entry.component?.name,
+			entry.component?.__name,
+			entry.component?.__doc?.tag,
+			entry.component?.__doc?.name,
+		];
+		return names.some((candidate) => normalizeName(candidate) === normalized);
+	}) || null;
+}
+
+function normalizeName(name) {
+	return String(name || '')
+		.replace(/[<>]/g, '')
+		.replace(/^El/, 'el')
+		.replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-|-$/g, '');
 }
 
 // Text nodes are pure-content leaves: `{ id, text: 'Hello' }` (no `component`).

@@ -31,6 +31,33 @@ const props = defineProps({
 		default: true,
 		_edit: { description: 'Add a soft top-light gradient and backdrop blur over the card token.' },
 	},
+	topLight: {
+		type: Number,
+		default: 14,
+		_edit: {
+			component: 'ElRangeInput',
+			description: 'Strength of the glass light catching the top edge.',
+			props: { min: 0, max: 40, step: 1, suffix: '%' },
+		},
+	},
+	bottomShade: {
+		type: Number,
+		default: 4,
+		_edit: {
+			component: 'ElRangeInput',
+			description: 'Strength of the subtle shade at the bottom of the card.',
+			props: { min: 0, max: 24, step: 1, suffix: '%' },
+		},
+	},
+	shadow: {
+		type: Number,
+		default: 4,
+		_edit: {
+			component: 'ElRangeInput',
+			description: 'Outer elevation shadow strength.',
+			props: { min: 0, max: 24, step: 1, suffix: '%' },
+		},
+	},
 	interactive: {
 		type: Boolean,
 		default: false,
@@ -45,17 +72,38 @@ const paddingClasses = {
 	lg: 'p-8',
 };
 
+const clamped = (value, min, max) => Math.min(Math.max(Number(value) || 0, min), max);
+
 const classes = computed(() => [
-	'relative overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-xl shadow-black/4',
-	'before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/80 dark:before:bg-white/15',
-	props.glass && 'bg-linear-to-b from-white/70 via-secondary to-secondary backdrop-blur-xl dark:from-white/8 dark:via-secondary dark:to-secondary',
-	props.interactive && 'transition duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-2xl hover:shadow-black/10',
+	'relative w-full overflow-hidden rounded-2xl border border-border bg-card text-card-foreground',
+	props.glass && 'backdrop-blur-xl',
+	props.interactive && 'transition duration-200 hover:-translate-y-0.5 hover:border-primary/30',
 	paddingClasses[props.padding] ?? paddingClasses.md,
 ]);
+
+const cardStyle = computed(() => {
+	const topLight = clamped(props.topLight, 0, 40);
+	const bottomShade = clamped(props.bottomShade, 0, 24);
+	const shadow = clamped(props.shadow, 0, 24);
+	const styles = {
+		boxShadow: shadow
+			? `0 18px 44px rgb(2 6 23 / ${shadow / 100}), 0 1px 2px rgb(2 6 23 / ${Math.min(shadow / 140, 0.12)})`
+			: 'none',
+	};
+
+	if (props.glass) {
+		styles.backgroundImage = [
+			`linear-gradient(to bottom, color-mix(in oklch, white ${topLight}%, transparent), transparent 42%, color-mix(in oklch, black ${bottomShade}%, transparent))`,
+			`linear-gradient(to bottom, color-mix(in oklch, white ${Math.min(topLight * 2, 80)}%, transparent), transparent 1px)`,
+		].join(', ');
+	}
+
+	return styles;
+});
 </script>
 
 <template>
-	<component :is="as" :class="classes">
+	<component :is="as" :class="classes" :style="cardStyle">
 		<slot />
 	</component>
 </template>

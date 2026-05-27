@@ -1,5 +1,5 @@
 <script setup>
-import ElField from '../field/ElField.vue';
+import FieldChrome from '../field/FieldChrome.vue';
 import { fieldProps } from '../field/fieldProps.js';
 import { useField } from '../field/useField.js';
 
@@ -12,7 +12,7 @@ const field = useField(props, emit, { idPrefix: 'el-textarea-input' });
 </script>
 
 <template>
-	<ElField v-bind="field.fieldAttrs.value">
+	<FieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
 		<textarea
 			:id="field.id.value"
 			:name="field.htmlName.value"
@@ -29,5 +29,5 @@ const field = useField(props, emit, { idPrefix: 'el-textarea-input' });
 			@focus="field.onFocus"
 			@blur="field.onBlur"
 		></textarea>
-	</ElField>
+	</FieldChrome>
 </template>

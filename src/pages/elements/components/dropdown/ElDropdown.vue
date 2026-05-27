@@ -118,7 +118,7 @@ const valueOf = (item) => (item && typeof item === 'object' ? (item.value ?? ite
 		<Teleport to="body" :disabled="!isMounted">
 			<div
 				:id="menuId"
-				class="el-dropdown-menu rounded-2xl border border-border bg-popover p-1 text-popover-foreground shadow-2xl shadow-black/10 ring-1 ring-border/60 dark:shadow-black/40"
+				class="el-dropdown-menu el-glass-surface rounded-2xl p-1"
 				:class="width"
 			>
 				<template v-for="(item, i) in items" :key="valueOf(item) ?? i">

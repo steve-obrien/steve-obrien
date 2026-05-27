@@ -1,5 +1,6 @@
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const rootDir = process.cwd();
 const routesFilePath = path.join(rootDir, 'src', 'routes.js');
@@ -26,7 +27,7 @@ const loadRoutesFromRoutesFile = async () => {
 				.map((match) => match[1]?.trim())
 				.filter(Boolean)
 				.filter((routePath) => routePath.startsWith('/'))
-				.filter((routePath) => !routePath.includes(':') && !routePath.includes('*')),
+				.filter((routePath) => !routePath.includes(':') && !routePath.includes('*') && !routePath.includes('$')),
 		),
 	];
 };
@@ -58,6 +59,45 @@ const loadRoutesFromNestedPageVue = async () => {
 	return [...new Set(routePaths)];
 };
 
+const loadArticleRoutes = async () => {
+	const articleContentDir = path.join(pagesDirPath, 'articles', 'content');
+	const routePaths = ['/articles'];
+
+	try {
+		const files = await readdir(articleContentDir);
+		for (const file of files) {
+			if (!file.endsWith('.md')) continue;
+			const filePath = path.join(articleContentDir, file);
+			const raw = await readFile(filePath, 'utf8');
+			const slugMatch = raw.match(/^---[\s\S]*?\nslug:\s*([^\n]+)\n[\s\S]*?\n---/);
+			const slug = slugMatch?.[1]?.trim().replace(/^['"]|['"]$/g, '') || file.replace(/\.md$/i, '');
+			routePaths.push(`/articles/${slug}`);
+		}
+	} catch {
+		return [];
+	}
+
+	return [...new Set(routePaths)];
+};
+
+const loadNewsRoutes = async () => {
+	const newsDataPath = path.join(pagesDirPath, 'news', 'dailyNews.js');
+
+	try {
+		const mod = await import(pathToFileURL(newsDataPath));
+		const feeds = mod.dailyNewsFeeds || [];
+		return [
+			'/news',
+			...feeds.flatMap((feed) => [
+				`/news/${feed.date}`,
+				...feed.items.map((item) => `/news/${feed.date}/${item.slug}`),
+			]),
+		];
+	} catch {
+		return [];
+	}
+};
+
 export const loadStaticRoutes = async () => {
 	let fromRoutesFile = [];
 	try {
@@ -71,5 +111,7 @@ export const loadStaticRoutes = async () => {
 	}
 
 	const fromNestedPages = await loadRoutesFromNestedPageVue();
-	return [...new Set([...fromRoutesFile, ...fromNestedPages])];
+	const fromArticles = await loadArticleRoutes();
+	const fromNews = await loadNewsRoutes();
+	return [...new Set([...fromRoutesFile, ...fromNestedPages, ...fromArticles, ...fromNews])];
 };

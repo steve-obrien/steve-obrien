@@ -92,7 +92,8 @@ export function createRoving({ items, orientation = 'horizontal', loop = true, o
 	const nextKey = horiz ? 'ArrowRight' : 'ArrowDown';
 	const prevKey = horiz ? 'ArrowLeft' : 'ArrowUp';
 
-	const setActive = (i) => {
+	const setActive = (i, options = {}) => {
+		const { focus = true, select = true } = options;
 		if (!items.length) return;
 		if (loop) i = (i + items.length) % items.length;
 		else i = Math.max(0, Math.min(items.length - 1, i));
@@ -100,8 +101,8 @@ export function createRoving({ items, orientation = 'horizontal', loop = true, o
 		items.forEach((el, idx) => {
 			el.tabIndex = idx === i ? 0 : -1;
 		});
-		items[i]?.focus();
-		onSelect?.(i, items[i]);
+		if (focus) items[i]?.focus();
+		if (select) onSelect?.(i, items[i]);
 	};
 
 	const onKey = (e) => {

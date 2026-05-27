@@ -1,8 +1,10 @@
 <script setup>
 import { computed, onMounted, ref, useId, watch } from 'vue';
+import FieldChrome from '../field/FieldChrome.vue';
+import { fieldProps } from '../field/fieldProps.js';
+import { useField } from '../field/useField.js';
 
 const listId = `el-combobox-${useId()}`;
-const generatedInputId = `el-combobox-input-${useId()}`;
 
 defineOptions({
 	__doc: {
@@ -20,20 +22,11 @@ defineOptions({
 });
 
 const props = defineProps({
+	...fieldProps,
 	modelValue: {
 		type: [String, Number],
 		default: '',
-		_edit: { description: 'Committed selected value.' },
-	},
-	id: {
-		type: String,
-		default: '',
-		_edit: { description: 'ID applied to the input.' },
-	},
-	name: {
-		type: String,
-		default: '',
-		_edit: { description: 'Form field name. Defaults to the generated id.' },
+		_edit: { group: 'Control props', description: 'Committed selected value.' },
 	},
 	options: {
 		type: Array,
@@ -54,34 +47,34 @@ const props = defineProps({
 	placeholder: {
 		type: String,
 		default: 'Search...',
-		_edit: { description: 'Placeholder shown when the input is empty.' },
+		_edit: { group: 'Control props', description: 'Placeholder shown when the input is empty.' },
 	},
 	placement: {
 		type: String,
 		default: 'bottom',
-		_edit: { options: ['bottom', 'top', 'right', 'left'], description: 'Preferred side before collision handling.' },
+		_edit: { group: 'Control props', options: ['bottom', 'top', 'right', 'left'], description: 'Preferred side before collision handling.' },
 	},
 	floatingMode: {
 		type: String,
 		default: 'viewport',
-		_edit: { options: ['viewport', 'anchor'], description: 'viewport keeps the list inside the browser; anchor keeps it attached while scrolling.' },
+		_edit: { group: 'Control props', options: ['viewport', 'anchor'], description: 'viewport keeps the list inside the browser; anchor keeps it attached while scrolling.' },
 	},
-	invalid: {
+	clearable: {
 		type: Boolean,
-		default: false,
-		_edit: { description: 'Mark the input invalid.' },
+		default: true,
+		_edit: { group: 'Control props', description: 'Show a clear button when an option has been selected.' },
 	},
 });
-const emit = defineEmits(['update:modelValue', 'query', 'select']);
+const emit = defineEmits(['update:modelValue', 'query', 'select', 'focus', 'blur']);
 
 const root = ref(null);
 const inputEl = ref(null);
 const isMounted = ref(false);
+const field = useField(props, emit, { idPrefix: 'el-combobox' });
+const hasSelection = computed(() => field.value.value !== null && field.value.value !== undefined && field.value.value !== '');
 
 const normalised = (option) => (typeof option === 'string' ? { value: option, label: option } : option);
 const optionList = computed(() => props.options.map(normalised));
-const inputId = computed(() => props.id || generatedInputId);
-const inputName = computed(() => props.name || inputId.value);
 
 function displayForValue(value) {
 	const selected = optionList.value.find((option) => String(option.value ?? option.label) === String(value));
@@ -89,14 +82,14 @@ function displayForValue(value) {
 }
 
 function syncInputFromModel() {
-	if (inputEl.value) inputEl.value.value = displayForValue(props.modelValue);
+	if (inputEl.value) inputEl.value.value = displayForValue(field.value.value);
 }
 
 onMounted(async () => {
 	isMounted.value = true;
 	await import('../../lib/headless/combobox.js');
 	syncInputFromModel();
-	root.value?.addEventListener('el:change', (event) => emit('update:modelValue', event.detail.value));
+	root.value?.addEventListener('el:change', (event) => field.onInput(event.detail.value));
 	root.value?.addEventListener('el:select', (event) => {
 		const index = Number(event.detail.option?.dataset.index);
 		emit('select', {
@@ -111,55 +104,77 @@ onMounted(async () => {
 	});
 });
 
-watch([() => props.modelValue, optionList], syncInputFromModel);
+watch([field.value, optionList], syncInputFromModel);
+
+function clearSelection() {
+	field.setValue('');
+	if (root.value) root.value.value = '';
+	if (inputEl.value) inputEl.value.value = '';
+	root.value?.removeAttribute('open');
+	emit('select', { item: null, value: '', label: '', option: null });
+}
 </script>
 
 <template>
-	<element-combobox
-		ref="root"
-		:data-menu-id="listId"
-		:value="modelValue ?? null"
-		:placement="placement"
-		:floating-mode="floatingMode"
-		class="relative block"
-	>
-		<input
-			ref="inputEl"
-			slot="input"
-			:id="inputId"
-			:name="inputName"
-			type="text"
-			:placeholder="placeholder"
-			:aria-invalid="invalid || undefined"
-			class="el-input rounded-full px-4 pr-10 focus:ring-ring/60"
-			:data-invalid="invalid ? '' : undefined"
-		/>
-		<button
-			slot="toggle"
-			type="button"
-			class="absolute right-1 top-1 inline-flex size-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-secondary hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
-			aria-label="Show options"
+	<FieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
+		<element-combobox
+			ref="root"
+			:data-menu-id="listId"
+			:value="field.value.value ?? null"
+			:placement="placement"
+			:floating-mode="floatingMode"
+			class="relative block"
 		>
-			<svg viewBox="0 0 20 20" class="size-4" fill="none">
-				<path d="M6 8l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
-			</svg>
-		</button>
-		<Teleport to="body" :disabled="!isMounted">
-			<ul
-				:id="listId"
-				class="z-50 max-h-[min(15rem,var(--el-floating-available-height))] overflow-auto rounded-2xl border border-border bg-popover p-1 text-popover-foreground shadow-2xl shadow-black/10 ring-1 ring-border/60"
+			<input
+				v-bind="field.inputAttrs.value"
+				ref="inputEl"
+				slot="input"
+				type="text"
+				class="el-input rounded-full px-4 focus:ring-ring/60"
+				:class="clearable && hasSelection ? 'pr-20' : 'pr-10'"
+				@focus="field.onFocus"
+				@blur="field.onBlur"
+			/>
+			<button
+				v-if="clearable && hasSelection"
+				type="button"
+				class="absolute right-9 top-1 inline-flex size-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-secondary hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+				aria-label="Clear selection"
+				@click.stop="clearSelection"
+				@mousedown.prevent
 			>
-				<li
-					v-for="(option, index) in optionList"
-					:key="option.value ?? index"
-					:data-value="option.value"
-					:data-label="option.label"
-					:data-index="index"
-					class="cursor-pointer rounded-xl px-3 py-2 text-sm transition data-[active]:bg-accent aria-selected:bg-accent"
+				<svg viewBox="0 0 20 20" class="size-4" fill="none">
+					<circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5" />
+					<path d="M7.5 7.5l5 5M12.5 7.5l-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+				</svg>
+			</button>
+			<button
+				slot="toggle"
+				type="button"
+				class="absolute right-1 top-1 inline-flex size-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-secondary hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+				aria-label="Show options"
+			>
+				<svg viewBox="0 0 20 20" class="size-4" fill="none">
+					<path d="M6 8l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+				</svg>
+			</button>
+			<Teleport to="body" :disabled="!isMounted">
+				<ul
+					:id="listId"
+					class="el-glass-surface z-50 max-h-[min(15rem,var(--el-floating-available-height))] overflow-auto rounded-2xl p-1"
 				>
-					<slot name="item" :item="option" :index="index">{{ option.label }}</slot>
-				</li>
-			</ul>
-		</Teleport>
-	</element-combobox>
+					<li
+						v-for="(option, index) in optionList"
+						:key="option.value ?? index"
+						:data-value="option.value"
+						:data-label="option.label"
+						:data-index="index"
+						class="cursor-pointer rounded-xl px-3 py-2 text-sm transition data-[active]:bg-accent aria-selected:bg-accent"
+					>
+						<slot name="item" :item="option" :index="index">{{ option.label }}</slot>
+					</li>
+				</ul>
+			</Teleport>
+		</element-combobox>
+	</FieldChrome>
 </template>

@@ -1,6 +1,8 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
-import ElField from '../field/ElField.vue';
+import FieldChrome from '../field/FieldChrome.vue';
+import { fieldProps } from '../field/fieldProps.js';
+import { useField } from '../field/useField.js';
 
 defineOptions({
 	__doc: {
@@ -16,20 +18,11 @@ defineOptions({
 });
 
 const props = defineProps({
+	...fieldProps,
 	modelValue: {
 		type: String,
 		default: '',
-		_edit: { description: 'Selected date as YYYY-MM-DD.' },
-	},
-	label: {
-		type: String,
-		default: '',
-		_edit: { description: 'Visible field label.' },
-	},
-	description: {
-		type: String,
-		default: '',
-		_edit: { description: 'Optional helper copy below the calendar.' },
+		_edit: { group: 'Control props', description: 'Selected date as YYYY-MM-DD.' },
 	},
 	locale: {
 		type: String,
@@ -78,10 +71,11 @@ const props = defineProps({
 	},
 });
 
-const emit = defineEmits(['update:modelValue', 'change', 'view-change']);
+const emit = defineEmits(['update:modelValue', 'change', 'view-change', 'focus', 'blur']);
+const field = useField(props, emit, { idPrefix: 'el-calendar' });
 
 const today = new Date();
-const initialDate = parseDate(props.modelValue);
+const initialDate = parseDate(field.value.value);
 const viewYear = ref(initialDate?.getFullYear() || props.initialYear || today.getFullYear());
 const viewMonth = ref(initialDate?.getMonth() ?? clampMonth(props.initialMonth) ?? today.getMonth());
 
@@ -114,15 +108,15 @@ const cells = computed(() => {
 			value,
 			day: date.getDate(),
 			currentMonth,
-			selected: value === props.modelValue,
+			selected: value === field.value.value,
 			today: value === formatDate(today),
-			disabled: props.disabled || outsideRange(value),
+			disabled: field.disabled.value || field.readOnly.value || outsideRange(value),
 			hidden: !currentMonth && !props.showAdjacentDays,
 		};
 	});
 });
 
-watch(() => props.modelValue, (value) => {
+watch(field.value, (value) => {
 	const date = parseDate(value);
 	if (!date) return;
 	viewYear.value = date.getFullYear();
@@ -172,7 +166,7 @@ function moveYear(delta) {
 
 function selectDate(cell) {
 	if (cell.disabled || cell.hidden) return;
-	emit('update:modelValue', cell.value);
+	field.onInput(cell.value);
 	emit('change', cell.value);
 	if (!cell.currentMonth) {
 		viewYear.value = cell.date.getFullYear();
@@ -183,16 +177,29 @@ function selectDate(cell) {
 </script>
 
 <template>
-	<ElField :label="label" :description="description">
-		<div class="w-full rounded-2xl border border-border bg-card p-3 text-card-foreground shadow-sm">
+	<FieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
+		<input
+			v-if="field.htmlName.value"
+			type="hidden"
+			:name="field.htmlName.value"
+			:value="field.value.value"
+		/>
+		<div
+			:id="field.id.value"
+			class="w-full rounded-2xl border border-border bg-card p-3 text-card-foreground shadow-sm data-[invalid]:border-destructive"
+			:aria-invalid="field.invalid.value || undefined"
+			:data-invalid="field.invalid.value ? '' : undefined"
+		>
 			<div class="flex items-center justify-between gap-2">
 				<div class="flex items-center gap-1">
 					<button
 						type="button"
 						class="grid size-8 place-items-center rounded-lg text-muted-foreground transition hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-40"
-						:disabled="disabled"
+						:disabled="field.disabled.value"
 						aria-label="Previous year"
 						@click="moveYear(-1)"
+						@focus="field.onFocus"
+						@blur="field.onBlur"
 					>
 						<svg viewBox="0 0 24 24" class="size-4" fill="none" aria-hidden="true">
 							<path d="m11 7-5 5 5 5M18 7l-5 5 5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
@@ -201,9 +208,11 @@ function selectDate(cell) {
 					<button
 						type="button"
 						class="grid size-8 place-items-center rounded-lg text-muted-foreground transition hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-40"
-						:disabled="disabled"
+						:disabled="field.disabled.value"
 						aria-label="Previous month"
 						@click="moveMonth(-1)"
+						@focus="field.onFocus"
+						@blur="field.onBlur"
 					>
 						<svg viewBox="0 0 24 24" class="size-4" fill="none" aria-hidden="true">
 							<path d="m15 18-6-6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
@@ -217,9 +226,11 @@ function selectDate(cell) {
 					<button
 						type="button"
 						class="grid size-8 place-items-center rounded-lg text-muted-foreground transition hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-40"
-						:disabled="disabled"
+						:disabled="field.disabled.value"
 						aria-label="Next month"
 						@click="moveMonth(1)"
+						@focus="field.onFocus"
+						@blur="field.onBlur"
 					>
 						<svg viewBox="0 0 24 24" class="size-4" fill="none" aria-hidden="true">
 							<path d="m9 18 6-6-6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
@@ -228,9 +239,11 @@ function selectDate(cell) {
 					<button
 						type="button"
 						class="grid size-8 place-items-center rounded-lg text-muted-foreground transition hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-40"
-						:disabled="disabled"
+						:disabled="field.disabled.value"
 						aria-label="Next year"
 						@click="moveYear(1)"
+						@focus="field.onFocus"
+						@blur="field.onBlur"
 					>
 						<svg viewBox="0 0 24 24" class="size-4" fill="none" aria-hidden="true">
 							<path d="m6 17 5-5-5-5M13 17l5-5-5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
@@ -262,10 +275,12 @@ function selectDate(cell) {
 					:aria-label="cell.value"
 					:aria-pressed="cell.selected"
 					@click="selectDate(cell)"
+					@focus="field.onFocus"
+					@blur="field.onBlur"
 				>
 					{{ cell.day }}
 				</button>
 			</div>
 		</div>
-	</ElField>
+	</FieldChrome>
 </template>

@@ -1,35 +1,72 @@
 <script setup>
-import ElField from '../field/ElField.vue';
+import FieldChrome from '../field/FieldChrome.vue';
 import ElButton from '../../components/button/ElButton.vue';
+import { fieldProps } from '../field/fieldProps.js';
+import { useField } from '../field/useField.js';
 
 const props = defineProps({
-	modelValue: { default: null },
-	options: { type: Array, default: () => [] },
-	label: String,
-	description: String,
-	disabled: Boolean,
-	required: Boolean,
+	...fieldProps,
+	modelValue: {
+		default: null,
+		_edit: { group: 'Control props', description: 'Selected value.' },
+	},
+	options: {
+		type: Array,
+		default: () => [],
+		_edit: {
+			group: 'Control props',
+			component: 'ElJsonListInput',
+			description: 'Options to render as buttons.',
+			props: {
+				compact: true,
+				addLabel: '+ Add option',
+				schema: [
+					{ key: 'label', label: 'Label', placeholder: 'Option label', default: (index) => `Option ${index + 1}` },
+					{ key: 'value', label: 'Value', placeholder: 'option-value', default: (index) => `option-${index + 1}` },
+				],
+			},
+		},
+	},
 });
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'focus', 'blur']);
+const field = useField(props, emit, { idPrefix: 'el-select-input' });
 
 // Options can be string[] or { label, value }[].
 const labelOf = (o) => (o && typeof o === 'object' ? (o.label ?? o.value) : o);
 const valueOf = (o) => (o && typeof o === 'object' ? (o.value ?? o.label) : o);
+
+function select(value) {
+	if (field.disabled.value || field.readOnly.value) return;
+	field.onInput(value);
+}
 </script>
 
 <template>
-	<ElField :label="label" :description="description" :required="required">
-		<div class="flex flex-wrap gap-1">
+	<FieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
+		<input
+			v-if="field.htmlName.value"
+			type="hidden"
+			:name="field.htmlName.value"
+			:value="field.value.value ?? ''"
+		/>
+		<div class="flex flex-wrap gap-0">
 			<ElButton
-				v-for="opt in options"
+				v-for="(opt, i) in options"
 				:key="valueOf(opt)"
 				type="button"
 				size="sm"
-				:variant="modelValue === valueOf(opt) ? 'primary' : 'secondary'"
-				:disabled="disabled"
-				:aria-pressed="modelValue === valueOf(opt)"
-				@click="emit('update:modelValue', valueOf(opt))"
+				:variant="field.value.value === valueOf(opt) ? 'primary' : 'secondary'"
+				:disabled="field.disabled.value"
+				:aria-pressed="field.value.value === valueOf(opt)"
+				@click="select(valueOf(opt))"
+				@focus="field.onFocus"
+				@blur="field.onBlur"
+				:class="[
+					'-ml-px',
+					i === 0 ? 'rounded-l-full' : 'rounded-none',
+					i === options.length - 1 ? 'rounded-r-full' : 'rounded-none',
+				]"
 			>{{ labelOf(opt) }}</ElButton>
 		</div>
-	</ElField>
+	</FieldChrome>
 </template>

@@ -7,12 +7,39 @@ const props = defineProps({
 	title: { type: String, default: 'Props' },
 });
 const info = computed(() => inspectComponent(props.component));
+
+const groupOrder = ['Control props', 'Field props'];
+const propGroups = computed(() => {
+	const groups = new Map();
+	for (const prop of info.value?.props || []) {
+		const name = prop.group || 'Control props';
+		if (!groups.has(name)) groups.set(name, []);
+		groups.get(name).push(prop);
+	}
+	return [...groups.entries()]
+		.map(([name, props]) => ({ name, props }))
+		.sort((a, b) => {
+			const ai = groupOrder.indexOf(a.name);
+			const bi = groupOrder.indexOf(b.name);
+			if (ai === -1 && bi === -1) return a.name.localeCompare(b.name);
+			if (ai === -1) return 1;
+			if (bi === -1) return -1;
+			return ai - bi;
+		});
+});
 </script>
 
 <template>
 	<section v-if="info?.props?.length" class="space-y-3">
 		<h3 class="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">{{ title }}</h3>
-		<div class="overflow-hidden rounded-2xl border border-border">
+		<div
+			v-for="group in propGroups"
+			:key="group.name"
+			class="overflow-hidden rounded-2xl border border-border"
+		>
+			<div class="border-b border-border bg-background px-4 py-3">
+				<p class="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{{ group.name }}</p>
+			</div>
 			<table class="w-full text-left text-sm">
 				<thead class="bg-secondary text-xs uppercase tracking-wider text-muted-foreground">
 					<tr>
@@ -23,7 +50,7 @@ const info = computed(() => inspectComponent(props.component));
 					</tr>
 				</thead>
 				<tbody class="divide-y divide-border">
-					<tr v-for="p in info.props" :key="p.name">
+					<tr v-for="p in group.props" :key="p.name">
 						<td class="px-4 py-3 font-mono text-[12.5px] text-foreground">
 							<code>{{ p.name }}</code><span v-if="p.required" class="ml-0.5 text-destructive">*</span>
 						</td>

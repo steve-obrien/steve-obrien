@@ -2,10 +2,12 @@
 	<SteveLayout>
 		<section class="space-y-6">
 			<div class="flex gap-4">
-				<div class="w-3/4">
-					<p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">About</p>
-					<h1 class="text-4xl tracking-tight sm:text-5xl font-bold font-serif leading-[1.2]">AI systems engineer,<br> product builder,<br> and technical founder.</h1>
-					<p class="max-w-3xl text-lg leading-relaxed text-foreground">
+				<div class="max-w-lg mx-auto">
+					<div class="flex items-center gap-4 mb-4">
+						<img src="../assets/me.jpeg" alt="Steve O'Brien" class="inline-block w-[50px] h-auto rounded-full" /> Steve O'Brien
+					</div>
+					<h1 class="text-4xl tracking-tight sm:text-5xl font-light font-serif leading-[1.2]">AI systems engineer, product builder, and technical founder.</h1>
+					<p class="max-w-3xl text-lg leading-relaxed text-foreground text-justify">
 						<br />
 						Building AI Systems, Products, and Infrastructure
 						<br /><br />
@@ -17,9 +19,6 @@
 						<br /><br />
 						This site documents what I’m building, researching, and learning as AI reshapes software, business, and human capability.
 					</p>
-				</div>
-				<div class="w-1/4">
-					<img src="../assets/me.jpeg" alt="Steve O'Brien" class="w-full h-auto rounded-full" />
 				</div>
 			</div>
 		</section>

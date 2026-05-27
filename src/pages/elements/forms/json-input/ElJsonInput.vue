@@ -1,6 +1,8 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import ElCodeInput from '../code-input/ElCodeInput.vue';
+import { fieldProps } from '../field/fieldProps.js';
+import { useField } from '../field/useField.js';
 
 defineOptions({
 	__doc: {
@@ -16,29 +18,10 @@ defineOptions({
 });
 
 const props = defineProps({
+	...fieldProps,
 	modelValue: {
 		default: null,
 		_edit: { component: 'ElJsonInput', description: 'Any JSON-serializable value.' },
-	},
-	id: {
-		type: String,
-		default: '',
-		_edit: { description: 'ID forwarded to the underlying code input.' },
-	},
-	name: {
-		type: String,
-		default: '',
-		_edit: { description: 'Name forwarded to the underlying code input.' },
-	},
-	label: {
-		type: String,
-		default: '',
-		_edit: { description: 'Visible field label.' },
-	},
-	description: {
-		type: String,
-		default: '',
-		_edit: { description: 'Optional helper copy below the label.' },
 	},
 	rows: {
 		type: Number,
@@ -50,17 +33,22 @@ const props = defineProps({
 		default: true,
 		_edit: { description: 'Attempt to load the enhanced editor from the CDN.' },
 	},
-	invalid: {
+	_registerField: {
 		type: Boolean,
-		default: false,
-		_edit: { description: 'Mark the input invalid.' },
+		default: true,
 	},
 });
 
-const emit = defineEmits(['update:modelValue', 'valid', 'invalid']);
-const text = ref(format(props.modelValue));
+const emit = defineEmits(['update:modelValue', 'valid', 'invalid', 'focus', 'blur']);
+const field = useField(props, emit, { idPrefix: 'el-json-input', register: props._registerField });
+const text = ref(format(field.value.value));
 const error = ref('');
 const focused = ref(false);
+const codeFieldAttrs = computed(() => ({
+	...field.fieldAttrs.value,
+	invalid: field.invalid.value || !!error.value,
+	errors: error.value ? [error.value] : field.errors.value,
+}));
 
 function format(value) {
 	return JSON.stringify(value ?? null, null, 2);
@@ -71,15 +59,27 @@ function onInput(value) {
 	try {
 		const parsed = JSON.parse(value);
 		error.value = '';
-		emit('update:modelValue', parsed);
+		field.setFieldState({ errors: [], invalid: false });
+		field.onInput(parsed);
 		emit('valid', parsed);
 	} catch (err) {
 		error.value = err.message;
+		field.setFieldState({ errors: [err.message], invalid: true });
 		emit('invalid', err);
 	}
 }
 
-watch(() => props.modelValue, (value) => {
+function onFocus(event) {
+	focused.value = true;
+	field.onFocus(event);
+}
+
+function onBlur(event) {
+	focused.value = false;
+	field.onBlur(event);
+}
+
+watch(field.value, (value) => {
 	if (focused.value) return;
 	const next = format(value);
 	if (next !== text.value) text.value = next;
@@ -90,20 +90,23 @@ watch(() => props.modelValue, (value) => {
 	<div>
 		<ElCodeInput
 			:model-value="text"
-			:id="id"
-			:name="name"
-			:label="label"
-			:description="description"
+			:id="field.id.value"
+			:name="field.htmlName.value"
+			:label="codeFieldAttrs.label"
+			:description="codeFieldAttrs.description"
 			:rows="rows"
 			:editor="editor"
-			:invalid="invalid || !!error"
+			:invalid="codeFieldAttrs.invalid"
+			:errors="codeFieldAttrs.errors"
+			:required="required"
+			:disabled="field.disabled.value"
+			:read-only="field.readOnly.value"
+			:chrome="chrome"
+			:_register-field="false"
 			lang="json"
 			@update:model-value="onInput"
-			@focus="focused = true"
-			@blur="focused = false"
+			@focus="onFocus"
+			@blur="onBlur"
 		/>
-		<p v-if="error" class="mt-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs font-mono text-destructive">
-			{{ error }}
-		</p>
 	</div>
 </template>

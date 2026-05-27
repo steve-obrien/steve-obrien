@@ -58,12 +58,20 @@ export class ElementMenu extends ElementBase {
 	}
 
 	get items() {
-		return Array.from(this.querySelectorAll(itemSelector)).filter((item) => !isDisabled(item));
+		return Array.from(this.querySelectorAll(itemSelector))
+			.filter((item) => item.closest('element-menu') === this)
+			.filter((item) => !isDisabled(item));
 	}
 
 	_select(item, event) {
 		const role = item.getAttribute('role');
 		const value = item.dataset.value ?? item.textContent.trim();
+
+		if (item.getAttribute('aria-haspopup') === 'menu') {
+			item.setAttribute('aria-expanded', 'true');
+			this.emit('el:submenu', { value, item, event });
+			return;
+		}
 
 		if (role === 'menuitemcheckbox') {
 			const checked = item.getAttribute('aria-checked') !== 'true';

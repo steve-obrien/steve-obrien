@@ -4,10 +4,33 @@ import {
 	bindPopoverToggle,
 	closePopoverPanel,
 	isPopoverOpen,
+	lockDocumentScroll,
 	openPopoverPanel,
 	positionPopoverPanel,
 	preparePopoverPanel,
+	unlockDocumentScroll,
 } from './popover-panel.js';
+
+const TRIGGER_SELECTOR = [
+	'button',
+	'a[href]',
+	'input:not([type="hidden"])',
+	'select',
+	'textarea',
+	'[role="button"]',
+	'[role="link"]',
+	'[tabindex]:not([tabindex="-1"])',
+].join(',');
+
+function isNativeTrigger(element) {
+	return ['BUTTON', 'A', 'INPUT', 'SELECT', 'TEXTAREA'].includes(element?.tagName);
+}
+
+function resolveTriggerElement(root) {
+	if (!root) return null;
+	if (root.matches(TRIGGER_SELECTOR)) return root;
+	return root.querySelector(TRIGGER_SELECTOR) || root.firstElementChild || root;
+}
 
 // <element-popover>
 //   <button slot="trigger">Open</button>
@@ -19,7 +42,7 @@ import {
 // surface our usual el:open / el:close events.
 export class ElementPopover extends ElementBase {
 	static get observedAttributes() {
-		return ['open', 'align', 'offset', 'placement', 'collision-padding', 'floating-mode'];
+		return ['open', 'align', 'offset', 'placement', 'collision-padding', 'floating-mode', 'flip', 'lock-scroll', 'data-trigger-id'];
 	}
 
 	static __doc = {
@@ -36,6 +59,9 @@ export class ElementPopover extends ElementBase {
 			{ name: 'offset', type: 'number', description: 'Gap in pixels between trigger and panel (default 8).' },
 			{ name: 'collision-padding', type: 'number', description: 'Viewport padding used when flipping or shifting the panel (default 8).' },
 			{ name: 'floating-mode', type: "'viewport' | 'anchor'", description: 'viewport keeps the panel inside the browser; anchor keeps it attached to the trigger while scrolling.' },
+			{ name: 'flip', type: 'boolean', description: 'Allow the panel to flip to the opposite side when it would collide with the viewport.' },
+			{ name: 'lock-scroll', type: 'boolean', description: 'Lock document scrolling while the panel is open.' },
+			{ name: 'data-trigger-id', type: 'string', description: 'Id of an external trigger element.' },
 			{ name: 'data-panel-id', type: 'string', description: 'Id of an external (teleported) panel element.' },
 		],
 		events: [
@@ -60,6 +86,10 @@ export class ElementPopover extends ElementBase {
 		this._open = false;
 		this._unbindToggle = null;
 		this._reflowOff = null;
+		this._triggerOff = null;
+		this._scrollLocked = false;
+		this._dismissOff = null;
+		this._dismissBindFrame = 0;
 	}
 
 	_positionOpts() {
@@ -69,6 +99,7 @@ export class ElementPopover extends ElementBase {
 			placement: this.getAttribute('placement') || 'bottom',
 			padding: Number(this.getAttribute('collision-padding') || 8),
 			mode: this.getAttribute('floating-mode') || 'viewport',
+			flip: this.getAttribute('flip') !== 'false',
 		};
 	}
 
@@ -82,18 +113,87 @@ export class ElementPopover extends ElementBase {
 		this._reflowOff = null;
 	}
 
+	_bindDismiss() {
+		this._unbindDismiss();
+		this._dismissBindFrame = requestAnimationFrame(() => {
+			const onPointerDown = (event) => {
+				const target = event.target;
+				if (this._panel?.contains(target) || this._trigger?.contains(target)) return;
+				this._syncOpen(false, false);
+			};
+			const onKeydown = (event) => {
+				if (event.key !== 'Escape') return;
+				event.preventDefault();
+				this._syncOpen(false, false);
+			};
+			document.addEventListener('pointerdown', onPointerDown, true);
+			document.addEventListener('keydown', onKeydown, true);
+			this._dismissOff = () => {
+				document.removeEventListener('pointerdown', onPointerDown, true);
+				document.removeEventListener('keydown', onKeydown, true);
+			};
+		});
+	}
+
+	_unbindDismiss() {
+		if (this._dismissBindFrame) {
+			cancelAnimationFrame(this._dismissBindFrame);
+			this._dismissBindFrame = 0;
+		}
+		this._dismissOff?.();
+		this._dismissOff = null;
+	}
+
+	_syncScrollLock(next) {
+		if (next && this.hasAttribute('lock-scroll') && !this._scrollLocked) {
+			lockDocumentScroll(this._panel);
+			this._scrollLocked = true;
+		} else if ((!next || !this.hasAttribute('lock-scroll')) && this._scrollLocked) {
+			unlockDocumentScroll(this._panel);
+			this._scrollLocked = false;
+		}
+	}
+
 	connectedCallback() {
-		this._trigger = this.querySelector('[slot="trigger"], [data-trigger]');
+		this._trigger = this._resolveTrigger();
 		this._panel = this._resolvePanel();
 		if (!this._trigger) return;
 
 		if (this._panel) this._preparePanel();
-
-		this._trigger.setAttribute('aria-haspopup', 'dialog');
-		this._trigger.setAttribute('aria-expanded', 'false');
-		this.on(this._trigger, 'click', () => this.toggle());
+		this._prepareTrigger();
 
 		if (this.hasAttribute('open')) this.open = true;
+	}
+
+	_prepareTrigger() {
+		this._triggerOff?.();
+		this._triggerOff = null;
+		if (!this._trigger) return;
+		this._trigger.setAttribute('aria-haspopup', 'dialog');
+		this._trigger.setAttribute('aria-expanded', String(this._open));
+		if (!isNativeTrigger(this._trigger) && !this._trigger.hasAttribute('role')) {
+			this._trigger.setAttribute('role', 'button');
+		}
+		if (!isNativeTrigger(this._trigger) && !this._trigger.hasAttribute('tabindex')) {
+			this._trigger.setAttribute('tabindex', '0');
+		}
+		const offClick = this.on(this._trigger, 'click', () => this.toggle());
+		const offKeydown = this.on(this._trigger, 'keydown', (event) => {
+			if (event.key !== 'Enter' && event.key !== ' ') return;
+			event.preventDefault();
+			this.toggle();
+		});
+		this._triggerOff = () => {
+			offClick?.();
+			offKeydown?.();
+		};
+	}
+
+	_resolveTrigger() {
+		const id = this.dataset.triggerId;
+		if (id) return resolveTriggerElement(document.getElementById(id));
+		const root = this.querySelector('[slot="trigger"], [data-trigger]');
+		return resolveTriggerElement(root);
 	}
 
 	_preparePanel() {
@@ -101,6 +201,7 @@ export class ElementPopover extends ElementBase {
 			this._panel.classList.add('el-popover-panel');
 		}
 		preparePopoverPanel(this._panel, this._trigger);
+		this._panel.setAttribute('popover', 'manual');
 		this._unbindToggle?.();
 		this._unbindToggle = bindPopoverToggle(this._panel, (open) => this._syncOpen(open, true));
 	}
@@ -113,6 +214,10 @@ export class ElementPopover extends ElementBase {
 	}
 
 	_ensurePanel() {
+		if (!this._trigger || !this._trigger.isConnected) {
+			this._trigger = this._resolveTrigger();
+			if (this._trigger) this._prepareTrigger();
+		}
 		if (!this._panel || !this._panel.isConnected) {
 			this._panel = this._resolvePanel();
 			if (this._panel) this._preparePanel();
@@ -139,8 +244,12 @@ export class ElementPopover extends ElementBase {
 				this._placePanel();
 			}
 			this._bindReflow();
+			this._syncScrollLock(true);
+			this._bindDismiss();
 		} else {
 			this._unbindReflow();
+			this._unbindDismiss();
+			this._syncScrollLock(false);
 			if (!fromPopover) closePopoverPanel(this._panel);
 		}
 
@@ -151,8 +260,15 @@ export class ElementPopover extends ElementBase {
 	}
 
 	attributeChangedCallback(name) {
+		if (name === 'data-trigger-id') {
+			this._trigger = this._resolveTrigger();
+			if (this._trigger) this._prepareTrigger();
+		}
 		if (!this._open || !this._panel || !this._trigger) return;
-		if (name === 'align' || name === 'offset' || name === 'placement' || name === 'collision-padding' || name === 'floating-mode') {
+		if (name === 'lock-scroll') {
+			this._syncScrollLock(true);
+		}
+		if (name === 'align' || name === 'offset' || name === 'placement' || name === 'collision-padding' || name === 'floating-mode' || name === 'flip') {
 			positionPopoverPanel(this._panel, this._trigger, this._positionOpts());
 		}
 	}
@@ -167,13 +283,17 @@ export class ElementPopover extends ElementBase {
 
 	toggle() {
 		if (!this._ensurePanel()) return;
-		this._syncOpen(!isPopoverOpen(this._panel), false);
+		this._syncOpen(!this._open, false);
 	}
 
 	disconnectedCallback() {
 		this._unbindToggle?.();
 		this._unbindToggle = null;
 		this._unbindReflow();
+		this._triggerOff?.();
+		this._triggerOff = null;
+		this._unbindDismiss();
+		this._syncScrollLock(false);
 		super.disconnectedCallback();
 	}
 }

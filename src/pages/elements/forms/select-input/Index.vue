@@ -6,7 +6,7 @@ import DocSection from '../../_layout/DocSection.vue';
 import CodeBlock from '../../_layout/CodeBlock.vue';
 import Demo from '../../_layout/Demo.vue';
 import Playground from '../../_layout/docs/Playground.vue';
-import PropsTable from '../../_layout/PropsTable.vue';
+import ComponentProps from '../../_layout/docs/ComponentProps.vue';
 import { ElSelectInput } from '../../lib/vue';
 
 const size = ref('md');
@@ -26,13 +26,6 @@ const size = ref('md');
   />
 </template>`;
 
-const props = [
-	{ name: 'v-model', type: 'any', default: '—', description: 'Selected value.' },
-	{ name: 'options', type: "string[] | { label, value }[]", default: '[]', description: 'Options to render as pills.' },
-	{ name: 'label', type: 'string', default: '—', description: 'Label above the pill group.' },
-	{ name: 'description', type: 'string', default: '—', description: 'Hint shown below the group.' },
-	{ name: 'disabled', type: 'boolean', default: 'false', description: 'Disable all options.' },
-];
 </script>
 
 <template>
@@ -69,8 +62,8 @@ const props = [
 				<CodeBlock :code="usage" lang="vue" />
 			</DocSection>
 
-			<DocSection title="Props">
-				<PropsTable :rows="props" />
+			<DocSection title="Reference">
+				<ComponentProps :component="ElSelectInput" />
 			</DocSection>
 		</DocPage>
 	</ElementsLayout>

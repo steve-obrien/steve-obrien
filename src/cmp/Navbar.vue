@@ -21,7 +21,7 @@
 				:key="link.to"
 				:to="link.to"
 				class="rounded-full px-4 py-2 text-sm font-medium transition-colors"
-				:class="route.path === link.to ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'">
+				:class="route.path === link.to || (link.to !== '/' && route.path.startsWith(`${link.to}/`)) ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'">
 					{{ link.label }}
 				</RouterLink>
 				<BtnLightDarkMode />

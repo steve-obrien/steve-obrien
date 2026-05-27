@@ -82,6 +82,20 @@ const getPageMeta = (routePath) => {
 		};
 	}
 
+	if (routePath === '/news') {
+		return {
+			title: `News | ${siteName}`,
+			description: 'A daily feed of AI research, brain science, software engineering, and agentic systems Steve is tracking.',
+		};
+	}
+
+	if (routePath.startsWith('/news/')) {
+		return {
+			title: `News summary | ${siteName}`,
+			description: 'Generated reading notes from Steve’s daily AI, neuroscience, software engineering, and agentic systems feed.',
+		};
+	}
+
 	const sectionName = routePath.replace(/^\//, '').replace(/-/g, ' ');
 	const humanLabel = sectionName.charAt(0).toUpperCase() + sectionName.slice(1);
 	return {

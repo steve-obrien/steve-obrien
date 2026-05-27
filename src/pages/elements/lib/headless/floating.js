@@ -187,6 +187,16 @@ export function applyFloatingPosition(referenceEl, floatingEl, options = {}) {
 	floatingEl.style.transform = '';
 	floatingEl.style.setProperty('--el-floating-available-width', `${Math.round(result.availableWidth)}px`);
 	floatingEl.style.setProperty('--el-floating-available-height', `${Math.round(result.availableHeight)}px`);
+	floatingEl.style.setProperty('--el-popover-arrow-x', `${Math.round(clamp(
+		(referenceEl.getBoundingClientRect().left + (referenceEl.getBoundingClientRect().width / 2)) - result.x,
+		14,
+		Math.max(14, floatingEl.getBoundingClientRect().width - 14),
+	))}px`);
+	floatingEl.style.setProperty('--el-popover-arrow-y', `${Math.round(clamp(
+		(referenceEl.getBoundingClientRect().top + (referenceEl.getBoundingClientRect().height / 2)) - result.y,
+		14,
+		Math.max(14, floatingEl.getBoundingClientRect().height - 14),
+	))}px`);
 	floatingEl.dataset.placement = result.placement;
 	floatingEl.dataset.floatingMode = result.mode;
 	floatingEl.dataset.side = result.side;

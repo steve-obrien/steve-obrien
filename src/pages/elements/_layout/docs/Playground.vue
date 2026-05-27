@@ -43,7 +43,7 @@ function seed() {
 	const out = {};
 	const defs = props.inspect.props || {};
 	for (const [key, def] of Object.entries(defs)) {
-		if (key === 'class' || key === 'modelModifiers') continue;
+		if (key === 'class' || key === 'modelModifiers' || key.startsWith('_')) continue;
 		const d = def && typeof def === 'object' ? def.default : undefined;
 		out[key] = typeof d === 'function' ? d() : d;
 	}
@@ -66,6 +66,25 @@ const schema = computed(() => {
 	if (!data.value) return [];
 	return inferSchema({ component: props.inspect, props: data.value, children: [] })
 		.filter((f) => f.key !== 'class');
+});
+const groupOrder = ['Control props', 'Field props'];
+const schemaGroups = computed(() => {
+	const groups = new Map();
+	for (const field of schema.value) {
+		const name = field.group || 'Control props';
+		if (!groups.has(name)) groups.set(name, []);
+		groups.get(name).push(field);
+	}
+	return [...groups.entries()]
+		.map(([name, fields]) => ({ name, fields }))
+		.sort((a, b) => {
+			const ai = groupOrder.indexOf(a.name);
+			const bi = groupOrder.indexOf(b.name);
+			if (ai === -1 && bi === -1) return a.name.localeCompare(b.name);
+			if (ai === -1) return 1;
+			if (bi === -1) return -1;
+			return ai - bi;
+		});
 });
 
 function onUpdateModelValue(v) {
@@ -158,13 +177,20 @@ const codeFilename = computed(() => {
 				</div>
 				<div class="max-h-72 space-y-4 overflow-y-auto p-4 lg:max-h-[34rem]">
 					<template v-if="data">
-						<InspectorField
-							v-for="f in schema"
-							:key="f.key"
-							:field="f"
-							:model-value="data[f.key]"
-							@update:model-value="(v) => data[f.key] = v"
-						/>
+						<section
+							v-for="group in schemaGroups"
+							:key="group.name"
+							class="space-y-3"
+						>
+							<p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{{ group.name }}</p>
+							<InspectorField
+								v-for="f in group.fields"
+								:key="f.key"
+								:field="f"
+								:model-value="data[f.key]"
+								@update:model-value="(v) => data[f.key] = v"
+							/>
+						</section>
 					</template>
 				</div>
 			</aside>

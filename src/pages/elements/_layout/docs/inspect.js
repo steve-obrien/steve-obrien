@@ -63,7 +63,7 @@ function propEntries(component) {
 	const p = component.props;
 	if (!p) return [];
 	if (Array.isArray(p)) return p.map((k) => [k, {}]);
-	return Object.entries(p).filter(([k]) => !PROP_BLACKLIST.has(k));
+	return Object.entries(p).filter(([k]) => !PROP_BLACKLIST.has(k) && !k.startsWith('_'));
 }
 
 function buildPropDoc(name, def) {
@@ -82,6 +82,7 @@ function buildPropDoc(name, def) {
 		type,
 		default: formatDefault(def?.default),
 		required: !!def?.required,
+		group: edit.group || editProps.group || 'Control props',
 		description: edit.description || editProps.description || '',
 		editor: edit.component || edit.editor || null,
 	};

@@ -8,7 +8,10 @@ defineOptions({
 		tag: '<ElField>',
 		description: 'Shared form chrome for labels, required markers, descriptions, and custom controls.',
 		slots: [
-			{ name: '(default)', description: 'The form control or custom interactive content.' },
+			{ name: '(default)', payload: '{ invalid, errors }', description: 'The form control or custom interactive content.' },
+			{ name: 'label', payload: '{ label, required, htmlFor }', description: 'Replace the default label while keeping field layout.' },
+			{ name: 'errors', payload: '{ errors }', description: 'Replace the default error list.' },
+			{ name: 'description', payload: '{ description }', description: 'Replace the default helper text.' },
 		],
 	},
 });
@@ -80,24 +83,30 @@ const isInvalid = computed(() => (
 </script>
 
 <template>
-	<div v-if="visible" v-bind="attrs" class="space-y-1.5" :data-invalid="isInvalid ? '' : undefined">
-		<component
-			:is="htmlFor ? 'label' : 'p'"
-			v-if="label"
-			v-bind="htmlFor ? { for: htmlFor } : {}"
-			class="block text-[11px] font-medium uppercase tracking-wider text-muted-foreground"
-		>
-			{{ label }}
-			<span v-if="required" class="text-destructive">*</span>
-		</component>
-		<slot />
-		<p
-			v-for="(error, index) in errorMessages"
-			:key="`${error}-${index}`"
-			class="text-[11px] leading-snug text-destructive"
-		>
-			{{ error }}
-		</p>
-		<p v-if="description" class="text-[11px] leading-snug text-muted-foreground">{{ description }}</p>
+	<div v-if="visible" v-bind="attrs" class="space-y-1.5 w-full" :data-invalid="isInvalid ? '' : undefined">
+		<slot name="label" :label="label" :required="required" :html-for="htmlFor">
+			<component
+				:is="htmlFor ? 'label' : 'p'"
+				v-if="label"
+				v-bind="htmlFor ? { for: htmlFor } : {}"
+				class="block text-[11px] font-medium uppercase tracking-wider text-muted-foreground"
+			>
+				{{ label }}
+				<span v-if="required" class="text-destructive">*</span>
+			</component>
+		</slot>
+		<slot :invalid="isInvalid" :errors="errorMessages" />
+		<slot name="errors" :errors="errorMessages">
+			<p
+				v-for="(error, index) in errorMessages"
+				:key="`${error}-${index}`"
+				class="text-[11px] leading-snug text-destructive"
+			>
+				{{ error }}
+			</p>
+		</slot>
+		<slot name="description" :description="description">
+			<p v-if="description" class="text-[11px] leading-snug text-muted-foreground">{{ description }}</p>
+		</slot>
 	</div>
 </template>

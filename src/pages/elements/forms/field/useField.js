@@ -89,7 +89,8 @@ function normalizeErrors(errors) {
 }
 
 export function useField(props, emit, options = {}) {
-	const provider = inject(formFieldProviderKey, null);
+	const injectedProvider = inject(formFieldProviderKey, null);
+	const provider = options.register === false ? null : injectedProvider;
 	const generatedId = `${options.idPrefix || 'el-field'}-${useId()}`;
 	const focused = ref(false);
 	const touched = ref(false);
@@ -256,6 +257,7 @@ export function useField(props, emit, options = {}) {
 		readOnly,
 		fieldAttrs,
 		inputAttrs,
+		setFieldState,
 		setValue,
 		onInput,
 		onFocus,

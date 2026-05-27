@@ -69,7 +69,7 @@ export class ElementRadioGroup extends ElementBase {
 			loop: true,
 			onSelect: (_, radio) => this._select(radio),
 		});
-		this._roving.setActive(active);
+		this._roving.setActive(active, { focus: false, select: false });
 		this._refreshing = false;
 	}
 

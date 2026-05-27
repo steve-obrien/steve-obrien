@@ -1,12 +1,12 @@
 # Forms Approach
 
-Status: architectural direction. The first shared-field phase and parent `ElForm` provider are implemented, but nested forms, async server validation, and backend data-type mapping are still future work.
+Status: current architecture plus forward direction. The shared field contract, parent `ElForm` provider, nested fieldset forms, dynamic children, Zod-like schema generation, and programmatic form registry are implemented. Async server validation, richer validator editing, conditional fields, and backend data-type mapping are still future work.
 
 ## Goal
 
 Elements form components should feel simple when used directly, but should also be able to participate in a larger form system.
 
-The short-term goal is to reduce repeated field props across inputs.
+The short-term goal was to reduce repeated field props across inputs. That first phase is now implemented with `fieldProps`, `useField`, `FieldChrome`, and `ElForm`.
 
 The long-term goal is an active-field framework where a field can understand:
 
@@ -16,60 +16,66 @@ The long-term goal is an active-field framework where a field can understand:
 - its backend data type
 - how to move data between user input, validation, storage, and display
 
-This document captures the approach before implementation.
+This document captures the current contract and the longer-term active-field direction.
 
 ## Current Pattern
 
-Most form components currently wrap their control in `ElField`.
+Form components are split into three responsibilities:
+
+- `fieldProps`: the shared public prop contract for form-capable controls.
+- `useField`: behaviour and state wiring; it talks to the nearest `ElForm` through Vue provide/inject when one exists.
+- `ElField` / `ElFieldChrome`: the default visual chrome for labels, descriptions, required markers, and errors.
+
+The control itself should mostly be presentation and interaction.
 
 Example:
 
 ```vue
-<ElField
-	:label="label"
-	:description="description"
-	:html-for="inputId"
-	:invalid="invalid"
-	:required="required"
->
+<script setup>
+import { ElFieldChrome, fieldProps, useField } from '@elements/vue';
+
+const props = defineProps({
+	...fieldProps,
+	type: { type: String, default: 'text' },
+});
+const emit = defineEmits(['update:modelValue', 'focus', 'blur']);
+const field = useField(props, emit, { idPrefix: 'my-input' });
+</script>
+
+<template>
+	<ElFieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
 	<input
-		:id="inputId"
-		:name="inputName"
-		:value="modelValue"
-		:placeholder="placeholder"
-		:disabled="disabled"
-		:required="required"
-		:aria-invalid="invalid || undefined"
+		v-bind="field.inputAttrs.value"
+		:type="type"
+		class="el-input"
+		@input="field.onInput($event.target.value)"
+		@focus="field.onFocus"
+		@blur="field.onBlur"
 	/>
-</ElField>
+	</ElFieldChrome>
+</template>
 ```
 
-This is a good visual and accessibility pattern. It keeps labels, descriptions, required markers, invalid state, and control chrome consistent.
+This keeps labels, descriptions, required markers, invalid state, and control chrome consistent while avoiding repeated prop and computed-value plumbing.
 
-The problem is that every input has to redefine the same props and computed values.
+Packaged controls should support:
 
-Repeated props include:
+- standalone `v-model`
+- registration with the nearest parent `ElForm`
+- derived dot paths, native HTML names, and IDs
+- validation state and error display
+- `chrome="field"` by default
+- `chrome="none"` for custom layouts
 
-- `id`
-- `name`
-- `label`
-- `description`
-- `placeholder`
-- `modelValue`
-- `disabled`
-- `invalid`
-- `required`
-
-This will get worse as field state grows.
-
-## Proposed Field Contract
+## Field Contract
 
 A field should represent one named chunk of form data.
 
-Suggested field-level props:
+Current shared field-level props:
 
 ```js
 {
+	id: String,
 	name: String,
 	label: String,
 	description: String,
@@ -82,6 +88,7 @@ Suggested field-level props:
 	readOnly: Boolean,
 	validators: Array,
 	validateOnBlur: Boolean,
+	chrome: 'field' | 'none',
 }
 ```
 
@@ -112,9 +119,7 @@ Definitions:
 
 ## Shared Field Props
 
-Form inputs should not define the common prop block manually.
-
-Instead, introduce a shared prop definition:
+Form inputs should not define the common prop block manually. They should spread the shared prop definition:
 
 ```js
 export const fieldProps = {
@@ -131,6 +136,7 @@ export const fieldProps = {
 	errors: { type: Object, default: () => ({}) },
 	validators: { type: Array, default: () => [] },
 	validateOnBlur: { type: Boolean, default: true },
+	chrome: { type: String, default: 'field' },
 };
 ```
 
@@ -147,9 +153,7 @@ This gives every form input a consistent public shape.
 
 ## Field Composable
 
-Create a composable that resolves field state and DOM wiring.
-
-Possible name:
+`useField` resolves field state and DOM wiring:
 
 ```js
 useField(props, emit, options)
@@ -172,7 +176,7 @@ Responsibilities:
 - run validators
 - communicate value changes to a parent form if present
 
-Possible return shape:
+Current return shape:
 
 ```js
 const field = useField(props, emit, {
@@ -193,6 +197,7 @@ field.touched;
 field.dirty;
 field.inputAttrs;
 field.fieldAttrs;
+field.setFieldState(patch);
 field.onInput(value);
 field.onFocus();
 field.onBlur();
@@ -201,19 +206,23 @@ field.validate();
 
 `name` is the local field segment. The full path is derived from the form hierarchy and should not be manually set on the field. For example, an `email` field inside an `invitees.0` subform has the dot path `invitees.0.email`, the native HTML input name `invitees[0][email]`, and the default input ID `invitees_0_email`.
 
-An input component would then become mostly presentation:
+An input component then becomes mostly presentation:
 
 ```vue
-<ElField v-bind="field.fieldAttrs">
+<ElFieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
 	<input
-		v-bind="field.inputAttrs"
+		v-bind="field.inputAttrs.value"
 		class="el-input"
 		@input="field.onInput($event.target.value)"
 		@focus="field.onFocus"
 		@blur="field.onBlur"
 	/>
-</ElField>
+</ElFieldChrome>
 ```
+
+`ElFieldChrome` is a small bridge used by packaged controls. It renders `ElField` when `chrome !== 'none'`, renders only the control when `chrome="none"`, and exposes a `chrome` slot for components that want a custom wrapper without giving up the shared field attrs.
+
+`ElField` remains visual chrome, not form behaviour. It now exposes scoped `label`, default, `errors`, and `description` slots so authors can replace parts of the wrapper while keeping the basic field contract.
 
 ## Form Context
 
@@ -527,28 +536,23 @@ Prefer field expressions or form-level watchers:
 
 Later this can become a richer expression language if needed.
 
+## Implemented Component Coverage
+
+The ordinary form controls now use the shared field contract:
+
+- text, textarea, number, password
+- email and URL convention wrappers
+- native select, select input, listbox, radio group, combobox, autocomplete
+- checkbox, toggle, toggle button, toggle button group
+- calendar, color, code, JSON, JSON list, position input
+
+Wrapper components such as `ElEmailInput` and `ElUrlInput` delegate to `ElTextInput` rather than registering an extra field. Composite components such as `ElJsonInput` and `ElJsonListInput` own the form field themselves and disable internal child registration where needed.
+
 ## Questions To Resolve
 
-1. Should `ElField` own field state, or should it remain display-only while `useField` owns state?
-2. Should `modelValue` remain the public prop for all inputs, or should form-bound fields prefer `value` internally?
-3. Should `errors` be an object, an array, or both?
-4. Should validators be functions in app code, serializable objects in Studio, or both?
-5. Should server validators be represented as validators, transformers, or separate field actions?
-6. Should field visibility remove data from the form result, or only hide the input?
-7. Should the active-field data type live in `__doc`, Studio metadata, field props, or a future server schema?
-8. How much should the first implementation do before introducing `ElForm`?
-
-## Suggested First Implementation Phase
-
-Do not build the full active-field framework first.
-
-Start with:
-
-1. Extract shared `fieldProps`.
-2. Add `useField`.
-3. Refactor `ElTextInput` to prove the pattern.
-4. Refactor `ElPasswordInput` because it has more presentation logic.
-5. Add `ElEmailInput` and `ElUrlInput` as convention components wrapping the text input.
-6. Keep async validators, nested forms, and backend data types as documented next steps.
-
-This keeps the first refactor small while pointing toward the larger architecture.
+1. Should validators become serializable Studio records, app functions, or both?
+2. Should server validators be represented as validators, transformers, or separate field actions?
+3. Should field visibility remove data from the form result, or only hide the input?
+4. Should active-field data types live in component docs, Studio metadata, field props, or a future server schema?
+5. How should conditional field expressions be represented so they work in Studio, AI-generated schemas, and server-provided forms?
+6. Should form submission serialize hidden JSON/list fields as JSON strings, or should native submission be treated as a secondary fallback?

@@ -30,7 +30,7 @@
 	--ring: oklch(0.708 0 0);
 }
 
-:root[data-theme="dark"] {
+[data-theme="dark"] {
 	color-scheme: dark;
 	--background: oklch(0.145 0 0);
 	--foreground: oklch(0.985 0 0);
@@ -176,6 +176,29 @@ element-popover:not(:defined) > *:not([slot="trigger"]) {
 
 	.el-textarea {
 		@apply w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:opacity-50;
+	}
+
+	.el-glass-surface {
+		background-color: color-mix(in oklch, var(--popover) 82%, transparent);
+		background-image:
+			linear-gradient(
+				to bottom,
+				color-mix(in oklch, white 70%, transparent),
+				color-mix(in oklch, var(--popover) 86%, transparent) 38%,
+				color-mix(in oklch, var(--popover) 92%, transparent)
+			);
+		@apply border border-border text-popover-foreground shadow-2xl shadow-black/10 ring-1 ring-border/60 backdrop-blur-xl dark:shadow-black/40;
+	}
+
+	[data-theme="dark"] .el-glass-surface {
+		background-color: color-mix(in oklch, var(--popover) 82%, transparent);
+		background-image:
+			linear-gradient(
+				to bottom,
+				color-mix(in oklch, white 12%, transparent),
+				color-mix(in oklch, var(--popover) 88%, transparent) 38%,
+				color-mix(in oklch, var(--popover) 92%, transparent)
+			);
 	}
 
 	[data-invalid] .el-input,

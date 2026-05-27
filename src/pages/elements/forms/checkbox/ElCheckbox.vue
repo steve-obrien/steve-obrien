@@ -20,7 +20,7 @@ const props = defineProps({
 		_edit: { description: 'Checked state.' },
 	},
 });
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'focus', 'blur']);
 const root = ref(null);
 const field = useField(props, emit, { idPrefix: 'el-checkbox' });
 
@@ -55,7 +55,7 @@ watch(field.value, (value) => {
 			@focus="field.onFocus"
 			@blur="field.onBlur"
 		/>
-		<span class="grid gap-0.5">
+		<span v-if="chrome !== 'none'" class="grid gap-0.5">
 			<span v-if="label" class="text-sm font-medium text-foreground">{{ label }}</span>
 			<span v-if="description" class="text-xs text-muted-foreground">{{ description }}</span>
 			<span v-if="field.errors.value.length" class="text-xs text-destructive">{{ field.errors.value[0].message || field.errors.value[0] }}</span>

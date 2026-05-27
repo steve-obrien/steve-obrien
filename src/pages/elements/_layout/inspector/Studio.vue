@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, nextTick, onMounted, reactive } from 'vue';
+import { ref, computed, watch, nextTick, onMounted, reactive, useSlots } from 'vue';
 import {
 	provideInspector,
 	makeReactiveSpec,
@@ -15,14 +15,21 @@ import { ElRenderer } from '../../lib/vue/index.js';
 import StageNode from './StageNode.vue';
 import InspectorPanel from './InspectorPanel.vue';
 import ComponentPalette from './ComponentPalette.vue';
+import { slotToSpec } from './markupToSpec.js';
 import './inspector.css';
 
 const props = defineProps({
-	initialSpec: { type: Object, required: true },
+	initialSpec: { type: Object, default: null },
 	title: { type: String, default: 'Studio' },
 });
 
-const tree = ref(makeReactiveSpec(props.initialSpec));
+const slots = useSlots();
+
+function initialSpec() {
+	return props.initialSpec || slotToSpec(slots.default);
+}
+
+const tree = ref(makeReactiveSpec(initialSpec()));
 const state = provideInspector({ selectedId: tree.value.id });
 
 const activePanel = ref('inspect');
@@ -218,7 +225,7 @@ function onDrop(event) {
 // Actions
 
 function reset() {
-	tree.value = makeReactiveSpec(props.initialSpec);
+	tree.value = makeReactiveSpec(initialSpec());
 	state.selectedId = tree.value.id;
 	showPalette.value = false;
 	clearDrop();

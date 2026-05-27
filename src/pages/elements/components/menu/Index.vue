@@ -9,6 +9,10 @@ import ComponentEvents from '../../_layout/docs/ComponentEvents.vue';
 import { ElMenu } from '../../lib/vue';
 import Actions from './examples/Actions.vue';
 import ActionsSrc from './examples/Actions.vue?raw';
+import NestedActions from './examples/NestedActions.vue';
+import NestedActionsSrc from './examples/NestedActions.vue?raw';
+import RichItems from './examples/RichItems.vue';
+import RichItemsSrc from './examples/RichItems.vue?raw';
 
 const items = [
 	{ value: 'rename', label: 'Rename' },
@@ -37,6 +41,26 @@ const items = [
 					description="Use menuitem, menuitemcheckbox, separators, and destructive tone in one keyboard navigable menu."
 				>
 					<Actions />
+				</Example>
+			</DocSection>
+
+			<DocSection eyebrow="Demo" title="Nested menu">
+				<Example
+					:source="NestedActionsSrc"
+					filename="NestedActions.vue"
+					description="Menu items can include children. Hover, ArrowRight, Enter, or Space opens the submenu; ArrowLeft or Esc returns to the parent."
+				>
+					<NestedActions />
+				</Example>
+			</DocSection>
+
+			<DocSection eyebrow="Demo" title="Rich item markup">
+				<Example
+					:source="RichItemsSrc"
+					filename="RichItems.vue"
+					description="Set item.slot to render per-item markup such as status rows, live badges, shortcuts, and switch-style checkbox items while ElMenu keeps keyboard and selection behaviour."
+				>
+					<RichItems />
 				</Example>
 			</DocSection>
 

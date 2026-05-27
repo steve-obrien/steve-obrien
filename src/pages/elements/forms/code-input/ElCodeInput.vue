@@ -1,6 +1,8 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue';
-import ElField from '../field/ElField.vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import FieldChrome from '../field/FieldChrome.vue';
+import { fieldProps } from '../field/fieldProps.js';
+import { useField } from '../field/useField.js';
 
 const CODEMIRROR_URL = 'https://esm.sh/codemirror@6.0.1';
 const JSON_LANG_URL = 'https://esm.sh/@codemirror/lang-json@6.0.2';
@@ -20,35 +22,11 @@ defineOptions({
 });
 
 const props = defineProps({
+	...fieldProps,
 	modelValue: {
 		type: String,
 		default: '',
 		_edit: { component: 'ElTextareaInput', props: { rows: 8 }, description: 'Code text.' },
-	},
-	id: {
-		type: String,
-		default: '',
-		_edit: { description: 'ID applied to the fallback textarea and used by the label.' },
-	},
-	name: {
-		type: String,
-		default: '',
-		_edit: { description: 'Form field name. Defaults to the generated id.' },
-	},
-	label: {
-		type: String,
-		default: '',
-		_edit: { description: 'Visible field label.' },
-	},
-	description: {
-		type: String,
-		default: '',
-		_edit: { description: 'Optional helper copy below the label.' },
-	},
-	placeholder: {
-		type: String,
-		default: '',
-		_edit: { description: 'Textarea placeholder used before the editor loads.' },
 	},
 	lang: {
 		type: String,
@@ -65,33 +43,20 @@ const props = defineProps({
 		default: true,
 		_edit: { description: 'Attempt to load the enhanced editor from the CDN.' },
 	},
-	disabled: {
+	_registerField: {
 		type: Boolean,
-		default: false,
-		_edit: { description: 'Disable editing.' },
-	},
-	invalid: {
-		type: Boolean,
-		default: false,
-		_edit: { description: 'Mark the editor invalid.' },
-	},
-	required: {
-		type: Boolean,
-		default: false,
-		_edit: { description: 'Show the required marker in the label.' },
+		default: true,
 	},
 });
 
 const emit = defineEmits(['update:modelValue', 'focus', 'blur']);
 const mountEl = ref(null);
 const enhanced = ref(false);
-const generatedId = `el-code-input-${useId()}`;
-const inputId = computed(() => props.id || generatedId);
-const inputName = computed(() => props.name || inputId.value);
+const field = useField(props, emit, { idPrefix: 'el-code-input', register: props._registerField });
 let editorView = null;
 
 function update(value) {
-	emit('update:modelValue', value);
+	field.onInput(value);
 }
 
 async function languageExtension(lang) {
@@ -107,7 +72,7 @@ async function languageExtension(lang) {
 }
 
 async function mountEditor() {
-	if (!props.editor || props.disabled || typeof window === 'undefined') return;
+	if (!props.editor || field.disabled.value || typeof window === 'undefined') return;
 	try {
 		if (!mountEl.value) return;
 		const cm = await import(/* @vite-ignore */ CODEMIRROR_URL);
@@ -141,17 +106,20 @@ async function mountEditor() {
 			},
 		});
 		editorView = new cm.EditorView({
-			doc: props.modelValue,
+			doc: field.value.value,
 			parent: mountEl.value,
 			extensions: [
 				cm.basicSetup,
 				lang,
 				theme,
-				cm.EditorView.editable.of(!props.disabled),
+				cm.EditorView.editable.of(!field.disabled.value && !field.readOnly.value),
 				cm.EditorView.lineWrapping,
 				cm.EditorView.updateListener.of((viewUpdate) => {
 					if (viewUpdate.docChanged) update(viewUpdate.state.doc.toString());
-					if (viewUpdate.focusChanged) emit(viewUpdate.view.hasFocus ? 'focus' : 'blur');
+					if (viewUpdate.focusChanged) {
+						if (viewUpdate.view.hasFocus) field.onFocus();
+						else field.onBlur();
+					}
 				}),
 			],
 		});
@@ -161,7 +129,7 @@ async function mountEditor() {
 	}
 }
 
-watch(() => props.modelValue, (value) => {
+watch(field.value, (value) => {
 	if (!editorView) return;
 	const current = editorView.state.doc.toString();
 	if (current === value) return;
@@ -178,25 +146,19 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-	<ElField :label="label" :description="description" :html-for="inputId" :invalid="invalid" :required="required">
-		<div class="overflow-hidden rounded-xl border border-input bg-background focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30 data-[invalid]:border-destructive data-[invalid]:focus-within:border-destructive data-[invalid]:focus-within:ring-destructive/25" :data-invalid="invalid ? '' : undefined">
+	<FieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
+		<div class="overflow-hidden rounded-xl border border-input bg-background focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30 data-[invalid]:border-destructive data-[invalid]:focus-within:border-destructive data-[invalid]:focus-within:ring-destructive/25" :data-invalid="field.invalid.value ? '' : undefined">
 			<div v-show="enhanced" ref="mountEl"></div>
 			<textarea
 				v-if="!enhanced"
-				:id="inputId"
-				:name="inputName"
-				:value="modelValue"
-				:placeholder="placeholder"
+				v-bind="field.inputAttrs.value"
 				:rows="rows"
-				:disabled="disabled"
-				:required="required"
-				:aria-invalid="invalid || undefined"
 				spellcheck="false"
 				class="block min-h-40 w-full resize-y bg-background p-3 font-mono text-[12.5px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground disabled:opacity-50"
 				@input="update($event.target.value)"
-				@focus="emit('focus')"
-				@blur="emit('blur')"
+				@focus="field.onFocus"
+				@blur="field.onBlur"
 			></textarea>
 		</div>
-	</ElField>
+	</FieldChrome>
 </template>

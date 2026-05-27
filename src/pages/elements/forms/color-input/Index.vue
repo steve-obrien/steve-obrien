@@ -6,7 +6,7 @@ import DocSection from '../../_layout/DocSection.vue';
 import CodeBlock from '../../_layout/CodeBlock.vue';
 import Demo from '../../_layout/Demo.vue';
 import Playground from '../../_layout/docs/Playground.vue';
-import PropsTable from '../../_layout/PropsTable.vue';
+import ComponentProps from '../../_layout/docs/ComponentProps.vue';
 import { ElColorInput } from '../../lib/vue';
 
 const accent = ref('#0ea5e9');
@@ -25,12 +25,6 @@ const accent = ref('#0ea5e9');
   />
 </template>`;
 
-const props = [
-	{ name: 'v-model', type: 'string', default: "'#000000'", description: 'Hex colour value.' },
-	{ name: 'label', type: 'string', default: '—', description: 'Label above the picker.' },
-	{ name: 'description', type: 'string', default: '—', description: 'Hint shown below the picker.' },
-	{ name: 'disabled', type: 'boolean', default: 'false', description: 'Disable the picker.' },
-];
 </script>
 
 <template>
@@ -69,8 +63,8 @@ const props = [
 				<CodeBlock :code="usage" lang="vue" />
 			</DocSection>
 
-			<DocSection title="Props">
-				<PropsTable :rows="props" />
+			<DocSection title="Reference">
+				<ComponentProps :component="ElColorInput" />
 			</DocSection>
 		</DocPage>
 	</ElementsLayout>
