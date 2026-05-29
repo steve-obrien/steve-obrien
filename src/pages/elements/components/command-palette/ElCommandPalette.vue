@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue';
 
 defineOptions({
 	__doc: {
@@ -40,9 +40,12 @@ const emit = defineEmits(['update:modelValue', 'select']);
 const query = ref('');
 const activeIndex = ref(0);
 const input = ref(null);
+const panel = ref(null);
 const isRendered = ref(false);
 const isVisible = ref(false);
 const motion = ref('closed');
+const listId = `el-command-palette-${useId()}-list`;
+const dialogLabel = 'Command palette';
 let motionTimer = null;
 
 const filtered = computed(() => {
@@ -124,6 +127,18 @@ function onKeydown(event) {
 	if (event.key === 'Escape') {
 		event.preventDefault();
 		close();
+	} else if (event.key === 'Tab') {
+		const nodes = panel.value?.querySelectorAll('button:not([disabled]):not([tabindex="-1"]), input:not([disabled]), [tabindex]:not([tabindex="-1"])') || [];
+		const first = nodes[0];
+		const last = nodes[nodes.length - 1];
+		if (!first || !last) return;
+		if (event.shiftKey && document.activeElement === first) {
+			event.preventDefault();
+			last.focus();
+		} else if (!event.shiftKey && document.activeElement === last) {
+			event.preventDefault();
+			first.focus();
+		}
 	} else if (event.key === 'ArrowDown') {
 		event.preventDefault();
 		move(1);
@@ -190,8 +205,10 @@ function matchesShortcut(event, shortcut) {
 			></div>
 
 			<div
+				ref="panel"
 				role="dialog"
 				aria-modal="true"
+				:aria-label="dialogLabel"
 				class="relative mx-auto mt-[12vh] w-[min(92vw,38rem)] origin-top overflow-hidden rounded-[1.25rem] border border-border bg-popover/95 text-popover-foreground shadow-[0_24px_80px_rgba(0,0,0,0.28),0_2px_12px_rgba(0,0,0,0.12)] ring-1 ring-border/60 backdrop-blur-xl dark:bg-popover/[0.92]"
 				:class="{
 					'command-panel-entering': motion === 'entering',
@@ -203,15 +220,22 @@ function matchesShortcut(event, shortcut) {
 					ref="input"
 					v-model="query"
 					type="text"
+					role="combobox"
+					aria-autocomplete="list"
+					aria-expanded="true"
+					:aria-controls="listId"
+					:aria-activedescendant="filtered[activeIndex] ? `${listId}-option-${activeIndex}` : undefined"
 					:placeholder="placeholder"
 					class="h-14 w-full border-b border-border/70 bg-transparent px-5 text-[1.05rem] outline-none placeholder:text-muted-foreground"
 				/>
-				<div role="listbox" class="max-h-80 overflow-auto p-2">
+				<div :id="listId" role="listbox" class="max-h-80 overflow-auto p-2">
 					<button
 						v-for="(command, index) in filtered"
+						:id="`${listId}-option-${index}`"
 						:key="command.value ?? command.label ?? index"
 						role="option"
 						type="button"
+						tabindex="-1"
 						class="block w-full rounded-xl px-3 py-2 text-left transition"
 						:class="index === activeIndex ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'"
 						:aria-selected="index === activeIndex"

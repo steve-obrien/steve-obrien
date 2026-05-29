@@ -1,7 +1,8 @@
 <script setup>
 import { baseParse, NodeTypes } from '@vue/compiler-dom';
 import { computed, defineComponent, h, nextTick, onMounted, ref, watch } from 'vue';
-import { ElCodeInput } from '../../elements/lib/vue';
+import { ElClassToggleInput, ElCodeInput, ElSplitterPanel } from '../../elements/lib/vue';
+import { tailwindClassIndex } from '../../elements/forms/_shared/serverLookup.js';
 
 /**
  * This experiment is a small model of the future app-builder architecture:
@@ -34,7 +35,7 @@ import { ElCodeInput } from '../../elements/lib/vue';
 /**
  * @typedef {Object} EditorNode
  * @property {string} id Stable editor id, not part of Vue source.
- * @property {'root' | 'component' | 'element' | 'headline' | 'text' | 'paragraph'} type
+ * @property {'root' | 'component' | 'element' | 'headline' | 'text' | 'paragraph' | 'literal'} type
  * @property {string=} tag Native tag or component name.
  * @property {string=} label Display label in layers/inspector.
  * @property {string=} text Plain text content.
@@ -84,13 +85,13 @@ const primitivePalette = [
 		id: 'paragraph',
 		label: 'Paragraph',
 		icon: 'M6 7h12M6 12h9M6 17h11',
-		create: () => ({ type: 'paragraph', label: 'Paragraph', text: 'hello', children: [] }),
+		create: () => ({ type: 'paragraph', label: 'Paragraph', text: 'hello', props: {}, children: [] }),
 	},
 	{
 		id: 'heading',
 		label: 'Heading',
 		icon: 'M6 5v14M18 5v14M6 12h12',
-		create: () => ({ type: 'headline', label: 'Heading', binding: 'project.name', children: [] }),
+		create: () => ({ type: 'headline', label: 'Heading', binding: 'project.name', props: {}, children: [] }),
 	},
 	{
 		id: 'button',
@@ -173,7 +174,7 @@ const props = defineProps({
 		insertable: false,
 		props: [],
 		source: `<template>
-	<div class="mx-auto space-y-5 rounded-xl border border-zinc-200 bg-zinc-50 p-5 shadow-xl shadow-zinc-950/10">
+	<div class="mx-auto space-y-5 rounded-xl border border-zinc-200 bg-white p-5 shadow-xl shadow-zinc-950/10">
 		<slot />
 	</div>
 </template>`,
@@ -309,9 +310,18 @@ const savedAt = ref('');
 const saveTarget = ref('Draft');
 const draggingEntry = ref(null);
 const draggingNodeId = ref('');
+const dropTargetId = ref('');
 const newProp = ref({ name: '', type: 'String' });
+const isCreateMenuOpen = ref(false);
+const isCreateDialogOpen = ref(false);
+const createKind = ref('component');
+const createFromSelection = ref(false);
+const createName = ref('');
+const createNameError = ref('');
 const codePanelEl = ref(null);
+const inactiveClassesForSelection = ref([]);
 const componentPreviewCache = new Map();
+let tailwindRefreshTimer = null;
 
 const activeComponent = computed(() => componentStore.value.find((component) => component.name === activeComponentName.value));
 const sourceFile = computed(() => activeComponent.value?.file || 'experiment://components/Unknown.vue');
@@ -321,6 +331,7 @@ const selectedData = computed(() => selectedNode.value?.binding ? getPath(dataMo
 const source = computed(() => buildSource(tree.value, activeComponent.value));
 const sourceText = computed(() => source.value.rows.map((row) => row.text).join('\n'));
 const selectedSourceLine = computed(() => source.value.lineMap[selectedId.value] || selectedNode.value?.sourceLine || 1);
+const selectedBaseClass = computed(() => selectedNode.value ? stageBaseClassForNode(selectedNode.value) : '');
 
 /**
  * The insert palette is intentionally narrower than the component registry.
@@ -354,9 +365,10 @@ const TemplateNode = defineComponent({
 	props: {
 		node: { type: Object, required: true },
 		selectedId: { type: String, required: true },
+		dropTargetId: { type: String, default: '' },
 		dataScope: { type: Object, default: () => ({}) },
 	},
-	emits: ['select', 'open-component', 'drop-on-node', 'node-drag-start'],
+	emits: ['select', 'open-component', 'drop-on-node', 'node-drag-start', 'node-drag-over'],
 	setup(props, { emit }) {
 		function select(event) {
 			event.stopPropagation();
@@ -374,6 +386,12 @@ const TemplateNode = defineComponent({
 			emit('drop-on-node', props.node.id);
 		}
 
+		function dragOver(event) {
+			event.preventDefault();
+			event.stopPropagation();
+			emit('node-drag-over', props.node.id);
+		}
+
 		function dragNode(event) {
 			if (props.node.type === 'root') return;
 			event.stopPropagation();
@@ -384,10 +402,12 @@ const TemplateNode = defineComponent({
 
 		return () => renderNode(props.node, {
 			selectedId: props.selectedId,
+			dropTargetId: props.dropTargetId,
 			scope: props.dataScope,
 			select,
 			open,
 			drop,
+			dragOver,
 			dragNode,
 			emit,
 		});
@@ -404,9 +424,19 @@ watch([selectedSourceLine, codeText], () => {
 	nextTick(applyCodeLineHighlight);
 });
 
+watch(selectedId, () => {
+	inactiveClassesForSelection.value = [];
+});
+
+watch(codeText, () => {
+	queueExperimentTailwindRefresh();
+});
+
 onMounted(() => {
+	loadCustomComponents();
 	loadActiveComponent();
 	nextTick(applyCodeLineHighlight);
+	queueExperimentTailwindRefresh();
 });
 
 function applyCodeLineHighlight() {
@@ -431,6 +461,88 @@ function applyCodeLineHighlight() {
 	const gutter = [...root.querySelectorAll('.cm-lineNumbers .cm-gutterElement')]
 		.find((element) => element.textContent?.trim() === String(line));
 	gutter?.classList.add('template-selected-code-gutter');
+}
+
+function selectFromCodeEvent(event) {
+	const root = codePanelEl.value;
+	if (!root) return;
+	const line = codeLineFromEvent(event);
+	if (!line) return;
+	const nodeId = nodeIdForSourceLine(line);
+	if (!nodeId || !findNode(tree.value, nodeId)) return;
+	selectedId.value = nodeId;
+	nextTick(applyCodeLineHighlight);
+}
+
+function codeLineFromEvent(event) {
+	const root = codePanelEl.value;
+	const directLine = event?.target?.closest?.('.cm-line');
+	if (directLine && root.contains(directLine)) return codeLineIndex(directLine);
+
+	const activeLine = root.querySelector('.cm-activeLine');
+	if (activeLine) return codeLineIndex(activeLine);
+
+	const selection = window.getSelection?.();
+	const anchor = selection?.anchorNode?.nodeType === Node.TEXT_NODE ? selection.anchorNode.parentElement : selection?.anchorNode;
+	const selectedLine = anchor?.closest?.('.cm-line');
+	if (selectedLine && root.contains(selectedLine)) return codeLineIndex(selectedLine);
+	return 0;
+}
+
+function codeLineIndex(lineElement) {
+	const root = codePanelEl.value;
+	const lines = [...root.querySelectorAll('.cm-line')];
+	const index = lines.indexOf(lineElement);
+	return index >= 0 ? index + 1 : 0;
+}
+
+function nodeIdForSourceLine(line) {
+	if (codeDirty.value || codeText.value !== sourceText.value) {
+		const nodes = flatNodes.value
+			.map(({ node }) => node)
+			.filter((node) => node.id && node.sourceLine && node.sourceLine <= line)
+			.sort((a, b) => b.sourceLine - a.sourceLine);
+		return nodes[0]?.id || null;
+	}
+
+	const rows = source.value.rows;
+	for (let index = line - 1; index >= 0; index -= 1) {
+		if (rows[index]?.id) return rows[index].id;
+	}
+	return null;
+}
+
+function queueExperimentTailwindRefresh() {
+	if (typeof window === 'undefined') return;
+	window.clearTimeout(tailwindRefreshTimer);
+	tailwindRefreshTimer = window.setTimeout(refreshExperimentTailwind, 250);
+}
+
+async function refreshExperimentTailwind() {
+	if (typeof window === 'undefined') return;
+	try {
+		const content = [
+			codeText.value,
+			sourceText.value,
+			...componentStore.value.map((component) => sourceForComponent(component)),
+		].join('\n');
+		const response = await fetch('/experiments/template-editor/tailwind.css', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ content }),
+		});
+		if (!response.ok) return;
+		const css = await response.text();
+		let style = document.getElementById('template-editor-tailwind-runtime');
+		if (!style) {
+			style = document.createElement('style');
+			style.id = 'template-editor-tailwind-runtime';
+			document.head.appendChild(style);
+		}
+		style.textContent = css;
+	} catch {
+		// The endpoint only exists in the local experiment dev server.
+	}
 }
 
 /**
@@ -570,6 +682,7 @@ function defaultPropsFor(component) {
 
 function onDragStart(entry, event) {
 	draggingEntry.value = entry;
+	dropTargetId.value = '';
 	event.dataTransfer.effectAllowed = 'copy';
 	event.dataTransfer.setData('application/x-template-component', entry.id);
 }
@@ -577,6 +690,7 @@ function onDragStart(entry, event) {
 function onDragEnd() {
 	draggingEntry.value = null;
 	draggingNodeId.value = '';
+	dropTargetId.value = '';
 }
 
 function addToSelected(entry) {
@@ -587,16 +701,28 @@ function addFromDrop(targetId) {
 	if (draggingNodeId.value) {
 		moveNodeAfter(draggingNodeId.value, targetId);
 		draggingNodeId.value = '';
+		dropTargetId.value = '';
 		return;
 	}
 	if (!draggingEntry.value) return;
 	insertEntry(draggingEntry.value, targetId);
 	draggingEntry.value = null;
+	dropTargetId.value = '';
 }
 
 function startNodeDrag(id) {
 	draggingNodeId.value = id;
+	dropTargetId.value = '';
 	selectedId.value = id;
+}
+
+function markDropTarget(id) {
+	if (!draggingEntry.value && !draggingNodeId.value) return;
+	dropTargetId.value = id;
+}
+
+function clearDropTarget() {
+	dropTargetId.value = '';
 }
 
 /**
@@ -654,7 +780,7 @@ function isDescendant(node, id) {
  * slots, and component nodes can.
  */
 function canContain(node) {
-	return !['headline', 'text', 'paragraph', 'input'].includes(node.type);
+	return !['headline', 'text', 'paragraph', 'literal', 'input'].includes(node.type);
 }
 
 function selectNode(id) {
@@ -699,6 +825,133 @@ function duplicateSelected() {
 	visualChanged();
 }
 
+function openCreateDialog(kind, options = {}) {
+	createKind.value = kind;
+	createFromSelection.value = !!options.fromSelection;
+	createName.value = suggestedComponentName(kind, createFromSelection.value ? selectedNode.value : null);
+	createNameError.value = '';
+	isCreateMenuOpen.value = false;
+	isCreateDialogOpen.value = true;
+}
+
+function suggestedComponentName(kind, node) {
+	if (node?.tag && node.type !== 'element') return `${node.tag}Copy`;
+	if (node?.label && node.label !== 'root') return `${node.label.replace(/[^A-Za-z0-9]+/g, '') || 'Custom'}Component`;
+	return kind === 'page' ? 'NewPage' : 'NewComponent';
+}
+
+function normalizeComponentName(value) {
+	const words = value
+		.trim()
+		.replace(/[^A-Za-z0-9]+/g, ' ')
+		.split(' ')
+		.filter(Boolean);
+	const name = words.map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`).join('');
+	return /^[A-Za-z]/.test(name) ? name : `Component${name}`;
+}
+
+function createComponentRecord() {
+	if (!createName.value.trim()) {
+		createNameError.value = 'Name required.';
+		return;
+	}
+	const name = normalizeComponentName(createName.value);
+	if (componentStore.value.some((component) => component.name === name)) {
+		createNameError.value = 'A component with this name already exists.';
+		return;
+	}
+
+	const role = createKind.value === 'page' ? 'page' : 'component';
+	const source = createFromSelection.value && selectedNode.value && selectedNode.value.type !== 'root'
+		? sourceFromSelectedNode(name)
+		: blankComponentSource(name, role);
+
+	const component = {
+		name,
+		file: `experiment://components/${name}.vue`,
+		role,
+		editable: true,
+		insertable: role === 'component',
+		custom: true,
+		props: [],
+		source,
+	};
+
+	componentStore.value = [...componentStore.value, component];
+	if (role === 'component' && createFromSelection.value) {
+		replaceSelectedWithComponent(name);
+		saveCurrentDraft();
+	}
+	persistCustomComponents();
+	localStorage.setItem(draftStorageKey(name), source);
+	componentPreviewCache.clear();
+	activeComponentName.value = name;
+	componentStack.value = [...componentStack.value, name];
+	isCreateDialogOpen.value = false;
+	createName.value = '';
+	createNameError.value = '';
+}
+
+function sourceFromSelectedNode(name) {
+	const node = stamp(clearIds(JSON.parse(JSON.stringify(selectedNode.value))));
+	return buildSource({ type: 'root', label: name, children: [node] }, { props: [] }).rows.map((row) => row.text).join('\n');
+}
+
+function blankComponentSource(name, role) {
+	const label = role === 'page' ? `${name} page` : name;
+	return `<template>
+	<section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
+		<h1>${label}</h1>
+		<p>Start building visually or paste Vue template code here.</p>
+	</section>
+</template>`;
+}
+
+function replaceSelectedWithComponent(name) {
+	const parent = findParent(tree.value, selectedId.value);
+	if (!parent) return;
+	const targetIndex = parent.children.findIndex((child) => child.id === selectedId.value);
+	if (targetIndex < 0) return;
+	const instance = stamp({ type: 'component', tag: name, label: name, props: {}, children: [] });
+	parent.children.splice(targetIndex, 1, instance);
+	parent.children = [...parent.children];
+	selectedId.value = instance.id;
+	visualChanged();
+}
+
+function saveCurrentDraft() {
+	if (!activeComponent.value || typeof localStorage === 'undefined') return;
+	const nextSource = sourceText.value;
+	activeComponent.value.source = nextSource;
+	localStorage.setItem(draftStorageKey(activeComponent.value.name), nextSource);
+	if (activeComponent.value.custom) persistCustomComponents();
+}
+
+function persistCustomComponents() {
+	if (typeof localStorage === 'undefined') return;
+	const customComponents = componentStore.value.filter((component) => component.custom);
+	localStorage.setItem(customComponentStorageKey(), JSON.stringify(customComponents));
+}
+
+function loadCustomComponents() {
+	if (typeof localStorage === 'undefined') return;
+	try {
+		const customComponents = JSON.parse(localStorage.getItem(customComponentStorageKey()) || '[]');
+		if (!Array.isArray(customComponents)) return;
+		const existing = new Set(componentStore.value.map((component) => component.name));
+		componentStore.value = [
+			...componentStore.value,
+			...customComponents.filter((component) => component?.name && !existing.has(component.name)),
+		];
+	} catch {
+		// Ignore broken experimental drafts rather than blocking the editor.
+	}
+}
+
+function customComponentStorageKey() {
+	return 'template-editor:v2:custom-components';
+}
+
 function clearIds(node) {
 	const { id, ...rest } = node;
 	return {
@@ -740,6 +993,14 @@ function updateSelectedProp(key, value) {
 		[key]: value,
 	};
 	visualChanged();
+}
+
+function updateSelectedClass(value) {
+	updateSelectedProp('class', value);
+}
+
+function updateSelectedInactiveClasses(values) {
+	inactiveClassesForSelection.value = values;
 }
 
 /**
@@ -811,6 +1072,7 @@ async function saveActiveComponent() {
 	activeComponent.value.source = nextSource;
 	componentPreviewCache.clear();
 	localStorage.setItem(draftStorageKey(activeComponent.value.name), nextSource);
+	if (activeComponent.value.custom) persistCustomComponents();
 	saveTarget.value = 'Draft';
 	codeDirty.value = false;
 	savedAt.value = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -821,12 +1083,18 @@ async function saveActiveComponent() {
  * from the current tree. If they typed a full SFC, preserve it as written.
  */
 function codeForSave(value) {
-	if (hasTemplateBlock(value)) return value;
+	if (hasTemplateBlock(value)) return replaceTemplateBlock(value, sourceText.value);
 	return sourceText.value;
 }
 
 function hasTemplateBlock(value) {
 	return /<template>[\s\S]*?<\/template>/.test(value);
+}
+
+function replaceTemplateBlock(value, generatedSource) {
+	const generatedMatch = generatedSource.match(/<template>[\s\S]*?<\/template>/);
+	if (!generatedMatch) return generatedSource;
+	return value.replace(/<template>[\s\S]*?<\/template>/, generatedMatch[0]);
 }
 
 function resetActiveComponent() {
@@ -876,16 +1144,20 @@ function buildSource(root, component) {
 	}
 
 	function emitNode(node, depth) {
+		if (node.type === 'literal') {
+			push(encodeText(node.text || ''), node.id, depth);
+			return;
+		}
 		if (node.type === 'headline') {
-			push(`<h1>${inlineSource(node)}</h1>`, node.id, depth);
+			push(`<h1${attrsForNode(node)}>${inlineSource(node)}</h1>`, node.id, depth);
 			return;
 		}
 		if (node.type === 'text') {
-			push(`<p>${inlineSource(node)}</p>`, node.id, depth);
+			push(`<p${attrsForNode(node)}>${inlineSource(node)}</p>`, node.id, depth);
 			return;
 		}
 		if (node.type === 'paragraph') {
-			push(`<p>${inlineSource(node)}</p>`, node.id, depth);
+			push(`<p${attrsForNode(node)}>${inlineSource(node)}</p>`, node.id, depth);
 			return;
 		}
 		if (node.type === 'element') {
@@ -899,8 +1171,9 @@ function buildSource(root, component) {
 
 	function emitElement(node, tag, depth) {
 		const props = attrsForNode(node);
-		if (!node.children?.length && node.text) {
-			push(`<${tag}${props}>${encodeText(node.text)}</${tag}>`, node.id, depth);
+		const inline = inlineSource(node);
+		if (!node.children?.length && inline) {
+			push(`<${tag}${props}>${inline}</${tag}>`, node.id, depth);
 			return;
 		}
 		if (!node.children?.length && voidTags.has(tag)) {
@@ -980,7 +1253,7 @@ function nodeFromAst(astNode, templateStartLine) {
 	if (astNode.type === NodeTypes.TEXT) {
 		const text = astNode.content.trim();
 		if (!text) return null;
-		return stamp({ type: 'paragraph', label: 'Text', text, sourceLine: sourceLineFor(astNode, templateStartLine), children: [] });
+		return stamp({ type: 'literal', label: 'Text', text, sourceLine: sourceLineFor(astNode, templateStartLine), children: [] });
 	}
 	if (astNode.type === NodeTypes.INTERPOLATION) {
 		return stamp({ type: 'text', label: 'Binding', binding: astNode.content.content.trim(), sourceLine: sourceLineFor(astNode, templateStartLine), children: [] });
@@ -990,15 +1263,17 @@ function nodeFromAst(astNode, templateStartLine) {
 	const sourceLine = sourceLineFor(astNode, templateStartLine);
 	const attrs = propsFromAst(astNode);
 	const repeat = repeatFromAst(astNode);
-	const children = astNode.children.map((child) => nodeFromAst(child, templateStartLine)).filter(Boolean);
 	const firstText = textContentFromChildren(astNode.children);
 	const firstBinding = bindingFromChildren(astNode.children);
 	const inline = inlinePartsFromChildren(astNode.children);
+	const children = inlineOnlyChildren(astNode.children)
+		? []
+		: astNode.children.map((child) => nodeFromAst(child, templateStartLine)).filter(Boolean);
 
-	if (astNode.tag === 'h1') return stamp({ type: 'headline', label: 'Heading', binding: firstBinding, inline, text: firstText, sourceLine, children: [] });
-	if (astNode.tag === 'p') return stamp({ type: firstBinding ? 'text' : 'paragraph', label: firstBinding ? 'Text' : 'Paragraph', binding: firstBinding, inline, text: firstText, sourceLine, children: [] });
-	if (isNativeTag(astNode.tag)) return stamp({ type: 'element', tag: astNode.tag, label: astNode.tag, props: attrs, repeat, text: firstText, sourceLine, children });
-	return stamp({ type: 'component', tag: astNode.tag, label: astNode.tag, props: attrs, repeat, text: firstText, sourceLine, children });
+	if (astNode.tag === 'h1' && inlineOnlyChildren(astNode.children)) return stamp({ type: 'headline', label: 'Heading', binding: firstBinding, inline, text: firstText, props: attrs, sourceLine, children: [] });
+	if (astNode.tag === 'p' && inlineOnlyChildren(astNode.children)) return stamp({ type: firstBinding ? 'text' : 'paragraph', label: firstBinding ? 'Text' : 'Paragraph', binding: firstBinding, inline, text: firstText, props: attrs, sourceLine, children: [] });
+	if (isNativeTag(astNode.tag)) return stamp({ type: 'element', tag: astNode.tag, label: astNode.tag, props: attrs, repeat, binding: firstBinding, inline, text: firstText, sourceLine, children });
+	return stamp({ type: 'component', tag: astNode.tag, label: astNode.tag, props: attrs, repeat, binding: firstBinding, inline, text: firstText, sourceLine, children });
 }
 
 function parseProps(value) {
@@ -1017,11 +1292,38 @@ function parseProps(value) {
 
 function propsFromAst(astNode) {
 	const out = {};
+	const hasEditorMarker = astNode.props.some((prop) => prop.type === NodeTypes.ATTRIBUTE && prop.name === 'data-template-node');
 	for (const prop of astNode.props) {
-		if (prop.type === NodeTypes.ATTRIBUTE) out[prop.name] = prop.value?.content || '';
+		if (prop.type === NodeTypes.ATTRIBUTE) {
+			if (prop.name === 'data-template-node') continue;
+			if (hasEditorMarker && prop.name === 'draggable') continue;
+			const value = prop.value?.content || '';
+			out[prop.name] = hasEditorMarker && prop.name === 'class'
+				? cleanPastedEditorClasses(value)
+				: value;
+		}
 		if (prop.type === NodeTypes.DIRECTIVE && prop.name !== 'for' && prop.arg?.content) out[`:${prop.arg.content}`] = prop.exp?.content || '';
 	}
 	return out;
+}
+
+function cleanPastedEditorClasses(value) {
+	const editorClasses = new Set([
+		'relative',
+		'transition',
+		'outline-none',
+		'hover:ring-2',
+		'hover:ring-teal-300/60',
+		'ring-2',
+		'ring-teal-500',
+		'ring-offset-2',
+		'ring-offset-zinc-50',
+		'template-drop-after',
+	]);
+	return value
+		.split(/\s+/)
+		.filter((token) => token && !editorClasses.has(token))
+		.join(' ');
 }
 
 function repeatFromAst(astNode) {
@@ -1090,6 +1392,13 @@ function inlinePartsFromChildren(children) {
 	return parts.length ? parts : null;
 }
 
+function inlineOnlyChildren(children) {
+	return children.every((child) => {
+		if (child.type === NodeTypes.TEXT) return true;
+		return child.type === NodeTypes.INTERPOLATION;
+	});
+}
+
 function resolveExpression(expression, scope = {}) {
 	if (!expression) return null;
 	const path = expression.trim();
@@ -1117,8 +1426,134 @@ function encodeAttribute(value) {
 	return encodeText(value).replace(/"/g, '&quot;');
 }
 
-const nativeTags = new Set(['div', 'section', 'article', 'aside', 'main', 'header', 'footer', 'nav', 'span', 'p', 'h1', 'h2', 'h3', 'button', 'input', 'slot']);
-const voidTags = new Set(['input']);
+const nativeTags = new Set([
+	'a',
+	'abbr',
+	'address',
+	'article',
+	'aside',
+	'audio',
+	'b',
+	'blockquote',
+	'br',
+	'button',
+	'canvas',
+	'caption',
+	'cite',
+	'code',
+	'col',
+	'colgroup',
+	'data',
+	'dd',
+	'del',
+	'details',
+	'dfn',
+	'div',
+	'dl',
+	'dt',
+	'em',
+	'fieldset',
+	'figcaption',
+	'figure',
+	'footer',
+	'form',
+	'h1',
+	'h2',
+	'h3',
+	'h4',
+	'h5',
+	'h6',
+	'header',
+	'hr',
+	'i',
+	'iframe',
+	'img',
+	'input',
+	'ins',
+	'kbd',
+	'label',
+	'legend',
+	'li',
+	'main',
+	'mark',
+	'meter',
+	'nav',
+	'ol',
+	'optgroup',
+	'option',
+	'output',
+	'p',
+	'picture',
+	'pre',
+	'progress',
+	'q',
+	'rp',
+	'rt',
+	'ruby',
+	's',
+	'samp',
+	'select',
+	'slot',
+	'small',
+	'source',
+	'span',
+	'strong',
+	'sub',
+	'summary',
+	'sup',
+	'svg',
+	'animate',
+	'circle',
+	'clipPath',
+	'defs',
+	'ellipse',
+	'feBlend',
+	'feColorMatrix',
+	'feComposite',
+	'feDropShadow',
+	'feFlood',
+	'feGaussianBlur',
+	'feMerge',
+	'feMergeNode',
+	'feOffset',
+	'filter',
+	'foreignObject',
+	'g',
+	'line',
+	'linearGradient',
+	'marker',
+	'mask',
+	'path',
+	'pattern',
+	'polygon',
+	'polyline',
+	'radialGradient',
+	'rect',
+	'stop',
+	'symbol',
+	'text',
+	'textPath',
+	'tspan',
+	'use',
+	'view',
+	'table',
+	'tbody',
+	'td',
+	'template',
+	'textarea',
+	'tfoot',
+	'th',
+	'thead',
+	'time',
+	'tr',
+	'u',
+	'ul',
+	'var',
+	'video',
+	'wbr',
+]);
+const voidTags = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
+const replacedPreviewTags = new Set(['audio', 'canvas', 'embed', 'iframe', 'img', 'object', 'picture', 'svg', 'video']);
 function isNativeTag(tag) {
 	return nativeTags.has(tag);
 }
@@ -1178,6 +1613,10 @@ function toArray(value) {
 	return value ? [value] : [];
 }
 
+function isImageNode(node) {
+	return node.type === 'element' && node.tag === 'img';
+}
+
 /**
  * Converts saved-template attrs into render attrs. Dynamic attrs are resolved
  * against the component scope so `:value="modelValue"` and `{{ task.title }}`
@@ -1188,18 +1627,48 @@ function previewAttrsForNode(node, scope, rootCommon = null) {
 	for (const [key, value] of Object.entries(node.props || {})) {
 		if (key.startsWith(':')) {
 			const name = domPropName(key.slice(1));
-			attrs[name] = resolveExpression(value, scope) ?? '';
+			const resolved = resolveExpression(value, scope);
+			if (isImageNode(node) && name === 'src' && resolved == null) {
+				attrs['data-template-src-expression'] = value;
+			} else {
+				attrs[name] = resolved ?? '';
+			}
 		} else {
 			attrs[domPropName(key)] = value === '' ? true : value;
 		}
 	}
 
-	if (!rootCommon) return attrs;
+	if (rootCommon) {
+		const savedClass = attrs.class;
+		const inheritedClass = rootCommon.class;
+		Object.assign(attrs, rootCommon);
+		const mergedClass = [inheritedClass, savedClass].filter(Boolean).join(' ');
+		if (mergedClass) attrs.class = mergedClass;
+		else delete attrs.class;
+	}
 
-	const savedClass = attrs.class;
-	Object.assign(attrs, rootCommon);
-	attrs.class = [savedClass, rootCommon.class].filter(Boolean).join(' ');
+	if (isImageNode(node)) prepareImagePreviewAttrs(attrs);
 	return attrs;
+}
+
+function prepareImagePreviewAttrs(attrs) {
+	const src = typeof attrs.src === 'string' ? attrs.src.trim() : attrs.src;
+	const label = attrs['data-template-src-expression']
+		? `:${attrs['data-template-src-expression']}`
+		: src || attrs.alt || 'image';
+	if (!src) attrs.src = imagePlaceholderSrc(label);
+	if (!attrs.alt) attrs.alt = label;
+	attrs.onError = (event) => {
+		if (event.currentTarget.dataset.templateImageFallback === 'true') return;
+		event.currentTarget.dataset.templateImageFallback = 'true';
+		event.currentTarget.src = imagePlaceholderSrc(label);
+	};
+}
+
+function imagePlaceholderSrc(label) {
+	const safeLabel = String(label || 'image').replace(/[<>&"]/g, '').slice(0, 80);
+	const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540"><rect width="960" height="540" rx="24" fill="#f4f4f5"/><rect x="40" y="40" width="880" height="460" rx="18" fill="#fff" stroke="#d4d4d8" stroke-width="4" stroke-dasharray="18 14"/><path d="M250 340l120-130 95 95 58-62 187 197H250z" fill="#ccfbf1" stroke="#14b8a6" stroke-width="8" stroke-linejoin="round"/><circle cx="660" cy="178" r="54" fill="#fde68a" stroke="#f59e0b" stroke-width="8"/><text x="480" y="472" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="28" fill="#52525b">${safeLabel}</text></svg>`;
+	return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
 function renderComponentPreview(node, ctx, common, scope, slotChildren, depth = 0) {
@@ -1226,6 +1695,7 @@ function renderComponentPreview(node, ctx, common, scope, slotChildren, depth = 
  * keep their real ids and can still be selected directly.
  */
 function renderPreviewNode(node, ctx, ownerNode, scope, slotChildren, rootCommon = null, depth = 0) {
+	if (node.type === 'literal') return renderInlineValue(node, node.text || 'Text', scope);
 	if (node.repeat) return renderPreviewRepeatNode(node, ctx, ownerNode, scope, slotChildren, rootCommon, depth);
 	if (node.type === 'element' && node.tag === 'slot') {
 		return slotChildren.length ? slotChildren : h('div', previewAttrsForNode(node, scope, rootCommon), 'Slot content');
@@ -1239,12 +1709,13 @@ function renderPreviewNode(node, ctx, ownerNode, scope, slotChildren, rootCommon
 	if (node.type === 'paragraph') return h('p', attrs, renderInlineValue(node, 'Paragraph', scope));
 	if (node.type === 'element') {
 		const tag = node.tag || 'section';
-		return h(tag, attrs, voidTags.has(tag) ? null : (children.length ? children : node.text));
+		return h(tag, attrs, voidTags.has(tag) ? null : (children.length ? children : inlineContentForNode(node, scope)));
 	}
 	if (node.type === 'component') {
-		const preview = renderComponentPreview(node, ctx, attrs, scope, children, depth + 1);
+		const previewSlotChildren = slotContentForNode(node, children, scope);
+		const preview = renderComponentPreview(node, ctx, attrs, scope, previewSlotChildren, depth + 1);
 		if (preview) return preview;
-		return h('section', attrs, children.length ? children : node.text || node.label);
+		return h('section', attrs, previewSlotChildren.length ? previewSlotChildren : node.text || node.label);
 	}
 	return h('section', attrs, children.length ? children : node.label);
 }
@@ -1275,40 +1746,47 @@ function renderPreviewRepeatNode(node, ctx, ownerNode, scope, slotChildren, root
  * data-binding previews, and component drill-down.
  */
 function renderNode(node, ctx) {
+	if (node.type === 'literal') return renderInlineValue(node, node.text || 'Text', ctx.scope || {});
+
 	const selected = ctx.selectedId === node.id;
-	const common = {
+	const scope = ctx.scope || {};
+	const dropTarget = ctx.dropTargetId === node.id && node.type !== 'root';
+	const common = previewAttrsForNode(node, scope, {
 		'data-template-node': node.id,
-		class: nodeClass(node, selected),
+		'data-template-selected': selected ? 'true' : null,
+		'data-template-drop-target': dropTarget ? 'true' : null,
 		draggable: node.type !== 'root',
 		onClick: ctx.select,
 		onDblclick: ctx.open,
 		onDragstart: ctx.dragNode,
 		onDragend: onDragEnd,
 		onDrop: ctx.drop,
-		onDragover: (event) => {
-			event.preventDefault();
-			event.stopPropagation();
-		},
-	};
+		onDragover: ctx.dragOver,
+	});
 
-	const scope = ctx.scope || {};
 	const children = renderChildren(node, ctx, scope);
 
 	if (node.repeat) {
 		return renderRepeatNode(node, ctx, common, scope);
 	}
 
-	if (node.type === 'root') return h('div', { ...common, class: `${common.class} min-w-[760px]` }, children);
+	const stageClass = stageBaseClassForNode(node);
+
+	if (node.type === 'root') return h('div', { ...common, class: ['min-w-[760px]', stageClass, common.class].filter(Boolean).join(' ') }, children);
+	if (node.type === 'component') {
+		const slotChildren = slotContentForNode(node, children, scope);
+		const preview = renderComponentPreview(node, ctx, common, scope, slotChildren);
+		if (preview) return preview;
+		if (stageClass && !common.class) common.class = stageClass;
+	}
+
+	if (stageClass && !common.class) common.class = stageClass;
+
 	if (node.type === 'headline') return h('h1', common, renderInlineValue(node, 'Heading', scope));
 	if (node.type === 'text') return h('p', common, renderInlineValue(node, 'Text', scope));
 	if (node.type === 'paragraph') return h('p', common, renderInlineValue(node, 'Paragraph', scope));
 	if (node.type === 'element' && node.tag === 'slot') return h('div', common, 'Slot content');
-	if (node.type === 'element') return h(node.tag || 'section', common, children.length ? children : node.text);
-
-	if (node.type === 'component') {
-		const preview = renderComponentPreview(node, ctx, common, scope, children);
-		if (preview) return preview;
-	}
+	if (node.type === 'element') return h(node.tag || 'section', common, children.length ? children : inlineContentForNode(node, scope));
 	if (node.type === 'component' && node.tag === 'MetricGrid') {
 		return h('section', common, dataModel.metrics.map((item) => h('article', { class: 'rounded-lg border border-zinc-200 bg-white p-4 shadow-sm' }, [
 			h('p', { class: 'text-xs font-medium text-zinc-500' }, item.label),
@@ -1324,17 +1802,30 @@ function renderNode(node, ctx) {
 	return h('section', common, children.length ? children : node.label);
 }
 
+function slotContentForNode(node, renderedChildren, scope) {
+	if (renderedChildren.length) return renderedChildren;
+	if (!node.inline?.length && !node.binding && !node.text) return [];
+	return [renderInlineValue(node, node.text || node.label, scope)];
+}
+
 function renderChildren(node, ctx, scope) {
 	return (node.children || []).map((child) => h(TemplateNode, {
 		key: child.id,
 		node: child,
 		selectedId: ctx.selectedId,
+		dropTargetId: ctx.dropTargetId,
 		dataScope: scope,
 		onSelect: (id) => ctx.emit('select', id),
 		onOpenComponent: (target) => ctx.emit('open-component', target),
 		onDropOnNode: (id) => ctx.emit('drop-on-node', id),
 		onNodeDragStart: (id) => ctx.emit('node-drag-start', id),
+		onNodeDragOver: (id) => ctx.emit('node-drag-over', id),
 	}));
+}
+
+function inlineContentForNode(node, scope) {
+	if (node.inline?.length || node.binding) return renderInlineValue(node, node.text || node.label, scope);
+	return node.text || '';
 }
 
 function renderTaskListPreview(common) {
@@ -1346,7 +1837,7 @@ function renderTaskListPreview(common) {
 				h('span', 'template'),
 			]),
 			...dataModel.tasks.map((task, index) => h('article', {
-				class: `${nodeClass({ type: 'element', tag: 'article' }, false)} border-t border-zinc-100 py-2 ${index > 0 ? 'opacity-90' : ''}`,
+				class: `border-t border-zinc-100 py-2 ${index > 0 ? 'opacity-90' : ''}`,
 				onClick: common.onClick,
 				onDblclick: common.onDblclick,
 				onDrop: common.onDrop,
@@ -1399,31 +1890,45 @@ function renderRepeatNode(node, ctx, common, scope) {
 }
 
 /**
- * Visual styling for known demo components. A future app editor should derive
- * this from the actual component render output or a sandboxed preview iframe.
+ * Visual styling for known demo components. These are preview defaults, not
+ * source-code classes. The inspector shows them separately from the editable
+ * `class=""` attribute so users can understand what the stage is adding.
  */
-function nodeClass(node, selected) {
-	const ring = selected ? ' ring-2 ring-teal-500 ring-offset-2 ring-offset-zinc-50' : ' hover:ring-2 hover:ring-teal-300/60';
-	const base = 'relative transition outline-none';
-	if (node.type === 'root') return `${base} mx-auto space-y-5 rounded-xl border border-zinc-200 bg-zinc-50 p-5 shadow-xl shadow-zinc-950/10${ring}`;
-	if (node.type === 'component' && node.tag === 'HeroPanel') return `${base} flex items-start gap-6 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm${ring}`;
-	if (node.type === 'component' && node.tag === 'TemplateFrame') return `${base} mx-auto space-y-5 rounded-xl border border-zinc-200 bg-zinc-50 p-5${ring}`;
-	if (node.type === 'component' && node.tag === 'Badge') return `${base} inline-flex w-fit rounded bg-teal-50 px-2.5 py-1 text-xs font-medium text-teal-700${ring}`;
-	if (node.type === 'component' && node.tag === 'SplitPanel') return `${base} grid grid-cols-1 gap-5 lg:grid-cols-[1.2fr_0.8fr]${ring}`;
-	if (node.type === 'component' && node.tag === 'MetricGrid') return `${base} grid grid-cols-1 gap-3 sm:grid-cols-3${ring}`;
-	if (node.type === 'component' && node.tag === 'TaskList') return `${base} rounded-xl border border-zinc-200 bg-white p-4 shadow-sm${ring}`;
-	if (node.type === 'component' && node.tag === 'ElButton') return `${base} inline-flex h-10 w-fit items-center justify-center rounded-md bg-zinc-950 px-4 text-sm font-medium text-white shadow-sm${ring}`;
-	if (node.type === 'component' && node.tag === 'ElTextInput') return `${base} h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-700${ring}`;
-	if (node.type === 'headline') return `${base} max-w-xl text-3xl font-semibold tracking-tight text-zinc-950${ring}`;
-	if (node.type === 'text' || node.type === 'paragraph') return `${base} max-w-lg text-sm leading-6 text-zinc-700${ring}`;
-	return `${base} rounded-lg border border-zinc-200 bg-white p-4${ring}`;
+function basePreviewClassForNode(node) {
+	if (node.type === 'root') return 'mx-auto space-y-5 rounded-xl border border-zinc-200 bg-zinc-50 p-5 shadow-xl shadow-zinc-950/10';
+	if (node.type === 'element' && node.tag === 'slot') return '';
+	if (node.type === 'component' && node.tag === 'HeroPanel') return 'flex items-start gap-6 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm';
+	if (node.type === 'component' && node.tag === 'TemplateFrame') return 'mx-auto space-y-5 rounded-xl border border-zinc-200 bg-zinc-50 p-5';
+	if (node.type === 'component' && node.tag === 'Badge') return 'inline-flex w-fit rounded bg-teal-50 px-2.5 py-1 text-xs font-medium text-teal-700';
+	if (node.type === 'component' && node.tag === 'SplitPanel') return 'grid grid-cols-1 gap-5 lg:grid-cols-[1.2fr_0.8fr]';
+	if (node.type === 'component' && node.tag === 'MetricGrid') return 'grid grid-cols-1 gap-3 sm:grid-cols-3';
+	if (node.type === 'component' && node.tag === 'TaskList') return 'rounded-xl border border-zinc-200 bg-white p-4 shadow-sm';
+	if (node.type === 'component' && node.tag === 'ElButton') return 'inline-flex h-10 w-fit items-center justify-center rounded-md bg-zinc-950 px-4 text-sm font-medium text-white shadow-sm';
+	if (node.type === 'component' && node.tag === 'ElTextInput') return 'h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-700';
+	if (node.type === 'headline') return 'max-w-xl text-3xl font-semibold tracking-tight text-zinc-950';
+	if (node.type === 'text' || node.type === 'paragraph') return 'max-w-lg text-sm leading-6 text-zinc-700';
+	if (node.type === 'element' && isEmptyElement(node)) return 'min-h-12 rounded-lg border border-dashed border-zinc-300 bg-white/80 p-4';
+	return '';
+}
+
+function stageBaseClassForNode(node) {
+	if (node.type === 'root') return basePreviewClassForNode(node);
+	if (node.props?.class) return '';
+	return basePreviewClassForNode(node);
+}
+
+function isEmptyElement(node) {
+	if (node.type !== 'element') return false;
+	if (voidTags.has(node.tag) || replacedPreviewTags.has(node.tag)) return false;
+	return !node.children?.length && !node.text && !node.inline?.length;
 }
 </script>
 
 <template>
 	<div class="min-h-screen bg-zinc-950 text-zinc-100">
-		<div class="grid min-h-screen grid-cols-1 xl:grid-cols-[280px_minmax(0,1fr)_460px]">
-			<aside class="border-b border-white/10 bg-zinc-950 xl:border-b-0 xl:border-r">
+		<ElSplitterPanel class="h-screen min-h-screen" :start-size="280" :end-size="460" :min-start="220" :min-main="560" :min-end="340">
+			<template #start>
+				<aside class="h-screen overflow-y-auto border-r border-white/10 bg-zinc-950">
 				<div class="border-b border-white/10 p-4">
 					<p class="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">Experiment</p>
 					<h1 class="mt-1 text-sm font-semibold text-white">Vue visual editor</h1>
@@ -1500,15 +2005,28 @@ function nodeClass(node, selected) {
 						</div>
 					</section>
 				</div>
-			</aside>
+				</aside>
+			</template>
 
-			<main class="min-w-0 bg-zinc-100 text-zinc-950">
+			<main class="h-screen min-w-0 bg-zinc-100 text-zinc-950">
 				<div class="flex h-16 items-center justify-between gap-3 border-b border-zinc-200 bg-white px-4">
 					<div class="min-w-0">
 						<p class="truncate text-sm font-semibold">{{ activeComponentName }}</p>
 						<p class="truncate text-xs text-zinc-500">{{ sourceFile }}:{{ selectedSourceLine }}</p>
 					</div>
 					<div class="flex items-center gap-2">
+						<div class="relative">
+							<button type="button" class="flex h-8 w-8 items-center justify-center rounded-md bg-zinc-950 text-white hover:bg-zinc-800" aria-label="Create" @click="isCreateMenuOpen = !isCreateMenuOpen">
+								<svg class="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+									<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+								</svg>
+							</button>
+							<div v-if="isCreateMenuOpen" class="absolute right-0 top-10 z-40 grid w-48 gap-1 rounded-md border border-zinc-200 bg-white p-1 text-xs shadow-xl">
+								<button type="button" class="rounded px-3 py-2 text-left hover:bg-zinc-100" @click="openCreateDialog('component')">New component</button>
+								<button type="button" class="rounded px-3 py-2 text-left hover:bg-zinc-100" @click="openCreateDialog('page')">New page</button>
+								<button v-if="selectedNode && selectedNode.type !== 'root'" type="button" class="rounded px-3 py-2 text-left hover:bg-zinc-100" @click="openCreateDialog('component', { fromSelection: true })">Component from selection</button>
+							</div>
+						</div>
 						<button type="button" class="h-8 rounded-md border border-zinc-200 px-3 text-xs font-medium hover:bg-zinc-50" @click="duplicateSelected">Duplicate</button>
 						<button type="button" class="h-8 rounded-md border border-rose-200 px-3 text-xs font-medium text-rose-700 hover:bg-rose-50" @click="removeSelected">Delete</button>
 					</div>
@@ -1516,25 +2034,29 @@ function nodeClass(node, selected) {
 
 				<div
 					class="h-[calc(100vh-4rem)] overflow-auto p-5"
-					:class="draggingEntry && 'bg-teal-50'"
+					:class="(draggingEntry || draggingNodeId) && 'bg-teal-50'"
 					@dragover.prevent
+					@dragleave="clearDropTarget"
 					@drop="addFromDrop(selectedId)"
 				>
 					<TemplateNode
 						v-if="tree"
 						:node="tree"
 						:selected-id="selectedId"
+						:drop-target-id="dropTargetId"
 						@select="selectNode"
 						@open-component="openComponent"
 						@drop-on-node="addFromDrop"
 						@node-drag-start="startNodeDrag"
+						@node-drag-over="markDropTarget"
 					/>
 				</div>
 			</main>
 
-			<aside class="min-w-0 border-t border-white/10 bg-zinc-950 xl:border-l xl:border-t-0">
-				<div class="grid h-screen grid-rows-[auto_minmax(0,1fr)]">
-					<section class="border-b border-white/10 p-4">
+			<template #end>
+				<aside class="h-screen min-w-0 overflow-hidden border-l border-white/10 bg-zinc-950">
+				<div class="grid h-full min-h-0 grid-rows-[minmax(12rem,auto)_minmax(0,1fr)]">
+					<section class="max-h-[48vh] overflow-y-auto border-b border-white/10 p-4">
 						<div class="flex items-center justify-between gap-3">
 							<div>
 								<h2 class="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">Component</h2>
@@ -1562,6 +2084,25 @@ function nodeClass(node, selected) {
 							<label v-if="selectedNode?.repeat" class="grid gap-1">
 								<span class="text-xs text-zinc-500">Repeated template</span>
 								<input class="h-9 rounded-md border border-white/10 bg-white/5 px-3 font-mono text-xs text-white outline-none focus:border-teal-300" :value="selectedNode.repeat.source" @input="updateRepeatSource($event.target.value)">
+							</label>
+							<div v-if="selectedNode && selectedNode.type !== 'root'" class="grid gap-1">
+								<span class="text-xs text-zinc-500">Template class</span>
+								<div class="template-class-input">
+									<ElClassToggleInput
+										:key="selectedNode.id"
+										chrome="none"
+										:model-value="selectedNode.props?.class || ''"
+										:inactive-values="inactiveClassesForSelection"
+										:options="tailwindClassIndex"
+										placeholder="Add new class"
+										@update:model-value="updateSelectedClass"
+										@update:inactive-values="updateSelectedInactiveClasses"
+									/>
+								</div>
+							</div>
+							<label v-if="selectedBaseClass" class="grid gap-1">
+								<span class="text-xs text-zinc-500">Preview base classes</span>
+								<textarea class="min-h-16 resize-none rounded-md border border-white/10 bg-black/20 px-3 py-2 font-mono text-[11px] text-zinc-400 outline-none" readonly :value="selectedBaseClass"></textarea>
 							</label>
 						</div>
 
@@ -1608,7 +2149,7 @@ function nodeClass(node, selected) {
 						</div>
 					</section>
 
-					<section class="min-h-0 p-4">
+					<section class="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] p-4">
 						<div class="mb-2 flex items-center justify-between gap-3">
 							<div class="min-w-0">
 								<h2 class="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">Code</h2>
@@ -1618,7 +2159,7 @@ function nodeClass(node, selected) {
 								{{ codeError || (codeDirty ? 'Unsaved' : savedAt ? `${saveTarget} saved ${savedAt}` : 'Synced') }}
 							</p>
 						</div>
-						<div ref="codePanelEl">
+						<div ref="codePanelEl" class="template-code-panel min-h-0 overflow-hidden" @click="selectFromCodeEvent" @keyup="selectFromCodeEvent" @mouseup="selectFromCodeEvent">
 							<ElCodeInput
 								:model-value="codeText"
 								:rows="26"
@@ -1632,7 +2173,32 @@ function nodeClass(node, selected) {
 						</div>
 					</section>
 				</div>
-			</aside>
+				</aside>
+			</template>
+		</ElSplitterPanel>
+
+		<div v-if="isCreateDialogOpen" class="fixed inset-0 z-50 grid place-items-center bg-zinc-950/70 p-4">
+			<form class="w-full max-w-sm rounded-lg border border-white/10 bg-zinc-950 p-4 shadow-2xl" @submit.prevent="createComponentRecord">
+				<div class="flex items-start justify-between gap-3">
+					<div>
+						<p class="text-xs font-semibold uppercase tracking-[0.16em] text-teal-300">Create</p>
+						<h2 class="mt-1 text-base font-semibold text-white">{{ createKind === 'page' ? 'New page' : createFromSelection ? 'Component from selection' : 'New component' }}</h2>
+					</div>
+					<button type="button" class="rounded px-2 py-1 text-sm text-zinc-400 hover:bg-white/10 hover:text-white" @click="isCreateDialogOpen = false">Close</button>
+				</div>
+				<label class="mt-4 grid gap-1">
+					<span class="text-xs text-zinc-500">Name</span>
+					<input v-model="createName" class="h-9 rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white outline-none focus:border-teal-300" placeholder="HeroFeature">
+				</label>
+				<p v-if="createNameError" class="mt-2 text-xs text-rose-300">{{ createNameError }}</p>
+				<p class="mt-3 text-xs leading-5 text-zinc-500">
+					The draft opens immediately so you can build visually or paste Vue template code, then save it back into this experiment.
+				</p>
+				<div class="mt-4 flex justify-end gap-2">
+					<button type="button" class="h-8 rounded-md border border-white/10 px-3 text-xs font-medium text-zinc-300 hover:bg-white/10" @click="isCreateDialogOpen = false">Cancel</button>
+					<button type="submit" class="h-8 rounded-md bg-teal-300 px-3 text-xs font-semibold text-zinc-950 hover:bg-teal-200">Create</button>
+				</div>
+			</form>
 		</div>
 	</div>
 </template>
@@ -1647,5 +2213,82 @@ function nodeClass(node, selected) {
 	background: color-mix(in oklch, var(--color-teal-300, #5eead4) 30%, transparent);
 	color: rgb(15 23 42);
 	font-weight: 700;
+}
+
+.template-code-panel {
+	height: 100%;
+	min-height: 0;
+}
+
+:deep(.template-code-panel [class*="border-input"]) {
+	box-sizing: border-box;
+	height: 100%;
+	min-height: 0;
+}
+
+:deep(.template-code-panel [class*="border-input"] > div) {
+	height: 100%;
+	min-height: 0;
+}
+
+:deep(.template-code-panel .cm-editor) {
+	height: 100%;
+	min-height: 0 !important;
+}
+
+:deep(.template-code-panel .cm-scroller) {
+	overflow: auto;
+}
+
+:deep(.template-code-panel textarea) {
+	height: 100%;
+	min-height: 0;
+	overflow: auto;
+	resize: none;
+}
+
+.template-class-input :deep(.el-input) {
+	border-color: rgb(255 255 255 / 0.1);
+	background: rgb(255 255 255 / 0.05);
+	color: white;
+	outline: none;
+}
+
+.template-class-input :deep(.el-input:focus) {
+	border-color: rgb(94 234 212);
+	box-shadow: none;
+}
+
+.template-class-input :deep(label) {
+	color: rgb(228 228 231);
+}
+
+.template-class-input :deep(label.opacity-50) {
+	color: rgb(113 113 122);
+	opacity: 1;
+}
+
+.template-class-input :deep(input[type="checkbox"]) {
+	accent-color: rgb(45 212 191);
+}
+
+:deep([data-template-node]) {
+	outline: 0 solid transparent;
+	outline-offset: 2px;
+	transition: outline-color 120ms ease, box-shadow 120ms ease;
+}
+
+:deep([data-template-node]:hover) {
+	outline: 2px solid rgb(94 234 212 / 0.65);
+}
+
+:deep([data-template-selected="true"]) {
+	outline: 2px solid rgb(20 184 166);
+	box-shadow: 0 0 0 4px rgb(240 253 250 / 0.9);
+}
+
+:deep([data-template-drop-target="true"]) {
+	outline: 3px dashed rgb(20 184 166);
+	box-shadow: 0 0 0 4px rgb(240 253 250 / 0.9), 0 8px 18px rgb(15 118 110 / 0.22);
 }
 </style>

@@ -144,19 +144,21 @@ function setRawJson(value) {
 			<div v-if="jsonToggle" class="flex justify-end">
 				<div class="inline-flex rounded-lg border border-border bg-secondary/60 p-0.5">
 					<button
-						type="button"
-						class="rounded-md px-2.5 py-1 text-xs font-medium transition"
-						:class="mode === 'fields' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
-						@click="mode = 'fields'"
-					>
+							type="button"
+							class="rounded-md px-2.5 py-1 text-xs font-medium transition"
+							:class="mode === 'fields' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+							:aria-pressed="mode === 'fields'"
+							@click="mode = 'fields'"
+						>
 						Fields
 					</button>
 					<button
-						type="button"
-						class="rounded-md px-2.5 py-1 text-xs font-medium transition"
-						:class="mode === 'json' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
-						@click="mode = 'json'"
-					>
+							type="button"
+							class="rounded-md px-2.5 py-1 text-xs font-medium transition"
+							:class="mode === 'json' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+							:aria-pressed="mode === 'json'"
+							@click="mode = 'json'"
+						>
 						JSON
 					</button>
 				</div>
@@ -188,9 +190,9 @@ function setRawJson(value) {
 					<div class="flex items-center justify-between gap-2">
 						<span class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Row {{ rowIndex + 1 }}</span>
 						<span class="flex items-center gap-1">
-							<button type="button" class="grid place-items-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground" :class="compact ? 'size-6' : 'size-7'" title="Move up" @click="move(rowIndex, -1)">↑</button>
-							<button type="button" class="grid place-items-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground" :class="compact ? 'size-6' : 'size-7'" title="Move down" @click="move(rowIndex, 1)">↓</button>
-							<button type="button" class="grid place-items-center rounded-md text-destructive hover:bg-destructive/10" :class="compact ? 'size-6' : 'size-7'" title="Remove" @click="remove(rowIndex)">×</button>
+								<button type="button" class="grid place-items-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground" :class="compact ? 'size-6' : 'size-7'" title="Move up" :aria-label="`Move row ${rowIndex + 1} up`" @click="move(rowIndex, -1)">↑</button>
+								<button type="button" class="grid place-items-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground" :class="compact ? 'size-6' : 'size-7'" title="Move down" :aria-label="`Move row ${rowIndex + 1} down`" @click="move(rowIndex, 1)">↓</button>
+								<button type="button" class="grid place-items-center rounded-md text-destructive hover:bg-destructive/10" :class="compact ? 'size-6' : 'size-7'" title="Remove" :aria-label="`Remove row ${rowIndex + 1}`" @click="remove(rowIndex)">×</button>
 						</span>
 					</div>
 					<label

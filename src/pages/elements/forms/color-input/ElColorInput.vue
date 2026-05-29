@@ -33,10 +33,12 @@ const field = useField(props, emit, { idPrefix: 'el-color-input' });
 		<div class="flex items-center gap-2">
 			<input
 				:id="`${field.id.value}-swatch`"
-				type="color"
-				:value="field.value.value"
-				:disabled="field.disabled.value || undefined"
-				class="h-9 w-12 cursor-pointer rounded-lg border border-border bg-background"
+					type="color"
+					:value="field.value.value"
+					:disabled="field.disabled.value || undefined"
+					:aria-label="label ? `${label} colour picker` : 'Colour picker'"
+					:aria-describedby="field.describedBy.value || undefined"
+					class="h-9 w-12 cursor-pointer rounded-lg border border-border bg-background"
 				@input="field.onInput($event.target.value)"
 				@focus="field.onFocus"
 				@blur="field.onBlur"

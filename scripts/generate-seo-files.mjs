@@ -1,12 +1,101 @@
 // This is a crappy AI gen script - ideally replace with something better.
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { loadStaticRoutes } from './lib/load-routes.mjs';
 
 const rootDir = process.cwd();
 const distDir = path.join(rootDir, 'dist');
 const cnamePath = path.join(rootDir, 'CNAME');
+const articleContentDir = path.join(rootDir, 'src', 'pages', 'articles', 'content');
 const siteName = "Steve O'Brien";
+let articleMetaByRoute = new Map();
+
+const escapeHtml = (value) => String(value)
+	.replace(/&/g, '&amp;')
+	.replace(/</g, '&lt;')
+	.replace(/>/g, '&gt;')
+	.replace(/"/g, '&quot;')
+	.replace(/'/g, '&#39;');
+
+const parseValue = (value) => {
+	const trimmed = value.trim();
+	if (trimmed === 'true') return true;
+	if (trimmed === 'false') return false;
+	if (/^\d+(\.\d+)?$/.test(trimmed)) return Number(trimmed);
+	if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+		return trimmed
+			.slice(1, -1)
+			.split(',')
+			.map((item) => item.trim().replace(/^['"]|['"]$/g, ''))
+			.filter(Boolean);
+	}
+	return trimmed.replace(/^['"]|['"]$/g, '');
+};
+
+const normaliseStringList = (value) => {
+	if (Array.isArray(value)) {
+		return value.map((item) => String(item).trim()).filter(Boolean);
+	}
+
+	if (typeof value !== 'string') return [];
+
+	return value
+		.split(',')
+		.map((item) => item.trim())
+		.filter(Boolean);
+};
+
+const parseFrontmatter = (raw) => {
+	const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+	if (!match) return {};
+
+	const meta = {};
+	for (const line of match[1].split(/\r?\n/)) {
+		const separator = line.indexOf(':');
+		if (separator === -1) continue;
+		const key = line.slice(0, separator).trim();
+		const value = line.slice(separator + 1).trim();
+		if (!key) continue;
+		meta[key] = parseValue(value);
+	}
+
+	return meta;
+};
+
+const loadArticleMeta = async () => {
+	const metaByRoute = new Map();
+
+	try {
+		const files = await readdir(articleContentDir);
+		for (const file of files) {
+			if (!file.endsWith('.md')) continue;
+			const filePath = path.join(articleContentDir, file);
+			const raw = await readFile(filePath, 'utf8');
+			const meta = parseFrontmatter(raw);
+			const slug = meta.slug || file.replace(/\.md$/i, '');
+			const title = meta.title || String(slug).replace(/-/g, ' ');
+			const description = meta.metaDescription
+				|| meta.meta_description
+				|| meta['meta-description']
+				|| meta.description
+				|| `${title} by ${siteName}.`;
+			const keywords = meta.metaKeywords
+				|| meta.meta_keywords
+				|| meta['meta-keywords']
+				|| meta.keywords;
+
+			metaByRoute.set(`/articles/${slug}`, {
+				title: `${title} | ${siteName}`,
+				description,
+				keywords: normaliseStringList(keywords),
+			});
+		}
+	} catch {
+		return metaByRoute;
+	}
+
+	return metaByRoute;
+};
 
 const readSiteUrl = async () => {
 	try {
@@ -54,6 +143,9 @@ const buildRobots = (siteUrl) => {
 };
 
 const getPageMeta = (routePath) => {
+	const articleMeta = articleMetaByRoute.get(routePath);
+	if (articleMeta) return articleMeta;
+
 	if (routePath === '/') {
 		return {
 			title: `About | ${siteName}`,
@@ -79,6 +171,13 @@ const getPageMeta = (routePath) => {
 		return {
 			title: `Ideas | ${siteName}`,
 			description: 'Notes and early ideas Steve is thinking through before they become concrete projects.',
+		};
+	}
+
+	if (routePath === '/articles') {
+		return {
+			title: `Articles | ${siteName}`,
+			description: 'Long-form articles by Steve O’Brien on software, AI, and building useful systems.',
 		};
 	}
 
@@ -108,7 +207,8 @@ const injectMetaIntoPage = async (siteUrl, routePath) => {
 	const fileName = routePath === '/' ? 'index.html' : `${routePath.replace(/^\//, '')}.html`;
 	const filePath = path.join(distDir, fileName);
 	const canonicalUrl = routePath === '/' ? siteUrl : `${siteUrl}${routePath}`;
-	const { title, description } = getPageMeta(routePath);
+	const { title, description, keywords } = getPageMeta(routePath);
+	const keywordContent = normaliseStringList(keywords).join(', ');
 
 	let html;
 	try {
@@ -116,24 +216,26 @@ const injectMetaIntoPage = async (siteUrl, routePath) => {
 	} catch {
 		return;
 	}
-	html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${title}</title>`);
+	html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
 	html = html.replace(/<meta name="description"[\s\S]*?>/gi, '');
+	html = html.replace(/<meta name="keywords"[\s\S]*?>/gi, '');
 	html = html.replace(/<meta property="og:[^"]+"[\s\S]*?>/gi, '');
 	html = html.replace(/<meta name="twitter:[^"]+"[\s\S]*?>/gi, '');
 	html = html.replace(/<link rel="canonical"[\s\S]*?>/gi, '');
 
 	const metaBlock = [
-		`<meta name="description" content="${description}">`,
-		`<link rel="canonical" href="${canonicalUrl}">`,
+		`<meta name="description" content="${escapeHtml(description)}">`,
+		keywordContent ? `<meta name="keywords" content="${escapeHtml(keywordContent)}">` : '',
+		`<link rel="canonical" href="${escapeHtml(canonicalUrl)}">`,
 		'<meta property="og:type" content="website">',
-		`<meta property="og:site_name" content="${siteName}">`,
-		`<meta property="og:title" content="${title}">`,
-		`<meta property="og:description" content="${description}">`,
-		`<meta property="og:url" content="${canonicalUrl}">`,
+		`<meta property="og:site_name" content="${escapeHtml(siteName)}">`,
+		`<meta property="og:title" content="${escapeHtml(title)}">`,
+		`<meta property="og:description" content="${escapeHtml(description)}">`,
+		`<meta property="og:url" content="${escapeHtml(canonicalUrl)}">`,
 		'<meta name="twitter:card" content="summary">',
-		`<meta name="twitter:title" content="${title}">`,
-		`<meta name="twitter:description" content="${description}">`,
-	].join('\n\t\t');
+		`<meta name="twitter:title" content="${escapeHtml(title)}">`,
+		`<meta name="twitter:description" content="${escapeHtml(description)}">`,
+	].filter(Boolean).join('\n\t\t');
 
 	html = html.replace('</head>', `\t\t${metaBlock}\n\t</head>`);
 	await writeFile(filePath, html, 'utf8');
@@ -143,6 +245,7 @@ const main = async () => {
 	await mkdir(distDir, { recursive: true });
 	const siteUrl = await readSiteUrl();
 	const routes = await loadStaticRoutes();
+	articleMetaByRoute = await loadArticleMeta();
 
 	await writeFile(path.join(distDir, 'sitemap.xml'), `${buildSitemap(siteUrl, routes)}\n`, 'utf8');
 	await writeFile(path.join(distDir, 'robots.txt'), `${buildRobots(siteUrl)}\n`, 'utf8');

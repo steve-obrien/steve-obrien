@@ -13,6 +13,10 @@ import NestedActions from './examples/NestedActions.vue';
 import NestedActionsSrc from './examples/NestedActions.vue?raw';
 import RichItems from './examples/RichItems.vue';
 import RichItemsSrc from './examples/RichItems.vue?raw';
+import MenuItemMarkup from './examples/MenuItemMarkup.vue';
+import MenuItemMarkupSrc from './examples/MenuItemMarkup.vue?raw';
+import MultiSubmenus from './examples/MultiSubmenus.vue';
+import MultiSubmenusSrc from './examples/MultiSubmenus.vue?raw';
 
 const items = [
 	{ value: 'rename', label: 'Rename' },
@@ -61,6 +65,26 @@ const items = [
 					description="Set item.slot to render per-item markup such as status rows, live badges, shortcuts, and switch-style checkbox items while ElMenu keeps keyboard and selection behaviour."
 				>
 					<RichItems />
+				</Example>
+			</DocSection>
+
+			<DocSection eyebrow="Demo" title="MenuItem markup">
+				<Example
+					:source="MenuItemMarkupSrc"
+					filename="MenuItemMarkup.vue"
+					description="Use <MenuItem> rows when custom markup should live directly inside the menu instead of going through item slots. The same markup can appear inside a submenu."
+				>
+					<MenuItemMarkup />
+				</Example>
+			</DocSection>
+
+			<DocSection eyebrow="Demo" title="Multiple submenus">
+				<Example
+					:source="MultiSubmenusSrc"
+					filename="MultiSubmenus.vue"
+					description="Several rows can own submenus, and nested submenu rows can open their own submenu to the right."
+				>
+					<MultiSubmenus />
 				</Example>
 			</DocSection>
 

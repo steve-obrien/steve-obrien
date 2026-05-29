@@ -78,10 +78,13 @@ const valueOf = (option) => String(option && typeof option === 'object' ? (optio
 		<element-listbox
 			ref="root"
 			:id="field.id.value"
-			:value="field.value.value ?? ''"
-			:orientation="orientation"
-			:aria-invalid="field.invalid.value || undefined"
-			class="grid gap-1 rounded-2xl border border-border bg-background p-1 shadow-sm data-[invalid]:border-destructive"
+				:value="field.value.value ?? ''"
+				:orientation="orientation"
+				:aria-label="label || undefined"
+				:aria-describedby="field.describedBy.value || undefined"
+				:aria-invalid="field.invalid.value || undefined"
+				:aria-errormessage="field.errorId.value || undefined"
+				class="grid gap-1 rounded-2xl border border-border bg-background p-1 shadow-sm data-[invalid]:border-destructive"
 			:class="orientation === 'horizontal' && 'grid-flow-col'"
 			:data-invalid="field.invalid.value ? '' : undefined"
 		>

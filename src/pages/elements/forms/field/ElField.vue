@@ -39,6 +39,14 @@ const props = defineProps({
 		default: '',
 		_edit: { description: 'ID of the control the label should target.' },
 	},
+	descriptionId: {
+		type: String,
+		default: '',
+	},
+	errorId: {
+		type: String,
+		default: '',
+	},
 	invalid: {
 		type: Boolean,
 		default: false,
@@ -100,13 +108,14 @@ const isInvalid = computed(() => (
 			<p
 				v-for="(error, index) in errorMessages"
 				:key="`${error}-${index}`"
+				:id="index === 0 ? errorId : undefined"
 				class="text-[11px] leading-snug text-destructive"
 			>
 				{{ error }}
 			</p>
 		</slot>
 		<slot name="description" :description="description">
-			<p v-if="description" class="text-[11px] leading-snug text-muted-foreground">{{ description }}</p>
+			<p v-if="description" :id="descriptionId || undefined" class="text-[11px] leading-snug text-muted-foreground">{{ description }}</p>
 		</slot>
 	</div>
 </template>

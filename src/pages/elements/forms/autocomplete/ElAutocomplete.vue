@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, ref, useId, watch } from 'vue';
+import ElFieldLoadingSpinner from '../_shared/ElFieldLoadingSpinner.vue';
 import FieldChrome from '../field/FieldChrome.vue';
 import { fieldProps } from '../field/fieldProps.js';
 import { useField } from '../field/useField.js';
@@ -60,6 +61,11 @@ const props = defineProps({
 		default: 'viewport',
 		_edit: { group: 'Control props', options: ['viewport', 'anchor'], description: 'viewport keeps suggestions inside the browser; anchor keeps them attached while scrolling.' },
 	},
+	loading: {
+		type: [Boolean, String],
+		default: false,
+		_edit: { group: 'Control props', description: 'Show an inline spinner while async suggestions are being fetched.' },
+	},
 });
 const emit = defineEmits(['update:modelValue', 'query', 'select', 'commit', 'focus', 'blur']);
 
@@ -68,6 +74,7 @@ const inputEl = ref(null);
 const isMounted = ref(false);
 const currentText = ref('');
 const field = useField(props, emit, { idPrefix: 'el-autocomplete' });
+const isLoading = computed(() => booleanProp(props.loading, false));
 
 const normalised = (option) => (typeof option === 'string' ? { value: option, label: option } : option);
 const items = computed(() => props.options.map(normalised));
@@ -105,6 +112,13 @@ onMounted(async () => {
 });
 
 watch(field.value, syncInputFromModel);
+
+function booleanProp(value, defaultValue = false) {
+	if (value === undefined || value === null) return defaultValue;
+	if (value === '' || value === true) return true;
+	if (value === false) return false;
+	return !['false', '0', 'no', 'off'].includes(String(value).toLowerCase());
+}
 </script>
 
 <template>
@@ -123,8 +137,13 @@ watch(field.value, syncInputFromModel);
 				slot="input"
 				type="text"
 				class="el-input rounded-full px-4 focus:ring-ring/60"
+				:class="isLoading ? 'pr-10' : ''"
 				@focus="field.onFocus"
 				@blur="field.onBlur"
+			/>
+			<ElFieldLoadingSpinner
+				v-if="isLoading"
+				class="absolute right-1 top-1"
 			/>
 			<Teleport to="body" :disabled="!isMounted">
 				<ul

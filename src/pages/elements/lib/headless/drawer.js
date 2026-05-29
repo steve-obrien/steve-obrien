@@ -99,6 +99,8 @@ export class ElementDrawer extends ElementBase {
 			'leave',
 			'leave-from',
 			'leave-to',
+			'aria-labelledby',
+			'aria-describedby',
 		];
 	}
 
@@ -206,6 +208,16 @@ export class ElementDrawer extends ElementBase {
 		this._panel.setAttribute('role', this._panel.getAttribute('role') || 'dialog');
 		this._panel.setAttribute('aria-modal', 'true');
 		this._panel.tabIndex = this._panel.tabIndex >= 0 ? this._panel.tabIndex : -1;
+		this._syncAria();
+	}
+
+	_syncAria() {
+		if (!this._panel) return;
+		for (const name of ['aria-labelledby', 'aria-describedby']) {
+			const value = this.getAttribute(name);
+			if (value) this._panel.setAttribute(name, value);
+			else this._panel.removeAttribute(name);
+		}
 	}
 
 	_createDefaultParts() {
@@ -385,6 +397,7 @@ export class ElementDrawer extends ElementBase {
 		if (['enter', 'enter-from', 'enter-to', 'leave', 'leave-from', 'leave-to'].includes(name)) {
 			this._syncMotionClasses();
 		}
+		if (name === 'aria-labelledby' || name === 'aria-describedby') this._syncAria();
 	}
 
 	get open() { return this._open; }

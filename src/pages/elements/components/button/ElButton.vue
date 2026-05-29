@@ -1,7 +1,8 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, useAttrs } from 'vue';
 
 defineOptions({
+	inheritAttrs: false,
 	__doc: {
 		name: 'Button',
 		tag: '<ElButton>',
@@ -45,6 +46,7 @@ const props = defineProps({
 		_edit: { description: 'Disable the button — non-interactive, lowered opacity.' },
 	},
 });
+const attrs = useAttrs();
 const active = 'select-none active:data-disabled:bg-secondary active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]  active:border-t-border active:data-disabled:shadow-none active:data-disabled:border-t-border focus-visible:outline-2 focus-visible:outline-ring focus-visible:-outline-offset-1 data-disabled:text-muted-foreground';
 const variants = {
 	primary: 'bg-primary text-primary-foreground hover:opacity-90 ring-1 ring-border hover:bg-[linear-gradient(rgb(0_0_0/3%)_0_0)]  active:bg-[linear-gradient(rgb(0_0_0/6%)_0_0)] active:scale-[0.97]',
@@ -66,11 +68,39 @@ const classes = computed(() => [
 	sizes[props.size] || sizes.md,
 	(props.disabled || props.loading) && 'opacity-50 pointer-events-none',
 ]);
+const disabledState = computed(() => props.disabled || props.loading);
+const isNativeButton = computed(() => props.as === 'button');
+const componentAttrs = computed(() => {
+	const { disabled, tabindex, onClick, ...rest } = attrs;
+	if (isNativeButton.value) return { ...rest, disabled: disabledState.value || undefined };
+	return {
+		...rest,
+		'aria-disabled': disabledState.value ? 'true' : undefined,
+		tabindex: disabledState.value ? -1 : tabindex,
+	};
+});
+
+function callClickHandler(handler, event) {
+	if (Array.isArray(handler)) {
+		handler.forEach((item) => callClickHandler(item, event));
+		return;
+	}
+	if (typeof handler === 'function') handler(event);
+}
+
+function onClick(event) {
+	if (disabledState.value) {
+		event.preventDefault();
+		event.stopPropagation();
+		return;
+	}
+	callClickHandler(attrs.onClick, event);
+}
 </script>
 
 <template>
-	<component :is="as" :class="classes" :disabled="disabled || loading">
-		<svg v-if="loading" class="size-4 animate-spin" viewBox="0 0 24 24" fill="none">
+	<component :is="as" v-bind="componentAttrs" :class="classes" @click="onClick">
+		<svg v-if="loading" class="size-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
 			<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-opacity="0.25" />
 			<path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
 		</svg>

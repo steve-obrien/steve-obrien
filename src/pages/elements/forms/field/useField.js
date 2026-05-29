@@ -105,6 +105,9 @@ export function useField(props, emit, options = {}) {
 	const htmlName = computed(() => providerHtmlName(provider, name.value));
 	const htmlId = computed(() => props.id || providerHtmlId(provider, name.value) || htmlIdFromPath(path.value) || generatedId);
 	const id = htmlId;
+	const descriptionId = computed(() => (props.description ? `${id.value}-description` : ''));
+	const errorId = computed(() => (errors.value.length ? `${id.value}-error` : ''));
+	const describedBy = computed(() => [descriptionId.value, errorId.value].filter(Boolean).join(' '));
 	const value = computed(() => {
 		const provided = providerValue(provider, name.value);
 		return provided !== undefined ? provided : internalValue.value;
@@ -124,12 +127,17 @@ export function useField(props, emit, options = {}) {
 		label: props.label,
 		description: props.description,
 		htmlFor: id.value,
+		descriptionId: descriptionId.value,
+		errorId: errorId.value,
 		invalid: invalid.value,
 		required: props.required,
 		errors: errors.value,
 		visible: visible.value,
 	}));
 
+	/**
+	 * This helps decorate the input with the relevant html attributes.
+	 */
 	const inputAttrs = computed(() => ({
 		id: id.value,
 		name: htmlName.value,
@@ -139,6 +147,8 @@ export function useField(props, emit, options = {}) {
 		readonly: readOnly.value || undefined,
 		required: props.required || undefined,
 		'aria-invalid': invalid.value || undefined,
+		'aria-describedby': describedBy.value || undefined,
+		'aria-errormessage': errorId.value || undefined,
 		'data-invalid': invalid.value ? '' : undefined,
 	}));
 
@@ -245,6 +255,9 @@ export function useField(props, emit, options = {}) {
 		path,
 		htmlName,
 		htmlId,
+		descriptionId,
+		errorId,
+		describedBy,
 		value,
 		errors,
 		invalid,

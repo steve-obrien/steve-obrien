@@ -4,6 +4,7 @@ const eagerComponentModules = import.meta.glob([
 	'../visual/*/El*.vue',
 	'!../components/playground/ElRenderer.vue',
 	'!../components/toast/ElToastItem.vue',
+	'!../forms/_shared/El*.vue',
 ], { eager: true, import: 'default' });
 
 const lazyComponentModules = import.meta.glob([
@@ -12,6 +13,7 @@ const lazyComponentModules = import.meta.glob([
 	'../visual/*/El*.vue',
 	'!../components/playground/ElRenderer.vue',
 	'!../components/toast/ElToastItem.vue',
+	'!../forms/_shared/El*.vue',
 ], { import: 'default' });
 
 export const componentSections = ['components', 'visual', 'forms'];

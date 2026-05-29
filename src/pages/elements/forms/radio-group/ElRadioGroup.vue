@@ -72,10 +72,13 @@ const selected = (option) => String(field.value.value ?? '') === valueOf(option)
 		<element-radio-group
 			ref="root"
 			:id="field.id.value"
-			:value="field.value.value ?? ''"
-			:orientation="orientation"
-			:aria-invalid="field.invalid.value || undefined"
-			class="grid gap-2 data-[invalid]:rounded-2xl data-[invalid]:ring-1 data-[invalid]:ring-destructive"
+				:value="field.value.value ?? ''"
+				:orientation="orientation"
+				:aria-label="label || undefined"
+				:aria-describedby="field.describedBy.value || undefined"
+				:aria-invalid="field.invalid.value || undefined"
+				:aria-errormessage="field.errorId.value || undefined"
+				class="grid gap-2 data-[invalid]:rounded-2xl data-[invalid]:ring-1 data-[invalid]:ring-destructive"
 			:class="orientation === 'horizontal' && 'grid-flow-col justify-start'"
 			:data-invalid="field.invalid.value ? '' : undefined"
 		>

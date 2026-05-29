@@ -8,6 +8,8 @@ import Example from '../../_layout/docs/Example.vue';
 import { ElAutocomplete } from '../../lib/vue';
 import SearchPeople from './examples/SearchPeople.vue';
 import SearchPeopleSrc from './examples/SearchPeople.vue?raw';
+import ServerLoadedPeople from './examples/ServerLoadedPeople.vue';
+import ServerLoadedPeopleSrc from './examples/ServerLoadedPeople.vue?raw';
 import { RouterLink } from 'vue-router';
 
 const people = [
@@ -21,6 +23,7 @@ const props = [
 	{ name: 'options', type: 'Array<{ value, label, ...meta }> | string[]', default: '[]', description: 'Suggestions. May be replaced as query results arrive.' },
 	{ name: 'placeholder', type: 'string', default: "'Search...'", description: 'Input placeholder.' },
 	{ name: 'floatingMode', type: "'viewport' | 'anchor'", default: "'viewport'", description: 'Choose whether suggestions stay in the browser or follow the input while scrolling.' },
+	{ name: 'loading', type: 'boolean', default: 'false', description: 'Show an inline spinner while async suggestions are being fetched.' },
 ];
 
 const events = [
@@ -50,6 +53,16 @@ const events = [
 					description="v-model is the typed text. @select receives the original option object when a suggestion is chosen."
 				>
 					<SearchPeople />
+				</Example>
+			</DocSection>
+
+			<DocSection eyebrow="Demo" title="Server-loaded suggestions">
+				<Example
+					:source="ServerLoadedPeopleSrc"
+					filename="ServerLoadedPeople.vue"
+					description="@query lets the parent fetch suggestions and pass the current server results back through options."
+				>
+					<ServerLoadedPeople />
 				</Example>
 			</DocSection>
 

@@ -1,65 +1,129 @@
 # Elements
 
-Elements is a component framework for building application UI with LLMs and humans working together.
+Elements is a component framework for building application UI with LLMs and humans working together. It provides Vue components, headless custom elements, reusable app blocks, Studio-editable specs, and semantic theme tokens.
 
 Primary docs:
 - Overview: /elements
-- AI builder guide: /elements/ai
+- AI builders: /elements/ai
 - Theming: /elements/theming
 - Component spec: /elements/component-spec
 - Studio: /elements/components/studio
-- Blocks: /elements/blocks/dashboard
-- Components: /elements/components/button
-- Headless web components: /elements/headless
+- Blocks: /elements/blocks/dashboard, /elements/blocks/chat, /elements/blocks/mail, /elements/blocks/forms, /elements/blocks/login, /elements/blocks/application-layout
+- Components: /elements/components/button, /elements/forms/text-input, /elements/visual/card
+- Headless: /elements/headless
 
-Philosophy:
-- Prefer composition over invention.
-- Use Elements primitives for behaviour and accessibility.
-- Use visual primitives for surfaces and layout polish.
-- Use blocks for complete app screens and common product patterns.
-- Keep generated UI editable in Studio.
-- Use token-based theming names such as bg-background, text-foreground, bg-card, text-card-foreground, bg-popover, text-popover-foreground, bg-primary, text-primary-foreground, bg-secondary, text-secondary-foreground, text-muted-foreground, border-border, border-input, ring-ring, bg-success, bg-warning, and bg-destructive.
-- Do not use raw colours unless defining a theme.
-- Prefer component props for behaviour and classes for layout, spacing, and small visual adjustments.
-- Give generated nodes stable ids and human labels when returning Studio specs.
-- Components are discovered from src/pages/elements/components/*/El*.vue, src/pages/elements/forms/*/El*.vue, and src/pages/elements/visual/*/El*.vue.
-- Component metadata currently lives in defineOptions({ __doc: ... }). Studio-specific decoration can live in __doc.studio or __studio.
-- Prop inspector metadata currently lives on prop definitions as _edit. Prefer _edit.component over the legacy _edit.editor alias.
+Use Elements when building app screens, forms, dashboards, chat tools, mail clients, login flows, settings screens, internal tools, or generated UI that should stay editable.
 
-Current component families:
-- Behaviour components: Button, Dropdown, Dialog, Drawer, Tabs, Toggle, Tooltip, Accordion, Menu, Listbox, Combobox, Autocomplete, Popover, Toast, Command palette.
-- Form components: Field, Checkbox, Radio group, Text input, Password input, Calendar, Textarea, Code input, JSON input, JSON list input, Number input, Select input, Native select, Boolean input, Color input.
-- Visual components: Card.
-- Blocks: Dashboard, Chat, Mail, Forms, Login, Application layout.
+## Core Rules
 
-LLM generation rules:
-1. Choose an existing block when the request matches a known app pattern.
-2. Choose existing components before writing custom HTML.
-3. Keep accessibility inside components; do not recreate keyboard navigation by hand.
-4. Prefer native form behaviour where it is useful, especially on mobile.
-5. Use Field to wrap custom controls that need consistent labels, required markers, and descriptions.
-6. Use Code input for prompts, templates, snippets, and structured text that benefits from a code editor.
-7. Use JSON input for editable schemas, tool payloads, app config, and other parsed structured data.
-8. Use JSON list input for schema-aware arrays of objects, especially inspector editors for menu items, commands, options, toasts, and people lists.
-9. Return an editable Studio spec when the user may want to inspect or revise the UI later.
-10. Use clear layer labels and stable ids in specs.
-11. Do not invent new theme colour names; use the theme page token names.
-12. Keep generated interfaces dense, practical, and product-like unless the user asks for a marketing page.
+1. Prefer existing Elements blocks and components before custom markup.
+2. Use component props for behavior; use classes for layout, spacing, and small visual adjustments.
+3. Use semantic theme utilities, not raw colors, unless defining a theme.
+4. Keep generated UI dense, practical, and product-like unless asked for marketing UI.
+5. Let Elements components handle accessibility, focus, keyboard navigation, overlays, and selection behavior.
+6. Return a Studio spec when the user may want to visually edit or inspect generated UI later.
+7. Give Studio spec nodes stable ids and human labels.
 
-Component discovery and documentation:
-- To add a component, create a folder under /elements/components, /elements/forms, or /elements/visual and add an El*.vue component file.
-- Add an Index.vue beside the component for bespoke documentation. If no Index.vue exists, the docs route is generated from the inspected component metadata and runtime props.
-- Use __doc.name, __doc.tag, __doc.description, __doc.icon, __doc.events, and __doc.slots to make generated docs useful.
-- Use __doc.hidden or __doc.nav.hidden to hide helper components from generated navigation.
-- Use __doc.studio.hidden to hide helper components from the Studio palette while keeping them available to code.
-- Use __doc.icon for the canonical SVG path icon. Sidebar fallback icons are presentation-only.
-- The component row is discovery data: id, path, section, slug, exportName, route, and component or loader.
-- The inspected component row decorates that with __doc, studio metadata, props, label, badge, icon, order, hidden flags, navHidden, and studioHidden.
-- Studio renderer specs are UI trees with id, label, component, props, and children. They are different from component discovery rows.
+## Vue Usage
 
-Future AI-specific areas:
-- AI chat tools that return editable UI.
-- Voice tools and multimodal controls.
-- Agent task runners that stream status into UI.
-- Server-backed autocomplete and search patterns.
-- Tool-call result renderers.
+Import public Vue components from `@elements/vue`.
+
+```js
+import {
+	ElButton,
+	ElCard,
+	ElCombobox,
+	ElForm,
+	ElTextInput,
+} from '@elements/vue';
+```
+
+Common families:
+- Components: `ElButton`, `ElDropdown`, `ElDialog`, `ElDrawer`, `ElPopover`, `ElTabs`, `ElTooltip`, `ElAccordion`, `ElMenu`, `ElTreeView`, `ElContextMenu`, `ElCommandPalette`, `ElToastStack`.
+- Forms: `ElForm`, `ElField`, `ElTextInput`, `ElEmailInput`, `ElUrlInput`, `ElTextareaInput`, `ElNumberInput`, `ElRangeInput`, `ElNativeSelect`, `ElSelectInput`, `ElListbox`, `ElCombobox`, `ElAutocomplete`, `ElCheckbox`, `ElRadioGroup`, `ElToggle`, `ElToggleButton`, `ElToggleButtonGroup`, `ElCalendar`, `ElDatePicker`, `ElPasswordInput`, `ElCodeInput`, `ElJsonInput`, `ElJsonListInput`, `ElColorInput`.
+- Visual: `ElCard`.
+- Utilities: `useToasts`, `fieldProps`, `useField`, validators, form registry helpers, tree utilities, `ElRenderer`.
+
+Use `@elements/headless` to register headless custom elements such as dropdown, dialog, drawer, popover, tabs, toggle, tooltip, accordion, menu, listbox, combobox, autocomplete, checkbox, radio group, and toast.
+
+## Choosing Components
+
+- Start with blocks for dashboard, chat, mail, forms, login, and application layout screens.
+- Use `ElCard` for app surfaces and grouped content.
+- Use `ElButton` for actions.
+- Use `ElDialog`, `ElDrawer`, `ElPopover`, `ElDropdown`, `ElMenu`, `ElContextMenu`, and `ElCommandPalette` for overlays and menus.
+- Use `ElNativeSelect` for small native option lists.
+- Use `ElListbox` for custom single-choice lists.
+- Use `ElCombobox` when the user searches and commits an option.
+- Use `ElAutocomplete` when text remains freeform but suggestions help.
+- Use `ElCalendar` for month-grid date selection and `ElDatePicker` for typed date entry with a calendar popover.
+- Use `ElCodeInput` for prompts, snippets, templates, and structured text.
+- Use `ElJsonInput` for parsed JSON data.
+- Use `ElJsonListInput` for schema-aware arrays such as options, commands, menu items, toast payloads, and inspector rows.
+
+## Forms
+
+Form-capable controls share a field contract. Prefer `fieldProps`, `useField`, `ElFieldChrome`, and parent `ElForm` instead of duplicating label, description, id, validation, errors, touched, dirty, or path logic.
+
+Fields use local names. Parent forms derive nested dot paths, native HTML names, ids, validation state, and submit payloads.
+
+Use `chrome="field"` for standard labelled controls and `chrome="none"` when composing custom layouts.
+
+## Studio Specs
+
+Studio specs are editable UI trees:
+
+```json
+{
+	"id": "settings-form",
+	"label": "Settings form",
+	"component": "ElCard",
+	"props": {
+		"padding": "lg",
+		"class": "w-full max-w-2xl"
+	},
+	"children": [
+		{
+			"id": "email",
+			"label": "Email input",
+			"component": "ElTextInput",
+			"props": {
+				"label": "Email address",
+				"placeholder": "you@example.com"
+			}
+		}
+	]
+}
+```
+
+Specs are not component discovery rows. Use component export names such as `ElTextInput` or HTML tags such as `section`, `h2`, and `p`.
+
+## Theme Tokens
+
+Use these utility names:
+- Surfaces: `bg-background`, `bg-card`, `bg-popover`, `bg-primary`, `bg-secondary`, `bg-muted`, `bg-accent`, `bg-success`, `bg-warning`, `bg-destructive`.
+- Text: `text-foreground`, `text-card-foreground`, `text-popover-foreground`, `text-primary-foreground`, `text-secondary-foreground`, `text-muted-foreground`, `text-accent-foreground`, `text-success-foreground`, `text-warning-foreground`, `text-destructive-foreground`.
+- Edges and focus: `border-border`, `border-input`, `divide-border`, `ring-ring`, `focus-visible:ring-ring`.
+
+Do not invent theme token names. Do not use raw hex, RGB, or OKLCH values in component markup.
+
+## Component Authoring
+
+Components are discovered from:
+- `src/pages/elements/components/*/El*.vue`
+- `src/pages/elements/forms/*/El*.vue`
+- `src/pages/elements/visual/*/El*.vue`
+
+Add bespoke docs with an `Index.vue` beside the component. If omitted, generated docs use inspected component metadata.
+
+Use `defineOptions({ __doc: ... })` for name, tag, description, icon, order, nav metadata, Studio metadata, slots, and events. Use prop `_edit` metadata for Studio inspector editors, with editor component names in `_edit.component`.
+
+Export public Vue components from `src/pages/elements/lib/vue/index.js`.
+
+## Avoid
+
+- Recreating dropdown, dialog, drawer, popover, combobox, autocomplete, toast, or keyboard navigation behavior manually.
+- Raw colors in component markup.
+- Anonymous Studio layers.
+- Large unstructured HTML blobs when a Studio spec would preserve intent.
+- Custom form plumbing where the shared field contract already applies.

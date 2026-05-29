@@ -1,24 +1,5 @@
-<script setup>
-import { computed, onMounted, ref, useSlots } from 'vue';
-
-defineOptions({
-	__doc: {
-		name: 'Popover',
-		tag: '<ElPopover>',
-		description: 'A floating panel anchored to a trigger. Built on the HTML Popover API so it sits in the top layer — no parent overflow, transform, or z-index can clip it.',
-		slots: [
-			{ name: 'trigger', description: 'Replaces the trigger button. Omit when using triggerId.' },
-			{ name: '(default)', payload: '{ open, close, toggle }', description: 'Popover body. Receives helpers so content can close itself without storing a component ref.' },
-		],
-		keyboard: [
-			{ keys: 'Click trigger', action: 'Toggles the popover.' },
-			{ keys: 'Click outside', action: 'Light-dismiss via the native popover API.' },
-			{ keys: 'Esc', action: 'Closes the popover.' },
-		],
-	},
-});
-
-const props = defineProps({
+<script>
+export const popoverProps = {
 	position: {
 		type: String,
 		default: 'bottom-start',
@@ -80,7 +61,30 @@ const props = defineProps({
 		default: '',
 		_edit: { description: 'ID of an external trigger button. When set, ElPopover will not render its own trigger.' },
 	},
+};
+</script>
+
+<script setup>
+import { computed, onMounted, ref, useSlots } from 'vue';
+
+defineOptions({
+	__doc: {
+		name: 'Popover',
+		tag: '<ElPopover>',
+		description: 'A floating panel anchored to a trigger. Built on the HTML Popover API so it sits in the top layer — no parent overflow, transform, or z-index can clip it.',
+		slots: [
+			{ name: 'trigger', description: 'Replaces the trigger button. Omit when using triggerId.' },
+			{ name: '(default)', payload: '{ open, close, toggle }', description: 'Popover body. Receives helpers so content can close itself without storing a component ref.' },
+		],
+		keyboard: [
+			{ keys: 'Click trigger', action: 'Toggles the popover.' },
+			{ keys: 'Click outside', action: 'Light-dismiss via the native popover API.' },
+			{ keys: 'Esc', action: 'Closes the popover.' },
+		],
+	},
 });
+
+const props = defineProps(popoverProps);
 const emit = defineEmits(['open', 'close']);
 
 const root = ref(null);

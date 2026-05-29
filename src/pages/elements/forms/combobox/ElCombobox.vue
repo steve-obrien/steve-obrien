@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, ref, useId, watch } from 'vue';
+import ElFieldLoadingSpinner from '../_shared/ElFieldLoadingSpinner.vue';
 import FieldChrome from '../field/FieldChrome.vue';
 import { fieldProps } from '../field/fieldProps.js';
 import { useField } from '../field/useField.js';
@@ -60,9 +61,14 @@ const props = defineProps({
 		_edit: { group: 'Control props', options: ['viewport', 'anchor'], description: 'viewport keeps the list inside the browser; anchor keeps it attached while scrolling.' },
 	},
 	clearable: {
-		type: Boolean,
+		type: [Boolean, String],
 		default: true,
 		_edit: { group: 'Control props', description: 'Show a clear button when an option has been selected.' },
+	},
+	loading: {
+		type: [Boolean, String],
+		default: false,
+		_edit: { group: 'Control props', description: 'Show an inline spinner while async options are being fetched.' },
 	},
 });
 const emit = defineEmits(['update:modelValue', 'query', 'select', 'focus', 'blur']);
@@ -71,7 +77,20 @@ const root = ref(null);
 const inputEl = ref(null);
 const isMounted = ref(false);
 const field = useField(props, emit, { idPrefix: 'el-combobox' });
+const isClearable = computed(() => booleanProp(props.clearable, true));
+const isLoading = computed(() => booleanProp(props.loading, false));
 const hasSelection = computed(() => field.value.value !== null && field.value.value !== undefined && field.value.value !== '');
+const inputAttrs = computed(() => {
+	const { value: _value, ...attrs } = field.inputAttrs.value;
+	return attrs;
+});
+const inputPaddingClass = computed(() => {
+	if (isClearable.value && hasSelection.value && isLoading.value) return 'pr-28';
+	if (isClearable.value && hasSelection.value) return 'pr-20';
+	if (isLoading.value) return 'pr-20';
+	return 'pr-10';
+});
+const loadingPositionClass = computed(() => (isClearable.value && hasSelection.value ? 'right-[4.25rem]' : 'right-9'));
 
 const normalised = (option) => (typeof option === 'string' ? { value: option, label: option } : option);
 const optionList = computed(() => props.options.map(normalised));
@@ -82,7 +101,15 @@ function displayForValue(value) {
 }
 
 function syncInputFromModel() {
+	if (root.value && root.value.value !== String(field.value.value ?? '')) {
+		root.value.value = field.value.value ?? '';
+	}
 	if (inputEl.value) inputEl.value.value = displayForValue(field.value.value);
+}
+
+function syncInputAfterOptionsChange() {
+	if (!hasSelection.value || field.focused.value) return;
+	syncInputFromModel();
 }
 
 onMounted(async () => {
@@ -104,7 +131,8 @@ onMounted(async () => {
 	});
 });
 
-watch([field.value, optionList], syncInputFromModel);
+watch(field.value, syncInputFromModel);
+watch(optionList, syncInputAfterOptionsChange);
 
 function clearSelection() {
 	field.setValue('');
@@ -113,6 +141,13 @@ function clearSelection() {
 	root.value?.removeAttribute('open');
 	emit('select', { item: null, value: '', label: '', option: null });
 }
+
+function booleanProp(value, defaultValue = false) {
+	if (value === undefined || value === null) return defaultValue;
+	if (value === '' || value === true) return true;
+	if (value === false) return false;
+	return !['false', '0', 'no', 'off'].includes(String(value).toLowerCase());
+}
 </script>
 
 <template>
@@ -120,23 +155,27 @@ function clearSelection() {
 		<element-combobox
 			ref="root"
 			:data-menu-id="listId"
-			:value="field.value.value ?? null"
 			:placement="placement"
 			:floating-mode="floatingMode"
 			class="relative block"
 		>
 			<input
-				v-bind="field.inputAttrs.value"
+				v-bind="inputAttrs"
 				ref="inputEl"
 				slot="input"
 				type="text"
 				class="el-input rounded-full px-4 focus:ring-ring/60"
-				:class="clearable && hasSelection ? 'pr-20' : 'pr-10'"
+				:class="inputPaddingClass"
 				@focus="field.onFocus"
 				@blur="field.onBlur"
 			/>
+			<ElFieldLoadingSpinner
+				v-if="isLoading"
+				class="absolute top-1"
+				:class="loadingPositionClass"
+			/>
 			<button
-				v-if="clearable && hasSelection"
+				v-if="isClearable && hasSelection"
 				type="button"
 				class="absolute right-9 top-1 inline-flex size-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-secondary hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
 				aria-label="Clear selection"

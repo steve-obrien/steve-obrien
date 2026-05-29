@@ -1,5 +1,14 @@
 <script setup>
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, nextTick, ref, useId, watch } from 'vue';
+import {
+	flattenTreeItems,
+	isSameOrDescendantPath,
+	moveTreeItem,
+	seedTreeOpenValues,
+	treeItemCanAcceptChildren,
+	treeItemChildren,
+	treeItemHasChildren,
+} from './treeUtils.js';
 
 defineOptions({
 	__doc: {
@@ -15,6 +24,7 @@ defineOptions({
 		events: [
 			{ name: 'update:modelValue', payload: '(value)', description: 'Emitted when the selected node changes.' },
 			{ name: 'select', payload: '({ item, value, node })', description: 'Fired when a tree item is selected.' },
+			{ name: 'action', payload: '({ action, item, value, node })', description: 'Fired when a right-side item action is clicked.' },
 			{ name: 'toggle', payload: '({ item, value, open })', description: 'Fired when a branch is opened or closed.' },
 			{ name: 'load-children', payload: '({ item, value })', description: 'Fired when a lazy node is opened and needs children.' },
 			{ name: 'reorder', payload: '({ items, item, target, position })', description: 'Fired after drag/drop with a reordered items array.' },
@@ -26,6 +36,7 @@ defineOptions({
 			{ keys: '←', action: 'Close an open branch, otherwise move to the parent.' },
 			{ keys: 'Enter / Space', action: 'Select the focused item.' },
 			{ keys: 'Home / End', action: 'Move to the first or last visible item.' },
+			{ keys: 'Alt + ↑ / ↓', action: 'Move the focused item before or after a sibling when draggable is enabled.' },
 		],
 	},
 });
@@ -77,21 +88,40 @@ const props = defineProps({
 		default: 'compact',
 		_edit: { options: ['compact', 'comfortable'], description: 'Vertical spacing for tree rows.' },
 	},
+	toggleTransition: {
+		type: Boolean,
+		default: true,
+		_edit: { description: 'Animate rows in and out when branches open and close.' },
+	},
+	variant: {
+		type: String,
+		default: 'default',
+		_edit: { options: ['default', 'finder'], description: 'Visual treatment for the tree surface.' },
+	},
+	label: {
+		type: String,
+		default: 'Tree view',
+		_edit: { description: 'Accessible name for the tree.' },
+	},
 });
 
-const emit = defineEmits(['update:modelValue', 'update:items', 'update:openValues', 'select', 'toggle', 'load-children', 'reorder']);
+const emit = defineEmits(['update:modelValue', 'update:items', 'update:openValues', 'select', 'action', 'toggle', 'load-children', 'reorder']);
 const activeValue = ref(props.modelValue);
-const openSet = ref(new Set(seedOpenValues(props.items, props.openValues)));
+const openSet = ref(new Set(seedTreeOpenValues(props.items, props.openValues)));
 const dropTarget = ref(null);
 const draggedValue = ref(null);
+const liveMessage = ref('');
+const treeId = `el-tree-${useId()}`;
 const rowRefs = new Map();
 
 const treeItems = computed(() => props.items || []);
-const visibleNodes = computed(() => flattenTree(treeItems.value, openSet.value));
+const visibleNodes = computed(() => flattenTreeItems(treeItems.value, openSet.value));
 const selectedValue = computed(() => props.modelValue);
 
+// Local open state lets the tree work without a store, while update:openValues
+// still gives larger apps a clean controlled-state path.
 watch(() => props.items, (items) => {
-	openSet.value = new Set(seedOpenValues(items, props.openValues, openSet.value));
+	openSet.value = new Set(seedTreeOpenValues(items, props.openValues, openSet.value));
 	if (!activeValue.value && visibleNodes.value[0]) activeValue.value = visibleNodes.value[0].value;
 }, { deep: true });
 
@@ -105,47 +135,6 @@ watch(() => props.modelValue, (value) => {
 	if (props.scrollIntoView) nextTick(() => scrollToNode(value));
 });
 
-function seedOpenValues(items, controlled = [], previous = new Set()) {
-	if (controlled?.length) return controlled.map(String);
-	const values = new Set(previous);
-	visitItems(items, (item) => {
-		if (item?.open) values.add(String(valueOf(item)));
-	});
-	return [...values];
-}
-
-function visitItems(items, callback) {
-	for (const item of items || []) {
-		callback(item);
-		if (Array.isArray(item?.children)) visitItems(item.children, callback);
-	}
-}
-
-function valueOf(item) {
-	return item?.id ?? item?.value ?? item?.label;
-}
-
-function labelOf(item) {
-	return item?.label ?? item?.name ?? valueOf(item);
-}
-
-function childrenOf(item) {
-	return Array.isArray(item?.children) ? item.children : [];
-}
-
-function hasChildren(item) {
-	return childrenOf(item).length > 0 || item?.lazy;
-}
-
-function canAcceptChildren(item) {
-	if (item?.acceptsChildren !== undefined) return item.acceptsChildren !== false;
-	return hasChildren(item);
-}
-
-function isOpen(value) {
-	return openSet.value.has(String(value));
-}
-
 function isLoading(item) {
 	return Boolean(item?.loading);
 }
@@ -155,7 +144,7 @@ function iconPath(item) {
 }
 
 function defaultIconFor(item) {
-	if (hasChildren(item)) return 'M4 6h6l2 2h8v10H4V6Z';
+	if (treeItemHasChildren(item)) return 'M4 6h6l2 2h8v10H4V6Z';
 	return 'M6 4h8l4 4v12H6V4Zm8 0v5h5';
 }
 
@@ -163,27 +152,15 @@ function slotNameOf(item) {
 	return item?.slot || 'item';
 }
 
-function flattenTree(items, openValues, depth = 1, parent = null, path = []) {
-	const out = [];
-	(items || []).forEach((item, index) => {
-		const value = valueOf(item);
-		const node = {
-			item,
-			value,
-			label: labelOf(item),
-			depth,
-			parent,
-			path: [...path, index],
-			open: openValues.has(String(value)),
-			loading: isLoading(item),
-			expandable: hasChildren(item),
-		};
-		out.push(node);
-		if (node.open && childrenOf(item).length) {
-			out.push(...flattenTree(childrenOf(item), openValues, depth + 1, node, node.path));
-		}
-	});
-	return out;
+function rowActions(item) {
+	const actions = Array.isArray(item?.actions) ? item.actions : [];
+	if (item?.rightIcon) {
+		return [
+			...actions,
+			{ value: item.rightIconAction || 'right-icon', label: item.rightIconLabel || 'Item action', icon: item.rightIcon },
+		];
+	}
+	return actions;
 }
 
 function setRowRef(value, element) {
@@ -191,6 +168,15 @@ function setRowRef(value, element) {
 	else rowRefs.delete(String(value));
 }
 
+/**
+ * Focus a tree row by value.
+ *
+ * Useful when another surface, such as a design stage, wants to move keyboard
+ * focus to the matching layer.
+ *
+ * @param {string|number} value
+ * @param {boolean} shouldScroll
+ */
 function focusNode(value, shouldScroll = false) {
 	if (value == null) return;
 	activeValue.value = value;
@@ -201,6 +187,11 @@ function focusNode(value, shouldScroll = false) {
 	});
 }
 
+/**
+ * Scroll a tree row into view by value without changing selection.
+ *
+ * @param {string|number} value
+ */
 function scrollToNode(value) {
 	nextTick(() => rowRefs.get(String(value))?.scrollIntoView({ block: 'nearest' }));
 }
@@ -210,6 +201,15 @@ function selectNode(node) {
 	activeValue.value = node.value;
 	emit('update:modelValue', node.value);
 	emit('select', { item: node.item, value: node.value, node });
+}
+
+function onActionClick(action, node) {
+	emit('action', {
+		action,
+		item: node.item,
+		value: node.value,
+		node,
+	});
 }
 
 function toggleNode(node, forceOpen = null) {
@@ -222,14 +222,16 @@ function toggleNode(node, forceOpen = null) {
 	openSet.value = next;
 	emit('update:openValues', [...next]);
 	emit('toggle', { item: node.item, value: node.value, open: nextOpen });
-	if (nextOpen && node.item?.lazy && !childrenOf(node.item).length) {
+	if (nextOpen && node.item?.lazy && !treeItemChildren(node.item).length) {
 		emit('load-children', { item: node.item, value: node.value });
 	}
 }
 
 function onRowKeydown(event, node) {
 	const index = visibleNodes.value.findIndex((visible) => String(visible.value) === String(node.value));
-	if (event.key === 'ArrowDown') {
+	if (event.altKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
+		reorderByKeyboard(event, node, event.key === 'ArrowUp' ? -1 : 1);
+	} else if (event.key === 'ArrowDown') {
 		event.preventDefault();
 		focusNode(visibleNodes.value[Math.min(index + 1, visibleNodes.value.length - 1)]?.value, true);
 	} else if (event.key === 'ArrowUp') {
@@ -255,6 +257,27 @@ function onRowKeydown(event, node) {
 	}
 }
 
+function reorderByKeyboard(event, node, direction) {
+	if (!dragAllowed(node)) return;
+	const index = visibleNodes.value.findIndex((visible) => String(visible.value) === String(node.value));
+	const target = visibleNodes.value[index + direction];
+	if (!target) return;
+	const position = direction < 0 ? 'before' : 'after';
+	if (!canDrop(String(node.value), target, position)) return;
+	event.preventDefault();
+	const result = moveTreeItem(treeItems.value, node.value, target.value, position);
+	if (!result) return;
+	emit('update:items', result.items);
+	emit('reorder', {
+		items: result.items,
+		item: result.item,
+		target: target.item,
+		position,
+	});
+	liveMessage.value = `Moved ${node.label} ${direction < 0 ? 'up' : 'down'}.`;
+	nextTick(() => focusNode(node.value, true));
+}
+
 function dragAllowed(node) {
 	return props.draggable && node.item?.draggable !== false && !node.item?.disabled;
 }
@@ -273,6 +296,8 @@ function onDragStart(event, node) {
 function onDragOver(event, node) {
 	const sourceValue = draggedValue.value || event.dataTransfer?.getData('text/plain');
 	if (!sourceValue || String(sourceValue) === String(node.value)) return;
+	// The row is split into three drop zones: top = before, middle = child,
+	// bottom = after. Locked/non-container nodes collapse this to before/after.
 	const position = dropPositionFromEvent(event, node);
 	if (!canDrop(sourceValue, node, position)) return;
 	event.preventDefault();
@@ -294,7 +319,7 @@ function onDrop(event, node) {
 	if (!sourceValue || !target || String(target.value) !== String(node.value)) return;
 	event.preventDefault();
 	if (!canDrop(sourceValue, node, target.position)) return;
-	const result = moveItem(treeItems.value, sourceValue, node.value, target.position);
+	const result = moveTreeItem(treeItems.value, sourceValue, node.value, target.position);
 	if (!result) return;
 	if (target.position === 'inside') toggleNode(node, true);
 	emit('update:items', result.items);
@@ -307,7 +332,7 @@ function onDrop(event, node) {
 }
 
 function dropPositionFromEvent(event, node) {
-	if (canAcceptChildren(node.item)) {
+	if (treeItemCanAcceptChildren(node.item)) {
 		const rect = event.currentTarget.getBoundingClientRect();
 		const y = event.clientY - rect.top;
 		if (y < rect.height * 0.25) return 'before';
@@ -319,61 +344,10 @@ function dropPositionFromEvent(event, node) {
 }
 
 function canDrop(sourceValue, targetNode, position) {
-	if (position === 'inside' && !canAcceptChildren(targetNode.item)) return false;
+	if (position === 'inside' && !treeItemCanAcceptChildren(targetNode.item)) return false;
 	const source = visibleNodes.value.find((node) => String(node.value) === String(sourceValue));
 	if (!source) return false;
 	return !isSameOrDescendantPath(targetNode.path, source.path);
-}
-
-function isSameOrDescendantPath(path, possibleParentPath) {
-	if (path.length < possibleParentPath.length) return false;
-	return possibleParentPath.every((part, index) => path[index] === part);
-}
-
-function cloneItems(items) {
-	return (items || []).map((item) => ({
-		...item,
-		children: Array.isArray(item.children) ? cloneItems(item.children) : item.children,
-	}));
-}
-
-function removeByValue(items, value) {
-	for (let index = 0; index < items.length; index += 1) {
-		if (String(valueOf(items[index])) === String(value)) {
-			return items.splice(index, 1)[0];
-		}
-		const children = childrenOf(items[index]);
-		if (children.length) {
-			const removed = removeByValue(children, value);
-			if (removed) return removed;
-		}
-	}
-	return null;
-}
-
-function insertByValue(items, targetValue, position, item) {
-	for (let index = 0; index < items.length; index += 1) {
-		if (String(valueOf(items[index])) === String(targetValue)) {
-			if (position === 'inside') {
-				if (!Array.isArray(items[index].children)) items[index].children = [];
-				items[index].children.push(item);
-			} else {
-				items.splice(position === 'before' ? index : index + 1, 0, item);
-			}
-			return true;
-		}
-		const children = childrenOf(items[index]);
-		if (children.length && insertByValue(children, targetValue, position, item)) return true;
-	}
-	return false;
-}
-
-function moveItem(items, sourceValue, targetValue, position) {
-	const next = cloneItems(items);
-	const item = removeByValue(next, sourceValue);
-	if (!item) return null;
-	if (!insertByValue(next, targetValue, position, item)) return null;
-	return { items: next, item };
 }
 
 function dropClass(node, position) {
@@ -393,81 +367,137 @@ defineExpose({
 <template>
 	<div
 		role="tree"
-		class="w-full rounded-2xl border border-border bg-background p-1 text-sm text-foreground shadow-sm"
-		aria-label="Tree view"
+		:id="treeId"
+		class="w-full rounded-2xl border border-border p-1 text-sm text-foreground shadow-sm"
+		:class="variant === 'finder' ? 'bg-secondary/50 backdrop-blur' : 'bg-background'"
+		:aria-label="label"
+		:aria-describedby="draggable ? `${treeId}-instructions` : undefined"
 	>
-		<div
-			v-for="node in visibleNodes"
-			:key="node.value"
-			:ref="(element) => setRowRef(node.value, element)"
-			role="treeitem"
-			:aria-level="node.depth"
-			:aria-expanded="node.expandable ? String(node.open) : null"
-			:aria-selected="String(String(selectedValue) === String(node.value))"
-			:tabindex="String(activeValue) === String(node.value) || (!activeValue && visibleNodes[0]?.value === node.value) ? 0 : -1"
-			:draggable="dragAllowed(node)"
-			class="group relative flex min-w-0 items-center rounded-xl outline-none transition focus-visible:ring-2 focus-visible:ring-ring/50 aria-selected:bg-primary aria-selected:text-primary-foreground"
-			:class="[
-				density === 'comfortable' ? 'min-h-10' : 'min-h-8',
-				dropClass(node, 'inside'),
-				dragAllowed(node) ? 'cursor-grab active:cursor-grabbing' : '',
-				dropTarget?.value === node.value && dropTarget.position === 'before' ? 'before:opacity-100' : '',
-				dropTarget?.value === node.value && dropTarget.position === 'after' ? 'after:opacity-100' : '',
-				'before:pointer-events-none before:absolute before:inset-x-2 before:top-0 before:h-0.5 before:rounded-full before:bg-ring before:opacity-0 after:pointer-events-none after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-full after:bg-ring after:opacity-0',
-			]"
-			:style="{ paddingLeft: `${(node.depth - 1) * 1.25}rem` }"
-			@click="selectNode(node)"
-			@keydown="onRowKeydown($event, node)"
-			@dragstart="onDragStart($event, node)"
-			@dragover="onDragOver($event, node)"
-			@dragleave="onDragLeave($event, node)"
-			@drop="onDrop($event, node)"
-			@dragend="draggedValue = null; dropTarget = null"
-			@focus="activeValue = node.value"
+		<p v-if="draggable" :id="`${treeId}-instructions`" class="sr-only">Use Alt plus Up or Down arrow to reorder the focused tree item.</p>
+		<p class="sr-only" aria-live="polite">{{ liveMessage }}</p>
+		<TransitionGroup
+			:name="toggleTransition ? 'el-tree-slide' : null"
+			tag="div"
+			class="contents"
 		>
-			<slot
-				name="row"
-				:item="node.item"
-				:node="node"
-				:depth="node.depth"
-				:open="node.open"
-				:selected="String(selectedValue) === String(node.value)"
-				:loading="node.loading"
-				:toggle="() => toggleNode(node)"
-				:select="() => selectNode(node)"
+			<div
+				v-for="node in visibleNodes"
+				:key="node.value"
+				:ref="(element) => setRowRef(node.value, element)"
+				role="treeitem"
+				:aria-level="node.depth"
+				:aria-expanded="node.expandable ? String(node.open) : null"
+				:aria-selected="String(String(selectedValue) === String(node.value))"
+				:aria-disabled="node.item?.disabled ? 'true' : null"
+				:tabindex="String(activeValue) === String(node.value) || (!activeValue && visibleNodes[0]?.value === node.value) ? 0 : -1"
+				:aria-keyshortcuts="draggable ? 'Alt+ArrowUp Alt+ArrowDown' : null"
+				:draggable="dragAllowed(node)"
+				class="group relative flex min-w-0 cursor-pointer items-center rounded-xl outline-none transition focus-visible:ring-2 focus-visible:ring-ring/50 aria-selected:bg-primary aria-selected:text-primary-foreground"
+				:class="[
+					density === 'comfortable' ? 'min-h-10' : 'min-h-8',
+					variant === 'finder' ? 'hover:bg-background/80 aria-selected:bg-accent aria-selected:text-accent-foreground' : 'hover:bg-secondary',
+					dropClass(node, 'inside'),
+					dropTarget?.value === node.value && dropTarget.position === 'before' ? 'before:opacity-100' : '',
+					dropTarget?.value === node.value && dropTarget.position === 'after' ? 'after:opacity-100' : '',
+					'before:pointer-events-none before:absolute before:inset-x-2 before:top-0 before:h-0.5 before:rounded-full before:bg-ring before:opacity-0 after:pointer-events-none after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-full after:bg-ring after:opacity-0',
+				]"
+				:style="{ paddingLeft: `${(node.depth - 1) * 1.25}rem` }"
+				@click="selectNode(node)"
+				@keydown="onRowKeydown($event, node)"
+				@dragstart="onDragStart($event, node)"
+				@dragover="onDragOver($event, node)"
+				@dragleave="onDragLeave($event, node)"
+				@drop="onDrop($event, node)"
+				@dragend="draggedValue = null; dropTarget = null"
+				@focus="activeValue = node.value"
 			>
-				<button
-					type="button"
-					class="grid size-7 shrink-0 place-items-center rounded-lg text-muted-foreground transition hover:bg-secondary hover:text-foreground group-aria-selected:text-primary-foreground/80"
-					:class="!node.expandable && 'opacity-0'"
-					:tabindex="-1"
-					:aria-label="node.open ? 'Collapse item' : 'Expand item'"
-					@click.stop="toggleNode(node)"
+				<slot
+					name="row"
+					:item="node.item"
+					:node="node"
+					:depth="node.depth"
+					:open="node.open"
+					:selected="String(selectedValue) === String(node.value)"
+					:loading="node.loading"
+					:toggle="() => toggleNode(node)"
+					:select="() => selectNode(node)"
 				>
-					<svg v-if="node.loading" viewBox="0 0 20 20" class="size-4 animate-spin" fill="none">
-						<circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="2" opacity=".25" />
-						<path d="M17 10a7 7 0 0 0-7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-					</svg>
-					<svg v-else viewBox="0 0 20 20" class="size-4 transition" :class="node.open && 'rotate-90'" fill="none">
-						<path d="M8 5l5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
-					</svg>
-				</button>
-				<span class="grid size-6 shrink-0 place-items-center text-muted-foreground group-aria-selected:text-primary-foreground/80">
-					<svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
-						<path :d="iconPath(node.item)" />
-					</svg>
-				</span>
-				<span class="min-w-0 flex-1 truncate px-1 py-1.5">
-					<slot :name="slotNameOf(node.item)" :item="node.item" :node="node" :depth="node.depth" :open="node.open" :selected="String(selectedValue) === String(node.value)" :loading="node.loading">
-						{{ node.label }}
-					</slot>
-				</span>
-				<span v-if="node.item?.rightIcon" class="mr-2 grid size-5 shrink-0 place-items-center text-muted-foreground group-aria-selected:text-primary-foreground/80">
-					<svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-						<path :d="node.item.rightIcon" />
-					</svg>
-				</span>
-			</slot>
-		</div>
+					<button
+						v-if="node.expandable"
+						type="button"
+						class="grid size-7 shrink-0 cursor-pointer place-items-center rounded-lg text-muted-foreground transition hover:bg-secondary hover:text-foreground group-aria-selected:text-primary-foreground/80"
+						:tabindex="-1"
+						:aria-label="node.open ? 'Collapse item' : 'Expand item'"
+						@click.stop="toggleNode(node)"
+					>
+						<svg v-if="node.loading" viewBox="0 0 20 20" class="size-4 animate-spin" fill="none">
+							<circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="2" opacity=".25" />
+							<path d="M17 10a7 7 0 0 0-7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+						</svg>
+						<svg v-else viewBox="0 0 20 20" class="size-4 transition" :class="node.open && 'rotate-90'" fill="none">
+							<path d="M8 5l5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+						</svg>
+					</button>
+					<span v-else class="size-7 shrink-0" aria-hidden="true"></span>
+					<span class="grid size-6 shrink-0 place-items-center text-muted-foreground group-aria-selected:text-primary-foreground/80">
+						<svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+							<path :d="iconPath(node.item)" />
+						</svg>
+					</span>
+					<span class="min-w-0 flex-1 truncate px-1 py-1.5">
+						<slot :name="slotNameOf(node.item)" :item="node.item" :node="node" :depth="node.depth" :open="node.open" :selected="String(selectedValue) === String(node.value)" :loading="node.loading">
+							{{ node.label }}
+						</slot>
+					</span>
+					<span v-if="rowActions(node.item).length" class="mr-1 flex shrink-0 items-center gap-0.5 opacity-80 transition group-hover:opacity-100 group-focus-within:opacity-100">
+						<button
+							v-for="action in rowActions(node.item)"
+							:key="action.value || action.label"
+							type="button"
+							class="grid size-6 cursor-pointer place-items-center rounded-md text-muted-foreground transition hover:bg-secondary hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 group-aria-selected:text-primary-foreground/80 group-aria-selected:hover:bg-primary-foreground/15"
+							:aria-label="action.label || action.value || 'Tree item action'"
+							:title="action.label || action.value || 'Tree item action'"
+							:disabled="action.disabled || undefined"
+							@click.stop="onActionClick(action, node)"
+							@mousedown.stop
+						>
+							<svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+								<path :d="action.icon" />
+							</svg>
+						</button>
+					</span>
+				</slot>
+			</div>
+		</TransitionGroup>
 	</div>
 </template>
+
+<style>
+.el-tree-slide-enter-active,
+.el-tree-slide-leave-active {
+	overflow: hidden;
+	min-height: 0 !important;
+	transition:
+		max-height 260ms cubic-bezier(0.32, 0.72, 0, 1),
+		opacity 180ms ease,
+		transform 260ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.el-tree-slide-move {
+	transition: transform 260ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.el-tree-slide-enter-from,
+.el-tree-slide-leave-to {
+	max-height: 0;
+	opacity: 0;
+	transform: translateY(-0.35rem);
+}
+
+.el-tree-slide-enter-to,
+.el-tree-slide-leave-from {
+	max-height: 2.75rem;
+	opacity: 1;
+	transform: translateY(0);
+}
+</style>

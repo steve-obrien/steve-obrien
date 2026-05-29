@@ -58,12 +58,16 @@ export class ElementListbox extends ElementBase {
 	_refresh() {
 		const options = this.options;
 		const orientation = this.getAttribute('orientation') || 'vertical';
+		const focused = options.findIndex((option) => option === document.activeElement || option.contains(document.activeElement));
+		const selected = options.findIndex((option) => valueOf(option) === this.value);
+		const active = focused >= 0 ? focused : Math.max(0, selected);
 		this.setAttribute('aria-orientation', orientation);
 		options.forEach((option, index) => {
-			option.tabIndex = index === 0 ? 0 : -1;
+			option.tabIndex = index === active ? 0 : -1;
 			option.setAttribute('aria-selected', String(valueOf(option) === this.value));
 		});
 		this._roving = createRoving({ items: options, orientation, loop: true });
+		this._roving.setActive(active, { focus: false, select: false });
 	}
 
 	_select(option, event) {

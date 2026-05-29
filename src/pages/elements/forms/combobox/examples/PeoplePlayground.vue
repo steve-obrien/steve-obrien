@@ -12,6 +12,8 @@ const data = reactive({
 	placeholder: 'Assign a person',
 	placement: 'bottom',
 	floatingMode: 'viewport',
+	clearable: true,
+	loading: false,
 });
 
 defineExpose({ data });
@@ -25,6 +27,8 @@ defineExpose({ data });
 			:placeholder="data.placeholder"
 			:placement="data.placement"
 			:floating-mode="data.floatingMode"
+			:clearable="data.clearable"
+			:loading="data.loading"
 			class="w-full"
 		>
 			<template #item="{ item }">

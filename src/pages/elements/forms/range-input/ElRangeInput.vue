@@ -55,6 +55,17 @@ const displayValue = computed(() => {
 	return Number.isFinite(value) ? value : props.min;
 });
 
+const progress = computed(() => {
+	const min = Number(props.min);
+	const max = Number(props.max);
+	const value = displayValue.value;
+	const range = max - min;
+
+	if (!Number.isFinite(min) || !Number.isFinite(max) || range <= 0) return 0;
+
+	return Math.min(100, Math.max(0, ((value - min) / range) * 100));
+});
+
 function toNumber(value) {
 	const number = Number(value);
 	return Number.isNaN(number) ? value : number;
@@ -71,7 +82,8 @@ function toNumber(value) {
 				:max="max"
 				:step="step"
 				:value="displayValue"
-				class="h-2 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-primary outline-none transition focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50 [&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-primary [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:shadow-sm"
+				:style="{ '--el-range-progress': `${progress}%` }"
+				class="el-range-input__control h-2 w-full cursor-pointer appearance-none rounded-full accent-primary outline-none transition focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50 [&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-primary [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:shadow-sm"
 				@input="field.onInput(toNumber($event.target.value))"
 				@focus="field.onFocus"
 				@blur="field.onBlur"
@@ -82,3 +94,27 @@ function toNumber(value) {
 		</div>
 	</FieldChrome>
 </template>
+
+<style scoped>
+.el-range-input__control {
+	background: linear-gradient(
+		to right,
+		var(--primary) 0%,
+		var(--primary) var(--el-range-progress),
+		var(--secondary) var(--el-range-progress),
+		var(--secondary) 100%
+	);
+}
+
+.el-range-input__control::-moz-range-track {
+	height: 0.5rem;
+	border-radius: 9999px;
+	background: var(--secondary);
+}
+
+.el-range-input__control::-moz-range-progress {
+	height: 0.5rem;
+	border-radius: 9999px;
+	background: var(--primary);
+}
+</style>

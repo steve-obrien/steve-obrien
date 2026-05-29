@@ -2,6 +2,8 @@
 import { RouterLink } from 'vue-router';
 import ElementsLayout from './_layout/ElementsLayout.vue';
 import { ElButton, ElDropdown, ElToggle, ElTooltip } from './lib/vue';
+
+import ElDatePicker from './forms/date-picker/ElDatePicker.vue';
 import { ref } from 'vue';
 
 const toggle = ref(true);
@@ -45,6 +47,8 @@ const components = [
 	{ name: 'Accordion', tag: 'element-accordion', to: '/elements/components/accordion' },
 	{ name: 'Combobox', tag: 'element-combobox', to: '/elements/forms/combobox' },
 	{ name: 'Autocomplete', tag: 'element-autocomplete', to: '/elements/forms/autocomplete' },
+	{ name: 'Tag combobox', tag: 'ElTagCombobox', to: '/elements/forms/tag-combobox' },
+	{ name: 'Class toggle input', tag: 'ElClassToggleInput', to: '/elements/forms/class-toggle-input' },
 	{ name: 'Toast', tag: 'element-toast-region', to: '/elements/components/toast' },
 	{ name: 'Command palette', tag: 'ElCommandPalette', to: '/elements/components/command-palette' },
 ];
@@ -57,7 +61,7 @@ const components = [
 			<div class="mx-auto max-w-3xl text-center">
 				<p class="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">A component library worth owning</p>
 				<h1 class="mt-4 text-5xl font-bold leading-[1.05] tracking-tight text-foreground sm:text-6xl">
-					Build interfaces that <span class="italic">feel</span> high-end.
+					Build high-end AI ready interfaces.
 				</h1>
 				<p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
 					<strong class="text-foreground">elements</strong> is a professional component library: headless web component primitives, a polished Vue layer, and Tailwind CSS 4 styling. Designed for serious products.
@@ -87,6 +91,9 @@ const components = [
 					<div class="flex flex-col items-start gap-3">
 						<span class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Toggle</span>
 						<ElToggle v-model="toggle" label="Notifications" />
+					</div>
+					<div class="flex flex-col items-start gap-3">
+						<ElDatePicker label="Appointment date" />
 					</div>
 				</div>
 			</div>

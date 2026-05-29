@@ -1,7 +1,7 @@
 ---
 title: Markdown with Vue escape hatches
 description: A starter article showing how long-form writing can live beside real Vue components.
-date: 2026-05-26
+date: 2026-05-25
 tags: [Writing, Vue, Systems]
 ---
 

@@ -67,7 +67,7 @@ function getTemplate() {
 const OPEN_COMMANDS = new Set(['open', 'show-modal']);
 
 export class ElementDialog extends ElementBase {
-	static get observedAttributes() { return ['open']; }
+	static get observedAttributes() { return ['open', 'aria-labelledby', 'aria-describedby']; }
 
 	static __doc = {
 		name: 'element-dialog',
@@ -150,8 +150,17 @@ export class ElementDialog extends ElementBase {
 		});
 
 		this.on(this._dialog, 'close', () => this._onNativeClose());
+		this._syncAria();
 
 		if (this.boolAttr('open')) this._setOpen(true);
+	}
+
+	_syncAria() {
+		for (const name of ['aria-labelledby', 'aria-describedby']) {
+			const value = this.getAttribute(name);
+			if (value) this._dialog.setAttribute(name, value);
+			else this._dialog.removeAttribute(name);
+		}
 	}
 
 	/** Fallback when Invoker Commands are unavailable — wire [commandfor] buttons by id. */
@@ -203,8 +212,9 @@ export class ElementDialog extends ElementBase {
 	}
 
 	attributeChangedCallback(name, _oldValue, newValue) {
-		if (!this.isConnected || !this._dialog || name !== 'open' || this._syncing) return;
-		this._setOpen(newValue !== null);
+		if (!this.isConnected || !this._dialog || this._syncing) return;
+		if (name === 'open') this._setOpen(newValue !== null);
+		else this._syncAria();
 	}
 
 	/** Whether the modal is open (reads the internal &lt;dialog&gt;). */

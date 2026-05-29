@@ -4,6 +4,8 @@ import SteveLayout from './pages/SteveLayout.vue';
 import './style.css';
 import { routes } from './routes';
 
+const siteName = "Steve O'Brien";
+
 // Apply the stored theme mode to `<html data-theme>` as early as possible so
 // the first paint matches what useTheme would do on mount. `system` mode
 // resolves against the OS preference. Legacy `theme` key (which only held
@@ -21,6 +23,48 @@ const applyInitialTheme = () => {
 	document.documentElement.dataset.theme = theme;
 };
 
+const updateMetaTag = (selector, attributes) => {
+	let tag = document.head.querySelector(selector);
+	if (!tag) {
+		tag = document.createElement('meta');
+		document.head.appendChild(tag);
+	}
+
+	for (const [key, value] of Object.entries(attributes)) {
+		tag.setAttribute(key, value);
+	}
+};
+
+const removeMetaTag = (selector) => {
+	document.head.querySelector(selector)?.remove();
+};
+
+const updateDocumentHead = (route) => {
+	const title = route.meta?.title ? `${route.meta.title} | ${siteName}` : siteName;
+	const description = route.meta?.description || '';
+	const keywords = route.meta?.keywords || '';
+
+	document.title = title;
+
+	if (description) {
+		updateMetaTag('meta[name="description"]', {
+			name: 'description',
+			content: description,
+		});
+	} else {
+		removeMetaTag('meta[name="description"]');
+	}
+
+	if (keywords) {
+		updateMetaTag('meta[name="keywords"]', {
+			name: 'keywords',
+			content: keywords,
+		});
+	} else {
+		removeMetaTag('meta[name="keywords"]');
+	}
+};
+
 export const createApp = ViteSSG(
 	App,
 	{
@@ -31,7 +75,7 @@ export const createApp = ViteSSG(
 			return { top: 0 };
 		},
 	},
-	({ app, isClient }) => {
+	({ app, router, isClient }) => {
 		app.component('SteveLayout', SteveLayout);
 
 		if (!isClient) {
@@ -39,5 +83,6 @@ export const createApp = ViteSSG(
 		}
 
 		applyInitialTheme();
+		router.afterEach((to) => updateDocumentHead(to));
 	},
 );

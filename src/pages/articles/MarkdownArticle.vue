@@ -246,9 +246,87 @@ const segments = computed(() => buildSegments(props.content));
 	padding-left: 1.35rem;
 }
 
+.article-prose :deep(ul) {
+	list-style: disc;
+}
+
+.article-prose :deep(ul ul) {
+	list-style: circle;
+}
+
+.article-prose :deep(ul ul ul) {
+	list-style: square;
+}
+
+.article-prose :deep(ol) {
+	list-style: decimal;
+}
+
+.article-prose :deep(ol ol) {
+	list-style: lower-alpha;
+}
+
+.article-prose :deep(ol ol ol) {
+	list-style: lower-roman;
+}
+
 .article-prose :deep(li) {
 	margin: 0.5rem 0;
 	padding-left: 0.2rem;
+}
+
+.article-prose :deep(li::marker) {
+	color: var(--muted-foreground);
+	font-weight: 600;
+}
+
+.article-prose :deep(table) {
+	border: 1px solid var(--border);
+	border-collapse: collapse;
+	border-radius: 0.5rem;
+	display: block;
+	margin: 2rem 0;
+	max-width: 100%;
+	overflow-x: auto;
+	white-space: nowrap;
+}
+
+.article-prose :deep(thead) {
+	background: color-mix(in oklch, var(--secondary) 80%, var(--background));
+}
+
+.article-prose :deep(th),
+.article-prose :deep(td) {
+	border-bottom: 1px solid var(--border);
+	border-right: 1px solid var(--border);
+	padding: 0.65rem 0.85rem;
+	text-align: left;
+	vertical-align: top;
+}
+
+.article-prose :deep(th:last-child),
+.article-prose :deep(td:last-child) {
+	border-right: 0;
+}
+
+.article-prose :deep(tbody tr:last-child td) {
+	border-bottom: 0;
+}
+
+.article-prose :deep(th) {
+	color: var(--foreground);
+	font-size: 0.9em;
+	font-weight: 600;
+	letter-spacing: 0.01em;
+}
+
+.article-prose :deep(td) {
+	color: var(--muted-foreground);
+	font-size: 0.94em;
+}
+
+.article-prose :deep(tbody tr:nth-child(even)) {
+	background: color-mix(in oklch, var(--secondary) 45%, transparent);
 }
 
 .article-prose :deep(blockquote) {

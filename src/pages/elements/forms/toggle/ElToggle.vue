@@ -32,11 +32,16 @@ const labelId = computed(() => (props.label ? `${field.id.value}-label` : ''));
 
 onMounted(async () => {
 	await import('../../lib/headless/toggle.js');
+	syncToggleFromValue();
 	root.value?.addEventListener('el:change', (event) => field.onInput(Boolean(event.detail.checked)));
 });
-watch(field.value, (value) => {
-	if (root.value && root.value.checked !== value) root.value.checked = value;
-});
+watch(field.value, syncToggleFromValue);
+
+function syncToggleFromValue() {
+	if (root.value && root.value.checked !== Boolean(field.value.value)) {
+		root.value.checked = Boolean(field.value.value);
+	}
+}
 
 function toggleFromLabel() {
 	if (field.disabled.value || field.readOnly.value) return;
@@ -60,7 +65,9 @@ function toggleFromLabel() {
 			:disabled="field.disabled.value || field.readOnly.value || null"
 			:aria-label="!labelId ? label || undefined : undefined"
 			:aria-labelledby="labelId || undefined"
+			:aria-describedby="field.describedBy.value || undefined"
 			:aria-invalid="field.invalid.value || undefined"
+			:aria-errormessage="field.errorId.value || undefined"
 			:data-invalid="field.invalid.value ? '' : undefined"
 			@focus="field.onFocus"
 			@blur="field.onBlur"
@@ -72,8 +79,8 @@ function toggleFromLabel() {
 			@click="toggleFromLabel"
 		>
 			<span v-if="label" :id="labelId" class="text-sm text-foreground">{{ label }}</span>
-			<span v-if="description" class="text-xs text-muted-foreground">{{ description }}</span>
-			<span v-if="field.errors.value.length" class="text-xs text-destructive">{{ field.errors.value[0].message || field.errors.value[0] }}</span>
+			<span v-if="description" :id="field.descriptionId.value" class="text-xs text-muted-foreground">{{ description }}</span>
+			<span v-if="field.errors.value.length" :id="field.errorId.value" class="text-xs text-destructive">{{ field.errors.value[0].message || field.errors.value[0] }}</span>
 		</span>
 	</div>
 </template>

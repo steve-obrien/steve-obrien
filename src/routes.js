@@ -70,7 +70,11 @@ const articleDetailRoutes = articles.map((article) => ({
 	path: `/articles/${article.slug}`,
 	component: ArticlePage,
 	props: { slug: article.slug },
-	meta: { title: article.title },
+	meta: {
+		title: article.title,
+		description: article.metaDescription,
+		keywords: article.metaKeywords.join(', '),
+	},
 }));
 
 const newsFeedRoutes = dailyNewsFeeds.map((feed) => ({

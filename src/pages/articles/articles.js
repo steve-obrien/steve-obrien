@@ -41,10 +41,23 @@ function parseValue(value) {
 		return trimmed
 			.slice(1, -1)
 			.split(',')
-			.map((item) => item.trim())
+			.map((item) => item.trim().replace(/^['"]|['"]$/g, ''))
 			.filter(Boolean);
 	}
 	return trimmed.replace(/^['"]|['"]$/g, '');
+}
+
+function normaliseStringList(value) {
+	if (Array.isArray(value)) {
+		return value.map((item) => String(item).trim()).filter(Boolean);
+	}
+
+	if (typeof value !== 'string') return [];
+
+	return value
+		.split(',')
+		.map((item) => item.trim())
+		.filter(Boolean);
 }
 
 /**
@@ -135,6 +148,8 @@ function calculateReadingTime(body) {
  * 	slug: string,
  * 	title: string,
  * 	description: string,
+ * 	metaDescription: string,
+ * 	metaKeywords: string[],
  * 	date: string,
  * 	readingTime: string,
  * 	tags: string[],
@@ -144,11 +159,22 @@ function calculateReadingTime(body) {
 function normaliseArticle(path, raw) {
 	const { meta, body } = parseFrontmatter(raw);
 	const slug = meta.slug || slugFromPath(path);
+	const description = meta.description || '';
+	const metaDescription = meta.metaDescription
+		|| meta.meta_description
+		|| meta['meta-description']
+		|| description;
+	const metaKeywords = meta.metaKeywords
+		|| meta.meta_keywords
+		|| meta['meta-keywords']
+		|| meta.keywords;
 
 	return {
 		slug,
 		title: meta.title || slug.replace(/-/g, ' '),
-		description: meta.description || '',
+		description,
+		metaDescription,
+		metaKeywords: normaliseStringList(metaKeywords),
 		date: meta.date || '',
 		readingTime: calculateReadingTime(body),
 		tags: Array.isArray(meta.tags) ? meta.tags : [],

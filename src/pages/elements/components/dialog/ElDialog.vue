@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, useId, watch } from 'vue';
 
 defineOptions({
 	__doc: {
@@ -48,6 +48,9 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'close']);
 
 const root = ref(null);
+const uniqueId = useId();
+const titleId = computed(() => (props.title ? `el-dialog-${uniqueId}-title` : ''));
+const descriptionId = computed(() => (props.description ? `el-dialog-${uniqueId}-description` : ''));
 
 function setOpen(v) {
 	if (!root.value) return;
@@ -81,15 +84,20 @@ defineExpose({
 		just hand it a trigger slot and the dialog body — no <dialog> tag in
 		Vue templates.
 	-->
-	<element-dialog ref="root" :static="static || null">
+		<element-dialog
+			ref="root"
+			:static="static || null"
+			:aria-labelledby="titleId || null"
+			:aria-describedby="descriptionId || null"
+		>
 		<!-- Vue does not forward slot= onto component roots; anchor trigger for element-dialog -->
 		<span slot="trigger" class="contents">
 			<slot name="trigger" />
 		</span>
 		<div class="rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-2xl shadow-black/30 ring-1 ring-border/60 outline-none w-[min(92vw,28rem)]">
 			<div v-if="title || description" class="space-y-2">
-				<h2 v-if="title" class="text-lg font-semibold tracking-tight">{{ title }}</h2>
-				<p v-if="description" class="text-sm text-muted-foreground">{{ description }}</p>
+					<h2 v-if="title" :id="titleId" class="text-lg font-semibold tracking-tight">{{ title }}</h2>
+					<p v-if="description" :id="descriptionId" class="text-sm text-muted-foreground">{{ description }}</p>
 			</div>
 			<div :class="(title || description) && 'mt-4'">
 				<slot />

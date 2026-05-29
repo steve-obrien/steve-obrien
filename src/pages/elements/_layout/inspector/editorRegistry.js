@@ -7,12 +7,14 @@ import {
 	ElPositionInput,
 	ElSelectInput,
 	ElCombobox,
+	ElTagCombobox,
 	ElToggle,
 	ElColorInput,
 	ElJsonListInput,
 	ElCodeInput,
 	ElJsonInput,
 } from '../../lib/vue';
+import ElPropDefinitionInput from './editors/ElPropDefinitionInput.vue';
 
 // Editor components are referenced by their actual component name in spec
 // schemas (e.g. `_edit: { component: 'ElSelectInput' }`). The indirection keeps
@@ -28,12 +30,14 @@ const editors = {
 	ElPositionInput: markRaw(ElPositionInput),
 	ElSelectInput: markRaw(ElSelectInput),
 	ElCombobox: markRaw(ElCombobox),
+	ElTagCombobox: markRaw(ElTagCombobox),
 	ElToggle: markRaw(ElToggle),
 	ElBooleanInput: markRaw(ElToggle),
 	ElColorInput: markRaw(ElColorInput),
 	ElJsonListInput: markRaw(ElJsonListInput),
 	ElCodeInput: markRaw(ElCodeInput),
 	ElJsonInput: markRaw(ElJsonInput),
+	ElPropDefinitionInput: markRaw(ElPropDefinitionInput),
 };
 
 export function getEditor(name) { return editors[name] || null; }

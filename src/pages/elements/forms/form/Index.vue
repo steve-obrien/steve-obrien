@@ -21,6 +21,8 @@ import NestedForm from './examples/NestedForm.vue';
 import NestedFormSrc from './examples/NestedForm.vue?raw';
 import ProgrammaticForm from './examples/ProgrammaticForm.vue';
 import ProgrammaticFormSrc from './examples/ProgrammaticForm.vue?raw';
+import ProgrammaticErrors from './examples/ProgrammaticErrors.vue';
+import ProgrammaticErrorsSrc from './examples/ProgrammaticErrors.vue?raw';
 import ServerDefinedForm from './examples/ServerDefinedForm.vue';
 import ServerDefinedFormSrc from './examples/ServerDefinedForm.vue?raw';
 import StandaloneFields from './examples/StandaloneFields.vue';
@@ -198,6 +200,25 @@ const formMethods = [
 				>
 					<ProgrammaticForm />
 				</Example>
+			</DocSection>
+
+			<DocSection eyebrow="API" title="Programmatic field errors">
+				<div class="space-y-4">
+					<p class="text-sm leading-6 text-muted-foreground">
+						Runtime validation errors belong to the form state, not the authored
+						<code class="font-mono text-foreground">errors</code>
+						prop. Use
+						<code class="font-mono text-foreground">setFieldState(name, { errors })</code>
+						when a server response or external process needs to mark a field invalid.
+					</p>
+					<Example
+						:source="ProgrammaticErrorsSrc"
+						filename="ProgrammaticErrors.vue"
+						description="A field can receive errors from the form API without changing the field's authored props."
+					>
+						<ProgrammaticErrors />
+					</Example>
+				</div>
 			</DocSection>
 
 			<DocSection eyebrow="Standalone" title="Fields still work without a form">

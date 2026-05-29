@@ -49,7 +49,15 @@ function select(value) {
 			:name="field.htmlName.value"
 			:value="field.value.value ?? ''"
 		/>
-		<div class="flex flex-wrap gap-0">
+			<div
+				:id="field.id.value"
+				role="group"
+				:aria-label="label || undefined"
+				:aria-describedby="field.describedBy.value || undefined"
+				:aria-invalid="field.invalid.value || undefined"
+				:aria-errormessage="field.errorId.value || undefined"
+				class="flex flex-wrap gap-0"
+			>
 			<ElButton
 				v-for="(opt, i) in options"
 				:key="valueOf(opt)"

@@ -10,6 +10,8 @@ import PeopleLookup from './examples/PeopleLookup.vue';
 import PeopleLookupSrc from './examples/PeopleLookup.vue?raw';
 import PeoplePlayground from './examples/PeoplePlayground.vue';
 import PeoplePlaygroundSrc from './examples/PeoplePlayground.vue?raw';
+import ServerLoadedPeople from './examples/ServerLoadedPeople.vue';
+import ServerLoadedPeopleSrc from './examples/ServerLoadedPeople.vue?raw';
 import Example from '../../_layout/docs/Example.vue';
 import { RouterLink } from 'vue-router';
 
@@ -59,6 +61,11 @@ const peoplePlaygroundInspect = {
 			default: true,
 			_edit: { description: 'Show a clear button when an option has been selected.' },
 		},
+		loading: {
+			type: Boolean,
+			default: false,
+			_edit: { description: 'Show an inline spinner while async options are being fetched.' },
+		},
 	},
 };
 
@@ -68,6 +75,7 @@ const props = [
 	{ name: 'placeholder', type: 'string', default: "'Search…'", description: 'Input placeholder.' },
 	{ name: 'floatingMode', type: "'viewport' | 'anchor'", default: "'viewport'", description: 'Choose whether the list stays in the browser or follows the input while scrolling.' },
 	{ name: 'clearable', type: 'boolean', default: 'true', description: 'Show an inline clear button when an option is selected.' },
+	{ name: 'loading', type: 'boolean', default: 'false', description: 'Show an inline spinner while async options are being fetched.' },
 ];
 const keys = [
 	{ k: '↑ / ↓', d: 'Move active option.' },
@@ -108,6 +116,16 @@ const keys = [
 					description="Use the item slot for richer option rendering. The input still displays the label and v-model still receives the value."
 				>
 					<PeopleLookup />
+				</Example>
+			</DocSection>
+
+			<DocSection eyebrow="Demo" title="Server-loaded options">
+				<Example
+					:source="ServerLoadedPeopleSrc"
+					filename="ServerLoadedPeople.vue"
+					description="@query lets the parent fetch options and pass the current server results back through options."
+				>
+					<ServerLoadedPeople />
 				</Example>
 			</DocSection>
 

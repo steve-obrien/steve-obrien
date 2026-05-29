@@ -1,6 +1,7 @@
 <script setup>
-import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
-import { attachPopoverReflow, positionPopoverPanel } from '../../lib/headless/popover-panel.js';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { positionPopoverPanel } from '../../lib/headless/popover-panel.js';
+import { provideMenuContext, useParentMenuContext } from './menuContext.js';
 
 defineOptions({
 	__doc: {
@@ -8,6 +9,7 @@ defineOptions({
 		tag: '<ElMenu>',
 		description: 'A roving-focus action menu for command lists, settings menus, and static menu panels.',
 		slots: [
+			{ name: '(default)', description: 'Custom <MenuItem> rows when you want markup-driven menus instead of the items prop.' },
 			{ name: 'item', payload: '{ item, index, value, label, checked, open, hasChildren }', description: 'Custom label/body content inside the default menu row.' },
 			{ name: 'item-row', payload: '{ item, index, value, label, checked, open, hasChildren }', description: 'Replace the full inner row markup while ElMenu keeps the interactive wrapper.' },
 			{ name: 'item.slot', payload: '{ item, index, value, label, checked, open, hasChildren }', description: 'Set item.slot to a named slot for per-item row markup.' },
@@ -22,7 +24,7 @@ defineOptions({
 const props = defineProps({
 	items: {
 		type: Array,
-		required: true,
+		default: null,
 		_edit: { component: 'ElJsonListInput', description: 'Menu rows. Use separator: true for dividers.', props: { compact: true } },
 	},
 	orientation: {
@@ -41,20 +43,46 @@ const root = ref(null);
 const openPath = ref('');
 const submenuPanel = ref(null);
 const submenuTrigger = ref(null);
-const submenuReflowOff = ref(null);
+const parentMenu = useParentMenuContext();
+const hasItemPropRows = computed(() => Array.isArray(props.items) && props.items.length > 0);
+let parentPopover = null;
+let parentPopoverToggleOff = null;
+let closeTimer = null;
+const submenuCloseDelay = 650;
+
+provideMenuContext({
+	select(event) {
+		emit('select', event);
+		parentMenu?.select?.(event);
+	},
+	change(event) {
+		emit('change', event);
+		parentMenu?.change?.(event);
+	},
+});
 
 onMounted(async () => {
 	await import('../../lib/headless/menu.js');
-	root.value?.addEventListener('el:select', (event) => emit('select', {
+	root.value?.addEventListener('el:select', (event) => emitSelect({
 		value: event.detail.value,
-		item: props.items.find((item) => valueOf(item) === event.detail.value) || null,
+		item: itemForValue(event.detail.value),
 	}));
-	root.value?.addEventListener('el:change', (event) => emit('change', {
+	root.value?.addEventListener('el:change', (event) => emitChange({
 		value: event.detail.value,
 		checked: event.detail.checked,
-		item: props.items.find((item) => valueOf(item) === event.detail.value) || null,
+		item: itemForValue(event.detail.value),
 	}));
-	root.value?.addEventListener('el:submenu', (event) => openSubmenu(event.detail.value, event.detail.item, true));
+	root.value?.addEventListener('el:submenu', (event) => {
+		if (!hasItemPropRows.value) return;
+		openSubmenu(event.detail.value, event.detail.item, true);
+	});
+	parentPopover = root.value?.closest?.('[popover]');
+	if (parentPopover) {
+		parentPopoverToggleOff = (event) => {
+			if (event.newState === 'closed') closeActiveSubmenu(false);
+		};
+		parentPopover.addEventListener('toggle', parentPopoverToggleOff);
+	}
 });
 
 const labelOf = (item) => (item && typeof item === 'object' ? (item.label ?? item.value) : item);
@@ -81,8 +109,22 @@ const roleOf = (item) => {
 	return 'menuitem';
 };
 
+function itemForValue(value) {
+	return props.items?.find?.((item) => valueOf(item) === value) || null;
+}
+
+function emitSelect(event) {
+	emit('select', event);
+	parentMenu?.select?.(event);
+}
+
+function emitChange(event) {
+	emit('change', event);
+	parentMenu?.change?.(event);
+}
+
 function activeChildItems() {
-	return props.items.find((item) => valueOf(item) === openPath.value)?.children || [];
+	return props.items?.find?.((item) => valueOf(item) === openPath.value)?.children || [];
 }
 
 function submenuOptions() {
@@ -99,11 +141,10 @@ function submenuOptions() {
 function placeSubmenu() {
 	if (!submenuPanel.value || !submenuTrigger.value) return;
 	positionPopoverPanel(submenuPanel.value, submenuTrigger.value, submenuOptions());
-	submenuReflowOff.value?.();
-	submenuReflowOff.value = attachPopoverReflow(submenuPanel.value, submenuTrigger.value, submenuOptions());
 }
 
 function openSubmenu(value, trigger = null, focusFirst = false) {
+	cancelSubmenuClose();
 	openPath.value = value;
 	if (trigger) submenuTrigger.value = trigger;
 	nextTick(() => {
@@ -116,15 +157,41 @@ function openSubmenu(value, trigger = null, focusFirst = false) {
 }
 
 function closeSubmenu(value, focusBack = true) {
+	cancelSubmenuClose();
 	if (openPath.value === value) openPath.value = '';
-	submenuReflowOff.value?.();
-	submenuReflowOff.value = null;
 	if (focusBack) root.value?.querySelector(`[data-value="${CSS.escape(value)}"]`)?.focus();
 }
 
+function closeActiveSubmenu(focusBack = true) {
+	if (!openPath.value) return;
+	closeSubmenu(openPath.value, focusBack);
+}
+
+function cancelSubmenuClose() {
+	if (!closeTimer) return;
+	clearTimeout(closeTimer);
+	closeTimer = null;
+}
+
+function scheduleCloseSubmenu(value, focusBack = false) {
+	cancelSubmenuClose();
+	closeTimer = setTimeout(() => closeSubmenu(value, focusBack), submenuCloseDelay);
+}
+
+function isSubmenuSafeTarget(target) {
+	if (!(target instanceof Element)) return false;
+	return Boolean(target.closest('[data-el-menu-submenu-panel]'));
+}
+
 function maybeCloseSubmenu(event, value) {
-	if (submenuPanel.value?.contains(event.relatedTarget)) return;
-	closeSubmenu(value, false);
+	if (submenuPanel.value?.contains(event.relatedTarget) || isSubmenuSafeTarget(event.relatedTarget)) return;
+	scheduleCloseSubmenu(value, false);
+}
+
+function maybeCloseSubmenuPanel(event) {
+	if (!openPath.value) return;
+	if (submenuTrigger.value?.contains(event.relatedTarget) || isSubmenuSafeTarget(event.relatedTarget)) return;
+	scheduleCloseSubmenu(openPath.value, false);
 }
 
 function onItemKeydown(event, item) {
@@ -144,26 +211,31 @@ function onSubmenuKeydown(event, item) {
 
 function onSelect(event) {
 	openPath.value = '';
-	submenuReflowOff.value?.();
-	submenuReflowOff.value = null;
-	emit('select', event);
+}
+
+function onChange() {
+	// Nested ElMenu instances propagate change through menuContext.
 }
 
 function setSubmenuPanel(element) {
 	submenuPanel.value = element;
-	if (element) nextTick(placeSubmenu);
+	if (!element) return;
+	nextTick(placeSubmenu);
 }
 
 function focusableAttrs(item) {
 	const tag = itemTag(item);
 	return {
 		type: tag === 'button' ? 'button' : null,
-		href: tag === 'a' ? item?.href : null,
+		href: tag === 'a' && !item?.disabled ? item?.href : null,
+		tabindex: tag === 'a' && item?.disabled ? -1 : null,
 	};
 }
 
 onBeforeUnmount(() => {
-	submenuReflowOff.value?.();
+	cancelSubmenuClose();
+	parentPopover?.removeEventListener('toggle', parentPopoverToggleOff);
+	closeActiveSubmenu(false);
 });
 </script>
 
@@ -174,7 +246,8 @@ onBeforeUnmount(() => {
 		class="block w-full"
 		:class="surface ? 'el-glass-surface rounded-2xl p-1 shadow-sm' : ''"
 	>
-		<template v-for="(item, index) in items" :key="valueOf(item) || index">
+		<slot v-if="!hasItemPropRows" />
+		<template v-for="(item, index) in items" v-else :key="valueOf(item) || index">
 			<hr v-if="item && item.separator" class="my-1 border-t border-border" />
 			<div
 				v-else
@@ -217,11 +290,13 @@ onBeforeUnmount(() => {
 		<div
 			v-if="openPath"
 			:ref="setSubmenuPanel"
+			data-el-menu-submenu-panel
 			class="el-popover-panel el-glass-surface fixed z-50 min-w-40 rounded-2xl p-1 outline-none"
 			@keydown="onSubmenuKeydown($event, { value: openPath })"
-			@mouseleave="closeSubmenu(openPath, false)"
+			@mouseenter="cancelSubmenuClose"
+			@mouseleave="maybeCloseSubmenuPanel"
 		>
-			<ElMenu :items="activeChildItems()" :surface="false" @select="onSelect" @change="emit('change', $event)">
+			<ElMenu :items="activeChildItems()" :surface="false" @select="onSelect" @change="onChange">
 				<template v-for="(_, slotName) in $slots" #[slotName]="childSlotProps">
 					<slot :name="slotName" v-bind="childSlotProps" />
 				</template>

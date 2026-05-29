@@ -47,7 +47,12 @@ const positions = [
 			:name="field.htmlName.value"
 			:value="field.value.value"
 		/>
-		<div class="relative h-28 rounded-xl border border-border bg-secondary/30 p-3">
+			<div
+				role="group"
+				:aria-label="label || undefined"
+				:aria-describedby="field.describedBy.value || undefined"
+				class="relative h-28 rounded-xl border border-border bg-secondary/30 p-3"
+			>
 			<div class="absolute left-1/2 top-1/2 size-12 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-background shadow-sm"></div>
 			<button
 				v-for="position in positions"

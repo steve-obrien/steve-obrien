@@ -69,10 +69,12 @@ function toggle() {
 		/>
 		<button
 			:id="field.id.value"
-			type="button"
-			:aria-pressed="String(pressed)"
-			:aria-invalid="field.invalid.value || undefined"
-			:data-invalid="field.invalid.value ? '' : undefined"
+				type="button"
+				:aria-pressed="String(pressed)"
+				:aria-invalid="field.invalid.value || undefined"
+				:aria-describedby="field.describedBy.value || undefined"
+				:aria-errormessage="field.errorId.value || undefined"
+				:data-invalid="field.invalid.value ? '' : undefined"
 			:disabled="field.disabled.value || undefined"
 			class="inline-flex w-fit items-center justify-center gap-2 rounded-xl border border-border bg-background font-medium text-foreground shadow-sm outline-none transition hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring/50 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground data-[invalid]:border-destructive data-[invalid]:ring-destructive/20"
 			:class="sizeClass"

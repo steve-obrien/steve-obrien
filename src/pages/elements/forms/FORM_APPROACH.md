@@ -403,6 +403,145 @@ Example configured validators:
 
 This fits the current Studio inspector pattern because validators are just a prop.
 
+## Validator Registry Direction
+
+The long-term validator model should use serializable validator records backed by a registry. This keeps Studio editing, runtime validation, and server-side validation aligned.
+
+Recommended configured shape:
+
+```js
+[
+	{
+		name: 'text',
+		props: {
+			min: 3,
+			max: 32,
+			tooShort: 'Use at least 3 characters.',
+			tooLong: 'Use 32 characters or fewer.',
+		},
+	},
+	{
+		name: 'serverUnique',
+		props: {
+			resource: 'users',
+			field: 'username',
+			endpoint: '/api/validators/unique',
+			message: 'That username is already taken.',
+		},
+	},
+]
+```
+
+Registry definition shape:
+
+```js
+defineValidator({
+	name: 'text',
+	label: 'Text length',
+	runsOn: ['client', 'server'],
+	propsSchema: [
+		{ key: 'min', label: 'Minimum', component: 'ElNumberInput', min: 0 },
+		{ key: 'max', label: 'Maximum', component: 'ElNumberInput', min: 0 },
+		{ key: 'tooShort', label: 'Too short message', component: 'ElTextInput' },
+		{ key: 'tooLong', label: 'Too long message', component: 'ElTextInput' },
+	],
+	validate(value, props, context) {
+		if (props.min != null && String(value || '').length < props.min) {
+			return props.tooShort || `Use at least ${props.min} characters.`;
+		}
+		if (props.max != null && String(value || '').length > props.max) {
+			return props.tooLong || `Use ${props.max} characters or fewer.`;
+		}
+		return true;
+	},
+});
+```
+
+This is close to the component style already used by Studio: a validator has a `name`, a props object, and a schema describing how the inspector edits those props. The inspector can render an `ElValidatorInput` as a specialized list editor:
+
+- choose a validator from the registry
+- render the selected validator's `propsSchema`
+- store the result as plain JSON in the field's `validators` prop
+- show whether the validator runs on client, server, or both
+
+Authoring can still support Laravel-like strings as a convenience layer, but those strings should compile into the same records:
+
+```js
+parseValidatorRules('required|text:min=3,max=32|serverUnique:resource=users,field=username')
+```
+
+becomes:
+
+```js
+[
+	{ name: 'required' },
+	{ name: 'text', props: { min: 3, max: 32 } },
+	{ name: 'serverUnique', props: { resource: 'users', field: 'username' } },
+]
+```
+
+Decorators should also produce the same records rather than becoming a separate validation system:
+
+```js
+validators: [
+	validator('required'),
+	validator('text', { min: 3, max: 32 }),
+	validator('serverUnique', { resource: 'users', field: 'username' }),
+]
+```
+
+Possible implementation phases:
+
+1. Add a validator registry with `defineValidator`, `getValidator`, `listValidators`, and `compileValidators`.
+2. Move built-in validators into registry definitions, preserving existing function validators for backwards compatibility.
+3. Add `ElValidatorInput`, built on `ElJsonListInput`, so Studio can edit validator records with a form UI.
+4. Update the field prop metadata for `validators` to use `ElValidatorInput` instead of raw JSON.
+5. Add a string-rule parser as sugar only. The stored and server-visible shape remains validator records.
+6. Add async/server validator support with stale-result protection, debouncing, and a standard request payload.
+7. Let server libraries consume the same records, using local server validators where possible and returning normalized error records keyed by field path.
+
+Server validator request shape:
+
+```js
+{
+	validator: 'serverUnique',
+	props: { resource: 'users', field: 'username' },
+	field: {
+		name: 'username',
+		path: 'account.username',
+		value: 'steve',
+	},
+	values: {
+		account: {
+			username: 'steve',
+		},
+	},
+}
+```
+
+Server validator result shape:
+
+```js
+{
+	valid: false,
+	code: 'unique',
+	message: 'That username is already taken.',
+	meta: {
+		resource: 'users',
+		field: 'username',
+	},
+}
+```
+
+## Runtime Errors And Inspector Props
+
+There are two different error sources:
+
+- Authored `errors` prop: static errors configured on a field node, editable in Studio.
+- Runtime form state errors: errors produced by validators, server responses, or calls such as `form.setFieldState('email', { errors })`.
+
+The property inspector currently reads authored props, so runtime validation errors will display below the field but will not appear inside the field's `errors` prop editor. That is the right data boundary, but Studio should make the distinction visible. A future inspector should add a read-only "Runtime state" panel for the selected field showing current value, dirty/touched/focused state, invalid state, and normalized errors from the parent form.
+
 ## Prepackaged Field Components
 
 Some inputs should exist as convenience components with default presentation, type, validators, and transformers.

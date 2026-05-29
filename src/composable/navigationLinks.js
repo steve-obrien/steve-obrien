@@ -2,7 +2,6 @@ const links = [
 	{ to: '/', label: 'About' },
 	// { to: '/experiments', label: 'Experiments' },
 	{ to: '/articles', label: 'Articles' },
-	{ to: '/news', label: 'News' },
 	{ to: '/projects', label: 'Projects' },
 	{ to: '/companies', label: 'Companies' },
 	// { to: '/elements', label: 'Elements' },

@@ -2,9 +2,11 @@ import { defineConfig } from 'vite';
 import { fileURLToPath } from 'node:url';
 import vue from '@vitejs/plugin-vue';
 import tailwindcss from '@tailwindcss/vite';
+import templateEditorTailwindServer from './src/pages/experiments/template-editor/tailwindServer.js';
 
 export default defineConfig({
 	plugins: [
+		templateEditorTailwindServer(),
 		vue({
 			template: {
 				compilerOptions: {

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, useId, watch } from 'vue';
 
 defineOptions({
 	__doc: {
@@ -75,6 +75,8 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'open', 'close']);
 
 const drawer = ref(null);
+const uniqueId = useId();
+const titleId = computed(() => (props.title ? `el-drawer-${uniqueId}-title` : ''));
 
 const hostStyle = computed(() => ({
 	'--el-drawer-width': props.width,
@@ -108,7 +110,13 @@ defineExpose({
 </script>
 
 <template>
-	<element-drawer ref="drawer" :side="side" :static="static || null" :style="hostStyle">
+		<element-drawer
+			ref="drawer"
+			:side="side"
+			:static="static || null"
+			:style="hostStyle"
+			:aria-labelledby="titleId || null"
+		>
 		<span slot="trigger" class="contents">
 			<slot name="trigger" />
 		</span>
@@ -117,7 +125,7 @@ defineExpose({
 		>
 			<header v-if="title || $slots.header" class="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-4">
 				<slot name="header">
-					<h2 v-if="title" class="text-base font-semibold tracking-tight text-foreground">{{ title }}</h2>
+						<h2 v-if="title" :id="titleId" class="text-base font-semibold tracking-tight text-foreground">{{ title }}</h2>
 				</slot>
 				<button
 					data-close

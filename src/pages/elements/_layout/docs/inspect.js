@@ -84,7 +84,7 @@ function buildPropDoc(name, def) {
 		required: !!def?.required,
 		group: edit.group || editProps.group || 'Control props',
 		description: edit.description || editProps.description || '',
-		editor: edit.component || edit.editor || null,
+		editor: edit.component || null,
 	};
 }
 

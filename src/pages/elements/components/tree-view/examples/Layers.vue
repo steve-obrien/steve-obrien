@@ -8,6 +8,7 @@ const rectIcon = 'M5 6h14v12H5V6Z';
 const textIcon = 'M5 7h14M12 7v10M8 17h8';
 const lockIcon = 'M8 11V8a4 4 0 0 1 8 0v3M7 11h10v8H7v-8Z';
 const eyeIcon = 'M2 12s4-6 10-6 10 6 10 6-4 6-10 6S2 12 2 12Zm10 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z';
+const eyeOffIcon = 'M3 3l18 18M10.6 10.6A2 2 0 0 0 13.4 13.4M9.9 5.2A9.8 9.8 0 0 1 12 5c6 0 10 7 10 7a16.2 16.2 0 0 1-3.1 3.9M6.5 6.5C3.8 8.2 2 12 2 12s4 7 10 7c1.4 0 2.7-.4 3.8-1';
 
 const selected = ref('hero-title');
 const tree = ref([
@@ -23,7 +24,13 @@ const tree = ref([
 				icon: groupIcon,
 				open: true,
 				children: [
-					{ id: 'hero-title', label: 'Headline', icon: textIcon, rightIcon: eyeIcon },
+					{
+						id: 'hero-title',
+						label: 'Headline',
+						icon: textIcon,
+						visible: true,
+						actions: [{ value: 'visibility', label: 'Toggle visibility', icon: eyeIcon }],
+					},
 					{ id: 'hero-card', label: 'Feature card', icon: rectIcon },
 				],
 			},
@@ -31,7 +38,7 @@ const tree = ref([
 				id: 'locked-nav',
 				label: 'Locked nav',
 				icon: groupIcon,
-				rightIcon: lockIcon,
+				actions: [{ value: 'locked', label: 'Locked subtree', icon: lockIcon, disabled: true }],
 				acceptsChildren: false,
 				children: [
 					{ id: 'logo', label: 'Logo', icon: rectIcon },
@@ -44,6 +51,25 @@ const tree = ref([
 function selectFromStage(id) {
 	selected.value = id;
 }
+
+function updateNode(nodes, id, callback) {
+	for (const node of nodes) {
+		if (node.id === id) {
+			callback(node);
+			return true;
+		}
+		if (Array.isArray(node.children) && updateNode(node.children, id, callback)) return true;
+	}
+	return false;
+}
+
+function onAction({ action, item }) {
+	if (action.value !== 'visibility') return;
+	updateNode(tree.value, item.id, (node) => {
+		node.visible = !node.visible;
+		node.actions = [{ value: 'visibility', label: 'Toggle visibility', icon: node.visible ? eyeIcon : eyeOffIcon }];
+	});
+}
 </script>
 
 <template>
@@ -52,6 +78,7 @@ function selectFromStage(id) {
 			v-model="selected"
 			v-model:items="tree"
 			@reorder="tree = $event.items"
+			@action="onAction"
 		>
 			<template #item="{ item }">
 				<span class="flex min-w-0 items-center gap-2">

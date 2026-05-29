@@ -140,7 +140,6 @@ const docFields = [
 
 const editFields = [
 	['component', 'Name of the inspector editor component. Example: ElTextInput, ElJsonInput, ElJsonListInput.'],
-	['editor', 'Legacy alias for component. Supported by InspectorField today. Prefer component for new code.'],
 	['description', 'Helper copy shown by the inspector field.'],
 	['options', 'Option values passed to the default editor when useful.'],
 	['props', 'Props passed to the editor component. Use this for compact, rows, schema, addLabel, and similar editor-specific props.'],

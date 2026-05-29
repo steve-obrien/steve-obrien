@@ -51,6 +51,28 @@ const SAMPLE_PROPS = {
 			{ label: 'Cherry', value: 'cherry' },
 		],
 	},
+	ElTagCombobox: {
+		label: 'Classes',
+		modelValue: ['bg-white', 'text-sm'],
+		allowCustom: true,
+		options: [
+			{ label: 'bg-white', value: 'bg-white' },
+			{ label: 'text-sm', value: 'text-sm' },
+			{ label: 'rounded-xl', value: 'rounded-xl' },
+		],
+	},
+	ElClassToggleInput: {
+		label: 'Classes',
+		modelValue: 'flex min-w-0 text-2xl',
+		inactiveValues: ['md:h-full'],
+		options: [
+			'flex',
+			'min-w-0',
+			'text-2xl',
+			'md:h-full',
+			'md:overflow-y-auto',
+		],
+	},
 	ElCommandPalette: {
 		commands: [
 			{ label: 'Open dashboard', value: 'dashboard' },

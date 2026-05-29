@@ -13,6 +13,7 @@ import ElNumberInput from '../number-input/ElNumberInput.vue';
 import ElPasswordInput from '../password-input/ElPasswordInput.vue';
 import ElRadioGroup from '../radio-group/ElRadioGroup.vue';
 import ElSelectInput from '../select-input/ElSelectInput.vue';
+import ElTagCombobox from '../tag-combobox/ElTagCombobox.vue';
 import ElTextInput from '../text-input/ElTextInput.vue';
 import ElTextareaInput from '../textarea-input/ElTextareaInput.vue';
 import ElToggle from '../toggle/ElToggle.vue';
@@ -34,6 +35,7 @@ const formComponents = {
 	ElPasswordInput,
 	ElRadioGroup,
 	ElSelectInput,
+	ElTagCombobox,
 	ElTextInput,
 	ElTextareaInput,
 	ElToggle,

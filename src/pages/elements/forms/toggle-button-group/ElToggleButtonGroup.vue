@@ -129,10 +129,12 @@ function onKeydown(event, index, option) {
 		/>
 		<div
 			:id="field.id.value"
-			role="group"
-			:aria-label="label || undefined"
-			:aria-invalid="field.invalid.value || undefined"
-			:data-invalid="field.invalid.value ? '' : undefined"
+				role="group"
+				:aria-label="label || undefined"
+				:aria-describedby="field.describedBy.value || undefined"
+				:aria-invalid="field.invalid.value || undefined"
+				:aria-errormessage="field.errorId.value || undefined"
+				:data-invalid="field.invalid.value ? '' : undefined"
 			class="inline-flex w-fit rounded-2xl border border-border bg-secondary/60 p-1 shadow-inner shadow-black/5 data-[invalid]:border-destructive"
 			:class="orientation === 'vertical' ? 'flex-col' : 'flex-row'"
 		>

@@ -13,13 +13,13 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue']);
 const update = (v) => emit('update:modelValue', v);
 
-const editor = computed(() => getEditor(props.field.component || props.field.editor) || getDefaultEditor());
+const editor = computed(() => getEditor(props.field.component) || getDefaultEditor());
 
 // Pass through every schema entry except the bookkeeping fields so editors
 // pick up their own props (options, rows, min/max/step, placeholder, …).
 const editorProps = computed(() => {
 	// eslint-disable-next-line no-unused-vars
-	const { key, component, editor: _editor, target, label, description, props: fieldProps = {}, ...rest } = props.field;
+	const { key, component, target, label, description, props: fieldProps = {}, ...rest } = props.field;
 	return { ...rest, ...fieldProps };
 });
 </script>

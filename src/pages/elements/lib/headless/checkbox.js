@@ -83,7 +83,9 @@ export class ElementCheckbox extends ElementBase {
 
 	_sync() {
 		this.setAttribute('aria-checked', String(this.checked));
-		if (this.hasAttribute('disabled')) this.setAttribute('aria-disabled', 'true');
+		const disabled = this.hasAttribute('disabled');
+		this.tabIndex = disabled ? -1 : 0;
+		if (disabled) this.setAttribute('aria-disabled', 'true');
 		else this.removeAttribute('aria-disabled');
 	}
 

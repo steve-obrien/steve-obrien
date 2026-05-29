@@ -46,20 +46,15 @@ function defaultEditorForProp(def) {
 }
 
 function resolveComponent(hint, props, def) {
-	// 1. Explicit editor component name wins.
 	if (hint.component) return hint.component;
-	// 2. Back-compat: older `_edit: { editor: 'ElXxx' }` still works.
-	if (hint.editor) return hint.editor;
-	// 3. `options` (or `enum`) implies a select.
 	if (hint.options || hint.enum || props.options || props.enum) return 'ElSelectInput';
-	// 4. Fall back to the prop type.
 	return defaultEditorForProp(def);
 }
 
 function normaliseEdit(hint = {}, def) {
 	const props = { ...(hint.props || {}) };
 	for (const [key, value] of Object.entries(hint)) {
-		if (['component', 'editor', 'props', 'label', 'description', 'group'].includes(key)) continue;
+		if (['component', 'props', 'label', 'description', 'group'].includes(key)) continue;
 		if (!(key in props)) props[key] = value;
 	}
 	return {

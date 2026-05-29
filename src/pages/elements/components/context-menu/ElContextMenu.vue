@@ -1,5 +1,6 @@
 <script setup>
 import { nextTick, onBeforeUnmount, onMounted, ref, useId } from 'vue';
+import { lockDocumentScroll, unlockDocumentScroll } from '../../lib/headless/popover-panel.js';
 import ElMenu from '../menu/ElMenu.vue';
 
 defineOptions({
@@ -33,12 +34,30 @@ const props = defineProps({
 		default: 'min-w-48',
 		_edit: { description: 'Tailwind width utility for the menu panel.' },
 	},
+	lockScroll: {
+		type: Boolean,
+		default: true,
+		_edit: { description: 'Lock browser scrolling while the context menu is open.' },
+	},
 });
 const emit = defineEmits(['select']);
 
 const panelId = `el-context-menu-${useId()}`;
 const trigger = ref(null);
 const panel = ref(null);
+let scrollLocked = false;
+
+function lockScroll() {
+	if (!props.lockScroll || scrollLocked) return;
+	lockDocumentScroll(panel.value);
+	scrollLocked = true;
+}
+
+function unlockScroll() {
+	if (!scrollLocked) return;
+	unlockDocumentScroll(panel.value);
+	scrollLocked = false;
+}
 
 function open(event) {
 	event.preventDefault();
@@ -48,6 +67,7 @@ function open(event) {
 	if (!panel.value.matches?.(':popover-open')) {
 		panel.value.showPopover?.();
 	}
+	lockScroll();
 	nextTick(() => {
 		panel.value?.querySelector('[role="menuitem"]')?.focus();
 	});
@@ -79,6 +99,7 @@ function onWindowBlur() {
 
 function close() {
 	panel.value?.hidePopover?.();
+	unlockScroll();
 }
 
 function onSelect(event) {
@@ -92,8 +113,7 @@ function onKeydown(event) {
 	close();
 }
 
-onMounted(async () => {
-	await import('../../lib/headless/popover-panel.js');
+onMounted(() => {
 	panel.value?.addEventListener('keydown', onKeydown);
 	document.addEventListener('pointerdown', onDocumentPointerDown, true);
 	document.addEventListener('contextmenu', onDocumentContextMenu, true);
@@ -105,6 +125,7 @@ onBeforeUnmount(() => {
 	document.removeEventListener('pointerdown', onDocumentPointerDown, true);
 	document.removeEventListener('contextmenu', onDocumentContextMenu, true);
 	window.removeEventListener('blur', onWindowBlur);
+	unlockScroll();
 });
 </script>
 

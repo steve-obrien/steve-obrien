@@ -36,37 +36,41 @@ const cardStyle = computed(() => ({
 
 <template>
 	<article
-		class="news-card"
-		:class="{ 'news-card-featured': featured }"
+		class="news-card relative isolate min-h-[31rem] overflow-hidden rounded-3xl border border-white/15 text-white shadow-[0_1.25rem_3.5rem_rgba(0,0,0,0.32)] transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-[0_1.75rem_4.5rem_rgba(0,0,0,0.4)] max-sm:min-h-0 max-sm:rounded-[1.1rem]"
+		:class="{ 'news-card-featured min-h-[35rem] md:col-span-2': featured }"
 		:style="cardStyle"
 	>
 		<RouterLink
-			class="news-card-link"
+			class="news-card-link grid min-h-[inherit] text-inherit no-underline"
 			:to="to"
 			:aria-label="`Read generated summary for ${item.title}`"
 		>
-			<div class="news-card-image-wrap">
+			<div class="news-card-image-wrap relative aspect-[16/10] overflow-hidden border-b border-white/10">
 				<img
-					class="news-card-image"
+					class="block size-full scale-[1.01] object-cover transition-transform duration-300"
 					:src="item.image"
 					:alt="item.imageAlt"
 					loading="lazy"
 				/>
 			</div>
 
-			<div class="news-card-body">
-				<div class="news-card-meta">
+			<div class="news-card-body flex min-h-[17rem] flex-col gap-4 p-[1.35rem] max-sm:min-h-0 max-sm:p-[1.1rem]">
+				<div class="flex items-center gap-2 text-xs font-bold uppercase leading-tight tracking-[0.08em] text-white/70">
 					<span class="news-card-category">{{ item.category }}</span>
 					<span aria-hidden="true">/</span>
 					<time :datetime="item.publishedAt">{{ publishedLabel }}</time>
 				</div>
 
-				<h2 class="news-card-title">{{ item.title }}</h2>
-				<p class="news-card-description">{{ item.description }}</p>
+				<h2 class="news-card-title m-0 font-serif text-[clamp(1.8rem,3vw,2.65rem)] font-normal leading-[1.02] tracking-normal text-white max-sm:text-[1.7rem]">
+					{{ item.title }}
+				</h2>
+				<p class="m-0 max-w-xl text-base leading-7 text-white/75 max-sm:text-[0.95rem] max-sm:leading-relaxed">
+					{{ item.description }}
+				</p>
 
-				<div class="news-card-source">
+				<div class="mt-auto flex items-center gap-2 text-xs font-bold uppercase leading-tight tracking-[0.08em] text-white/80">
 					<span>Read summary</span>
-					<span class="news-card-source-mark" aria-hidden="true">-></span>
+					<span class="news-card-source-mark inline-flex size-6 items-center justify-center rounded-full text-xs text-white transition-[background,transform] duration-200" aria-hidden="true">-></span>
 				</div>
 			</div>
 		</RouterLink>
@@ -75,21 +79,9 @@ const cardStyle = computed(() => ({
 
 <style scoped>
 .news-card {
-	position: relative;
-	min-height: 31rem;
-	overflow: hidden;
-	border: 1px solid rgba(255, 255, 255, 0.14);
-	border-radius: 1.5rem;
 	background:
 		linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0)),
 		var(--news-card-gradient);
-	box-shadow: 0 1.25rem 3.5rem rgba(0, 0, 0, 0.32);
-	color: white;
-	isolation: isolate;
-	transition:
-		transform 220ms ease,
-		border-color 220ms ease,
-		box-shadow 220ms ease;
 }
 
 .news-card::before {
@@ -103,23 +95,7 @@ const cardStyle = computed(() => ({
 }
 
 .news-card:hover {
-	transform: translateY(-0.25rem);
 	border-color: color-mix(in srgb, var(--news-card-accent) 44%, white 10%);
-	box-shadow: 0 1.75rem 4.5rem rgba(0, 0, 0, 0.4);
-}
-
-.news-card-link {
-	display: grid;
-	min-height: inherit;
-	color: inherit;
-	text-decoration: none;
-}
-
-.news-card-image-wrap {
-	position: relative;
-	overflow: hidden;
-	aspect-ratio: 16 / 10;
-	border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .news-card-image-wrap::after {
@@ -131,89 +107,21 @@ const cardStyle = computed(() => ({
 	content: "";
 }
 
-.news-card-image {
-	display: block;
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-	transform: scale(1.01);
-	transition: transform 320ms ease;
-}
-
-.news-card:hover .news-card-image {
+.news-card:hover img {
 	transform: scale(1.05);
-}
-
-.news-card-body {
-	display: flex;
-	min-height: 17rem;
-	flex-direction: column;
-	gap: 1rem;
-	padding: 1.35rem;
-}
-
-.news-card-meta,
-.news-card-source {
-	display: flex;
-	align-items: center;
-	gap: 0.55rem;
-	color: rgba(255, 255, 255, 0.68);
-	font-size: 0.72rem;
-	font-weight: 700;
-	letter-spacing: 0.08em;
-	line-height: 1.2;
-	text-transform: uppercase;
 }
 
 .news-card-category {
 	color: color-mix(in srgb, var(--news-card-accent) 72%, white 28%);
 }
 
-.news-card-title {
-	margin: 0;
-	color: white;
-	font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-	font-size: clamp(1.8rem, 3vw, 2.65rem);
-	font-weight: 400;
-	letter-spacing: 0;
-	line-height: 1.02;
-}
-
-.news-card-description {
-	margin: 0;
-	max-width: 36rem;
-	color: rgba(255, 255, 255, 0.76);
-	font-size: 1rem;
-	line-height: 1.7;
-}
-
-.news-card-source {
-	margin-top: auto;
-	color: rgba(255, 255, 255, 0.78);
-}
-
 .news-card-source-mark {
-	display: inline-flex;
-	height: 1.6rem;
-	width: 1.6rem;
-	align-items: center;
-	justify-content: center;
 	border: 1px solid color-mix(in srgb, var(--news-card-accent) 56%, white 12%);
-	border-radius: 999px;
-	color: white;
-	font-size: 0.8rem;
-	transition:
-		background 220ms ease,
-		transform 220ms ease;
 }
 
 .news-card:hover .news-card-source-mark {
 	background: color-mix(in srgb, var(--news-card-accent) 28%, transparent);
 	transform: translateX(0.18rem);
-}
-
-.news-card-featured {
-	min-height: 35rem;
 }
 
 .news-card-featured .news-card-body {
@@ -226,10 +134,6 @@ const cardStyle = computed(() => ({
 }
 
 @media (min-width: 900px) {
-	.news-card-featured {
-		grid-column: span 2;
-	}
-
 	.news-card-featured .news-card-link {
 		grid-template-columns: minmax(0, 1.08fr) minmax(21rem, 0.92fr);
 	}
@@ -244,27 +148,6 @@ const cardStyle = computed(() => ({
 	.news-card-featured .news-card-body {
 		min-height: 35rem;
 		justify-content: flex-end;
-	}
-}
-
-@media (max-width: 640px) {
-	.news-card {
-		min-height: auto;
-		border-radius: 1.1rem;
-	}
-
-	.news-card-body {
-		min-height: auto;
-		padding: 1.1rem;
-	}
-
-	.news-card-title {
-		font-size: 1.7rem;
-	}
-
-	.news-card-description {
-		font-size: 0.95rem;
-		line-height: 1.62;
 	}
 }
 </style>

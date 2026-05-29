@@ -91,7 +91,12 @@ export class ElementMenu extends ElementBase {
 
 	_onClick(event) {
 		const item = event.target.closest(itemSelector);
-		if (!item || !this.contains(item) || isDisabled(item)) return;
+		if (!item || !this.contains(item)) return;
+		if (isDisabled(item)) {
+			event.preventDefault();
+			event.stopPropagation();
+			return;
+		}
 		this._select(item, event);
 	}
 
