@@ -44,6 +44,16 @@ const props = defineProps({
 		default: false,
 		_edit: { description: 'Modal cannot be dismissed by backdrop click or Esc — use footer actions with data-close or v-model.' },
 	},
+	backdrop: {
+		type: Boolean,
+		default: true,
+		_edit: { description: 'Show the dimmed, blurred page backdrop behind the dialog.' },
+	},
+	footer: {
+		type: Boolean,
+		default: true,
+		_edit: { description: 'Show the footer region and default Close action when no footer slot is provided.' },
+	},
 });
 const emit = defineEmits(['update:modelValue', 'close']);
 
@@ -84,25 +94,27 @@ defineExpose({
 		just hand it a trigger slot and the dialog body — no <dialog> tag in
 		Vue templates.
 	-->
-		<element-dialog
-			ref="root"
-			:static="static || null"
-			:aria-labelledby="titleId || null"
-			:aria-describedby="descriptionId || null"
-		>
+	<element-dialog
+		ref="root"
+		class="el-dialog"
+		:static="static || null"
+		:no-backdrop="backdrop ? null : ''"
+		:aria-labelledby="titleId || null"
+		:aria-describedby="descriptionId || null"
+	>
 		<!-- Vue does not forward slot= onto component roots; anchor trigger for element-dialog -->
 		<span slot="trigger" class="contents">
 			<slot name="trigger" />
 		</span>
-		<div class="rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-2xl shadow-black/30 ring-1 ring-border/60 outline-none w-[min(92vw,28rem)]">
+		<div class="rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-2xl shadow-black/30 ring-1 ring-foreground/20 outline-none w-[min(92vw,28rem)]">
 			<div v-if="title || description" class="space-y-2">
-					<h2 v-if="title" :id="titleId" class="text-lg font-semibold tracking-tight">{{ title }}</h2>
-					<p v-if="description" :id="descriptionId" class="text-sm text-muted-foreground">{{ description }}</p>
+				<h2 v-if="title" :id="titleId" class="text-lg font-semibold tracking-tight">{{ title }}</h2>
+				<p v-if="description" :id="descriptionId" class="text-sm text-muted-foreground">{{ description }}</p>
 			</div>
 			<div :class="(title || description) && 'mt-4'">
 				<slot />
 			</div>
-			<div class="mt-6 flex items-center justify-end gap-2">
+			<div v-if="footer || $slots.footer" class="mt-6 flex items-center justify-end gap-2">
 				<slot name="footer">
 					<button
 						data-close
@@ -114,3 +126,32 @@ defineExpose({
 		</div>
 	</element-dialog>
 </template>
+
+<style scoped>
+.el-dialog::part(dialog) {
+	opacity: 0;
+	transform: translateY(10px) scale(0.96);
+	transform-origin: center;
+	filter: blur(1px);
+	transition:
+		opacity 180ms ease,
+		transform 240ms cubic-bezier(0.16, 1, 0.3, 1),
+		filter 180ms ease,
+		overlay 240ms allow-discrete,
+		display 240ms allow-discrete;
+}
+
+.el-dialog[open]::part(dialog) {
+	opacity: 1;
+	transform: translateY(0) scale(1);
+	filter: blur(0);
+}
+
+@starting-style {
+	.el-dialog[open]::part(dialog) {
+		opacity: 0;
+		transform: translateY(10px) scale(0.96);
+		filter: blur(1px);
+	}
+}
+</style>

@@ -5,6 +5,7 @@ import { ElDialog, ElButton } from '@elements/vue';
 const data = reactive({
 	modelValue: false,
 	static: false,
+	backdrop: true,
 	title: 'Dialog title',
 	description: 'Supporting text shown under the heading.',
 });

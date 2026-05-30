@@ -14,10 +14,14 @@ import PlaygroundDialog from './examples/Playground.vue';
 import PlaygroundDialogSrc from './examples/Playground.vue?raw';
 import Delete from './examples/Delete.vue';
 import DeleteSrc from './examples/Delete.vue?raw';
+import TermsScroll from './examples/TermsScroll.vue';
+import TermsScrollSrc from './examples/TermsScroll.vue?raw';
 import Nested from './examples/Nested.vue';
 import NestedSrc from './examples/Nested.vue?raw';
 import Programmatic from './examples/Programmatic.vue';
 import ProgrammaticSrc from './examples/Programmatic.vue?raw';
+import ProgrammaticDialogs from './examples/ProgrammaticDialogs.vue';
+import ProgrammaticDialogsSrc from './examples/ProgrammaticDialogs.vue?raw';
 import Custom from './examples/Custom.vue';
 import CustomSrc from './examples/Custom.vue?raw';
 
@@ -48,6 +52,16 @@ const doc = ElDialog.__doc;
 				</Example>
 			</DocSection>
 
+			<DocSection eyebrow="Demo" title="Scrollable terms">
+				<Example
+					:source="TermsScrollSrc"
+					filename="TermsScroll.vue"
+					description="A long-form agreement pattern that keeps the dialog footer visible while the terms scroll inside the dialog body."
+				>
+					<TermsScroll />
+				</Example>
+			</DocSection>
+
 			<DocSection eyebrow="Demo" title="Programmatic control">
 				<Example
 					:source="ProgrammaticSrc"
@@ -55,6 +69,16 @@ const doc = ElDialog.__doc;
 					description="Omit the trigger slot — open, close, or toggle via a template ref, or drive state with v-model."
 				>
 					<Programmatic />
+				</Example>
+			</DocSection>
+
+			<DocSection eyebrow="Demo" title="Programmatic dialogs">
+				<Example
+					:source="ProgrammaticDialogsSrc"
+					filename="ProgrammaticDialogs.vue"
+					description="Mount one stack and call useDialogs() from script to await confirmations or resolve custom form components."
+				>
+					<ProgrammaticDialogs />
 				</Example>
 			</DocSection>
 
@@ -76,6 +100,19 @@ const doc = ElDialog.__doc;
 				>
 					<Custom />
 				</Example>
+			</DocSection>
+
+			<DocSection eyebrow="Usage" title="Plain HTML">
+				<p class="text-sm leading-relaxed text-muted-foreground">
+					Use the headless custom element when you want the same native dialog behaviour in plain HTML or another framework.
+					The headless page includes copyable dialog examples with trigger, close, static, and programmatic controls.
+				</p>
+				<RouterLink
+					to="/elements/headless/dialog"
+					class="mt-4 inline-flex h-10 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+				>
+					View headless dialog
+				</RouterLink>
 			</DocSection>
 
 			<DocSection eyebrow="Why &lt;dialog&gt;" title="Built on the platform">

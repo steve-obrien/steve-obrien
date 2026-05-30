@@ -30,23 +30,15 @@ function getTemplate() {
 		max-height: 100vh;
 		/* UA default is overflow:auto, which clips box-shadow on slotted content */
 		overflow: visible;
-		opacity: 0;
-		transition:
-			opacity 140ms ease,
-			overlay 140ms ease allow-discrete,
-			display 140ms ease allow-discrete;
 	}
-	dialog[open] { opacity: 1; }
 	dialog:focus,
 	dialog:focus-visible {
 		outline: none;
 	}
-	@starting-style {
-		dialog[open] { opacity: 0; }
-	}
 	dialog::backdrop {
 		background: rgba(0, 0, 0, 0.5);
 		backdrop-filter: blur(4px);
+		-webkit-backdrop-filter: blur(4px);
 		opacity: 0;
 		transition:
 			opacity 140ms ease,
@@ -54,6 +46,11 @@ function getTemplate() {
 			display 140ms ease allow-discrete;
 	}
 	dialog[open]::backdrop { opacity: 1; }
+	:host([no-backdrop]) dialog::backdrop {
+		background: transparent;
+		backdrop-filter: none;
+		-webkit-backdrop-filter: none;
+	}
 	@starting-style {
 		dialog[open]::backdrop { opacity: 0; }
 	}
@@ -80,6 +77,7 @@ export class ElementDialog extends ElementBase {
 			{ name: 'id', type: 'string', description: 'Host id — used by commandfor on external buttons (e.g. commandfor="my-dialog").' },
 			{ name: 'open', type: 'boolean', description: 'Reflects open state. Setting it shows the dialog (showModal), removing it closes it.' },
 			{ name: 'static', type: 'boolean', description: 'Modal cannot be dismissed by backdrop click or Esc — only data-close, .close(), or removing open.' },
+			{ name: 'no-backdrop', type: 'boolean', description: 'Hides the visual backdrop while keeping native modal top-layer behaviour.' },
 		],
 		events: [
 			{ name: 'el:open', description: 'Fired when the dialog opens.' },

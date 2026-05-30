@@ -1,6 +1,7 @@
 export { default as ElButton } from '../../components/button/ElButton.vue';
 export { default as ElDropdown } from '../../components/dropdown/ElDropdown.vue';
 export { default as ElDialog } from '../../components/dialog/ElDialog.vue';
+export { default as ElDialogStack } from '../../components/dialog/ElDialogStack.vue';
 export { default as ElTabs } from '../../components/tabs/ElTabs.vue';
 export { default as ElTooltip } from '../../components/tooltip/ElTooltip.vue';
 export { default as ElAccordion } from '../../components/accordion/ElAccordion.vue';
@@ -31,6 +32,7 @@ export { default as ElCommandPalette } from '../../components/command-palette/El
 export { default as ElContextMenu } from '../../components/context-menu/ElContextMenu.vue';
 export { popoverProps } from '../../components/popover/ElPopover.vue';
 export { useToasts } from '../../components/toast/useToasts.js';
+export { useDialogs } from '../../components/dialog/useDialogs.js';
 
 // Visual primitives
 export { default as ElCard } from '../../visual/card/ElCard.vue';

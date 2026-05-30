@@ -209,7 +209,7 @@ function matchesShortcut(event, shortcut) {
 				role="dialog"
 				aria-modal="true"
 				:aria-label="dialogLabel"
-				class="relative mx-auto mt-[12vh] w-[min(92vw,38rem)] origin-top overflow-hidden rounded-[1.25rem] border border-border bg-popover/95 text-popover-foreground shadow-[0_24px_80px_rgba(0,0,0,0.28),0_2px_12px_rgba(0,0,0,0.12)] ring-1 ring-border/60 backdrop-blur-xl dark:bg-popover/[0.92]"
+				class="relative mx-auto mt-[12vh] w-[min(92vw,38rem)] origin-top overflow-hidden rounded-[1.25rem] border border-border bg-popover/95 text-popover-foreground shadow-[0_24px_80px_rgba(0,0,0,0.28),0_2px_12px_rgba(0,0,0,0.12)] ring-1 ring-foreground/20 backdrop-blur-xl"
 				:class="{
 					'command-panel-entering': motion === 'entering',
 					'command-panel-leaving': motion === 'leaving',
