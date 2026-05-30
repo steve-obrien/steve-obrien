@@ -2,6 +2,7 @@ export { default as ElButton } from '../../components/button/ElButton.vue';
 export { default as ElDropdown } from '../../components/dropdown/ElDropdown.vue';
 export { default as ElDialog } from '../../components/dialog/ElDialog.vue';
 export { default as ElDialogStack } from '../../components/dialog/ElDialogStack.vue';
+export { default as ElDialogSchemaForm } from '../../components/dialog/ElDialogSchemaForm.vue';
 export { default as ElTabs } from '../../components/tabs/ElTabs.vue';
 export { default as ElTooltip } from '../../components/tooltip/ElTooltip.vue';
 export { default as ElAccordion } from '../../components/accordion/ElAccordion.vue';

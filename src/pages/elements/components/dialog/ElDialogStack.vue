@@ -1,6 +1,7 @@
 <script setup>
 import ElButton from '../button/ElButton.vue';
 import ElDialog from './ElDialog.vue';
+import ElDialogSchemaForm from './ElDialogSchemaForm.vue';
 
 defineOptions({
 	__doc: {
@@ -91,6 +92,16 @@ function dialogComponent(dialog) {
 				@resolve="resolve(dialog, $event)"
 				@dismiss="dismiss(dialog, $event)"
 				@close="dismiss(dialog)"
+			/>
+			<ElDialogSchemaForm
+				v-else-if="dialog.formSchema"
+				:schema="dialog.formSchema"
+				:model-value="dialog.formValues || {}"
+				:submit-text="dialog.confirmText || 'Submit'"
+				:cancel-text="dialog.cancelText || 'Cancel'"
+				:invalid-message="dialog.invalidMessage || undefined"
+				@resolve="resolve(dialog, $event)"
+				@dismiss="dismiss(dialog, $event)"
 			/>
 			<p v-else-if="dialog.message" class="text-sm text-muted-foreground">
 				{{ dialog.message }}

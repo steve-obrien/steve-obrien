@@ -76,7 +76,7 @@ const doc = ElDialog.__doc;
 				<Example
 					:source="ProgrammaticDialogsSrc"
 					filename="ProgrammaticDialogs.vue"
-					description="Mount one stack and call useDialogs() from script to await confirmations or resolve custom form components."
+					description="Mount one stack and call useDialogs() from script to await confirmations, component forms, or schema-driven forms."
 				>
 					<ProgrammaticDialogs />
 				</Example>

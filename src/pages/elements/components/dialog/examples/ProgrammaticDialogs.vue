@@ -1,9 +1,15 @@
 <script setup>
-import { defineComponent, h, ref } from 'vue';
-import { ElButton, ElDialogStack, ElForm, useDialogs } from '@elements/vue';
+import { ref } from 'vue';
+import { ElButton, ElDialogStack, useDialogs } from '@elements/vue';
 import InviteDialogForm from './InviteDialogForm.vue';
 
-const { dialogs, confirmDialog, form, resolve, dismiss } = useDialogs();
+const {
+	dialogStack,
+	confirmDialog,
+	dialogForm,
+	resolveDialog,
+	dismissDialog,
+} = useDialogs();
 const lastResult = ref('No dialog result yet.');
 const schemaFormFields = [
 	{
@@ -26,54 +32,6 @@ const schemaFormFields = [
 	},
 ];
 
-const RuntimeInviteForm = defineComponent({
-	name: 'RuntimeInviteForm',
-	props: {
-		initialValues: {
-			type: Object,
-			default: () => ({}),
-		},
-		children: {
-			type: Array,
-			default: () => [],
-		},
-	},
-	emits: ['resolve', 'dismiss'],
-	setup(props, { emit }) {
-		const values = ref({ ...props.initialValues });
-		const formMessage = ref('');
-		return () => h(ElForm, {
-			modelValue: values.value,
-			'onUpdate:modelValue': (nextValues) => {
-				values.value = nextValues;
-			},
-			children: props.children,
-			class: 'space-y-4',
-			onChange: () => {
-				formMessage.value = '';
-			},
-			onInvalid: () => {
-				formMessage.value = 'Complete the required fields before continuing.';
-			},
-			onSubmit: ({ values: submittedValues }) => {
-				emit('resolve', submittedValues);
-			},
-		}, () => [
-			formMessage.value
-				? h('p', { class: 'text-xs text-destructive' }, formMessage.value)
-				: null,
-			h('div', { class: 'flex items-center justify-end gap-2' }, [
-				h(ElButton, {
-					type: 'button',
-					variant: 'secondary',
-					onClick: () => emit('dismiss'),
-				}, () => 'Cancel'),
-				h(ElButton, { type: 'submit' }, () => 'Create invite'),
-			]),
-		]);
-	},
-});
-
 async function confirmArchive() {
 	const confirmed = await confirmDialog({
 		title: 'Archive project?',
@@ -86,7 +44,7 @@ async function confirmArchive() {
 }
 
 async function openInviteForm() {
-	const result = await form(InviteDialogForm, {
+	const result = await dialogForm(InviteDialogForm, {
 		defaultEmail: 'maya@example.com',
 	}, {
 		title: 'Invite teammate',
@@ -96,15 +54,14 @@ async function openInviteForm() {
 }
 
 async function openSchemaForm() {
-	const result = await form(RuntimeInviteForm, {
+	const result = await dialogForm(schemaFormFields, {
 		initialValues: {
 			name: 'Maya Patel',
 			email: 'maya@example.com',
 		},
-		children: schemaFormFields,
-	}, {
 		title: 'Schema-defined invite',
-		description: 'The dialog and form component are both defined from script.',
+		description: 'The dialog renders an ElForm from a programmatic children schema.',
+		confirmText: 'Create invite',
 	});
 	lastResult.value = result?.email
 		? `Schema form resolved for ${result.name} (${result.email}).`
@@ -123,8 +80,8 @@ async function openSchemaForm() {
 	</div>
 
 	<ElDialogStack
-		:dialogs="dialogs"
-		@resolve="resolve($event.id, $event.value)"
-		@dismiss="dismiss($event.id, $event.value)"
+		:dialogs="dialogStack"
+		@resolve="resolveDialog($event.id, $event.value)"
+		@dismiss="dismissDialog($event.id, $event.value)"
 	/>
 </template>

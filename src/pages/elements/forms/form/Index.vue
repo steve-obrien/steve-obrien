@@ -192,6 +192,21 @@ const formMethods = [
 				</div>
 			</DocSection>
 
+			<DocSection eyebrow="Architecture" title="Schema and form data">
+				<p class="text-sm leading-6 text-muted-foreground">
+					The form schema describes components, validation, and future storage metadata.
+					The form model stores only the values users enter. Keeping those separate makes
+					it possible to generate forms from database tables, or generate database metadata
+					from a form builder.
+				</p>
+				<RouterLink
+					to="/elements/forms/schema"
+					class="mt-4 inline-flex h-10 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+				>
+					Read schema and data notes
+				</RouterLink>
+			</DocSection>
+
 			<DocSection eyebrow="API" title="Programmatic updates">
 				<Example
 					:source="ProgrammaticFormSrc"
