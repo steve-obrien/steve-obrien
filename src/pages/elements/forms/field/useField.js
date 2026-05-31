@@ -2,6 +2,7 @@ import { computed, inject, onBeforeUnmount, ref, unref, useId, watch } from 'vue
 import { normalizeValidatorResult, requiredValidator } from './validators.js';
 
 export const formFieldProviderKey = Symbol('elements.formFieldProvider');
+export const fieldDisplayProviderKey = Symbol('elements.fieldDisplayProvider');
 
 function providerValue(provider, name) {
 	if (!provider || !name) return undefined;
@@ -70,7 +71,7 @@ function providerHtmlId(provider, name) {
 	return htmlIdFromPath(name);
 }
 
-function normalizeErrors(errors) {
+export function normalizeErrors(errors) {
 	const value = unref(errors);
 	if (!value) return [];
 	if (typeof value === 'string') return value ? [value] : [];
@@ -90,10 +91,13 @@ function normalizeErrors(errors) {
 
 export function useField(props, emit, options = {}) {
 	const injectedProvider = inject(formFieldProviderKey, null);
+	const injectedDisplayProvider = inject(fieldDisplayProviderKey, null);
 	const provider = options.register === false ? null : injectedProvider;
+	const displayProvider = options.register === false || options.display === false ? null : injectedDisplayProvider;
+	const displayRegistrationKey = Symbol(options.idPrefix || 'elements.fieldDisplayRegistration');
 	const generatedId = `${options.idPrefix || 'el-field'}-${useId()}`;
 	const focused = ref(false);
-	const touched = ref(false);
+	const touchedState = ref(false);
 	const dirty = ref(false);
 	const validating = ref(false);
 	const internalValue = ref(props.modelValue);
@@ -119,6 +123,30 @@ export function useField(props, emit, options = {}) {
 		...normalizeErrors(localErrors.value),
 	]);
 	const invalid = computed(() => Boolean(props.invalid || providerFieldState.value.invalid || errors.value.length));
+	const interaction = computed(() => (
+		providerFieldState.value.interaction
+		|| (providerFieldState.value.focused ? 'focused' : providerFieldState.value.touched ? 'blurred' : '')
+		|| (focused.value ? 'focused' : touchedState.value ? 'blurred' : 'untouched')
+	));
+	const modification = computed(() => providerFieldState.value.modification || (providerFieldState.value.dirty || dirty.value ? 'changed' : 'clean'));
+	const validation = computed(() => {
+		if (validating.value || providerFieldState.value.validating) return 'validating';
+		if (invalid.value) return 'invalid';
+		if (providerFieldState.value.valid) return 'valid';
+		if (providerFieldState.value.validation && providerFieldState.value.validation !== 'unknown') {
+			return providerFieldState.value.validation;
+		}
+		if (providerFieldState.value.validation === 'unknown') return 'unknown';
+		if (
+			'invalid' in providerFieldState.value
+			|| 'errors' in providerFieldState.value
+			|| 'validating' in providerFieldState.value
+			|| localErrors.value.length
+		) return 'valid';
+		return 'unknown';
+	});
+	const valid = computed(() => validation.value === 'valid');
+	const touched = computed(() => interaction.value !== 'untouched');
 	const visible = computed(() => props.visible !== false && providerFieldState.value.visible !== false);
 	const disabled = computed(() => Boolean(props.disabled || providerFieldState.value.disabled));
 	const readOnly = computed(() => Boolean(props.readOnly || providerFieldState.value.readOnly));
@@ -152,6 +180,35 @@ export function useField(props, emit, options = {}) {
 		'data-invalid': invalid.value ? '' : undefined,
 	}));
 
+	if (displayProvider?.registerField) {
+		displayProvider.registerField(displayRegistrationKey, {
+			id,
+			name,
+			path,
+			htmlName,
+			htmlId,
+			descriptionId,
+			errorId,
+			describedBy,
+			value,
+			errors,
+			invalid,
+			interaction,
+			modification,
+			validation,
+			valid,
+			focused,
+			touched,
+			dirty,
+			validating,
+			visible,
+			disabled,
+			readOnly,
+			fieldAttrs,
+			inputAttrs,
+		});
+	}
+
 	watch(() => props.modelValue, (nextValue) => {
 		internalValue.value = nextValue;
 	});
@@ -162,6 +219,7 @@ export function useField(props, emit, options = {}) {
 
 	onBeforeUnmount(() => {
 		if (name.value && provider?.unregisterField) provider.unregisterField(name.value);
+		if (displayProvider?.unregisterField) displayProvider.unregisterField(displayRegistrationKey);
 	});
 
 	function setFieldState(patch) {
@@ -173,7 +231,7 @@ export function useField(props, emit, options = {}) {
 		setProviderValue(provider, name.value, nextValue);
 		emit?.('update:modelValue', nextValue);
 		dirty.value = true;
-		setFieldState({ dirty: true, value: nextValue });
+		setFieldState({ modification: 'changed', dirty: true, value: nextValue });
 	}
 
 	function onInput(nextValue) {
@@ -182,14 +240,14 @@ export function useField(props, emit, options = {}) {
 
 	function onFocus(event) {
 		focused.value = true;
-		setFieldState({ focused: true });
+		setFieldState({ interaction: 'focused', focused: true, touched: true });
 		emit?.('focus', event);
 	}
 
 	async function onBlur(event) {
 		focused.value = false;
-		touched.value = true;
-		setFieldState({ focused: false, touched: true });
+		touchedState.value = true;
+		setFieldState({ interaction: 'blurred', focused: false, touched: true });
 		emit?.('blur', event);
 		if (props.validateOnBlur) await validate();
 	}
@@ -202,7 +260,7 @@ export function useField(props, emit, options = {}) {
 			...(props.validators || []),
 		];
 		validating.value = true;
-		setFieldState({ validating: true });
+		setFieldState({ validation: 'validating', validating: true });
 		for (const validator of validators) {
 			const validateFn = typeof validator === 'function' ? validator : validator.validate;
 			if (!validateFn) continue;
@@ -225,6 +283,7 @@ export function useField(props, emit, options = {}) {
 			setFieldState({
 				errors: nextErrors,
 				invalid: nextErrors.length > 0,
+				validation: nextErrors.length > 0 ? 'invalid' : 'valid',
 				validating: false,
 			});
 		}
@@ -261,6 +320,10 @@ export function useField(props, emit, options = {}) {
 		value,
 		errors,
 		invalid,
+		interaction,
+		modification,
+		validation,
+		valid,
 		focused,
 		touched,
 		dirty,

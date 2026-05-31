@@ -97,6 +97,7 @@ const accountSchema = z.object({
 />`;
 
 const formMethods = [
+	{ name: 'getState()', returns: 'Form state snapshot', description: 'Returns aggregate form state, values, errors, fieldStates, and a complete fields object keyed by path.' },
 	{ name: 'get(name)', returns: 'Field API | Form API | null', description: 'Returns a field or nested form by local name or path. Use isField/isForm to branch safely.' },
 	{ name: 'getField(name)', returns: 'Field API | null', description: 'Returns only a field API by local name or nested path.' },
 	{ name: 'getForm(name)', returns: 'Form API | null', description: 'Returns this form when no name is passed, or a nested form by path.' },
@@ -109,8 +110,8 @@ const formMethods = [
 	{ name: 'getFieldPath(name)', returns: 'string', description: 'Returns the derived dot path for a local field name inside this form scope.' },
 	{ name: 'getHtmlName(name)', returns: 'string', description: 'Returns the bracket-style native form name, such as invitees[0][email].' },
 	{ name: 'getHtmlId(name)', returns: 'string', description: 'Returns the default generated input ID, such as invitees_0_email.' },
-	{ name: 'getFieldState(name)', returns: 'object', description: 'Reads touched, dirty, focused, validating, invalid, visible, disabled, and error state.' },
-	{ name: 'setFieldState(name, patch)', returns: 'void', description: 'Applies state to one field. Passing errors also updates the form error object.' },
+	{ name: 'getFieldState(name)', returns: 'object', description: 'Reads the field state machine axes plus derived touched, dirty, focused, validating, invalid, valid, visible, disabled, and error state.' },
+	{ name: 'setFieldState(name, patch)', returns: 'void', description: 'Applies state to one field. Boolean shorthands normalize into the state axes; passing errors also updates the form error object.' },
 	{ name: 'validate()', returns: 'Promise<boolean>', description: 'Runs validators for all fields in this form scope.' },
 	{ name: 'reset(nextValues)', returns: 'void', description: 'Resets values, errors, and field state for this form scope.' },
 	{ name: 'getSubform(name)', returns: 'ElForm API', description: 'Returns a nested subform by local name or path.' },

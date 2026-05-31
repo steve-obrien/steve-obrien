@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, useSlots } from 'vue';
-import { positionPopoverPanel } from '../../lib/headless/popover-panel.js';
 import ElMenu from './ElMenu.vue';
+import { positionSubmenuPanel } from './menuPlacement.js';
 
 defineOptions({
 	name: 'ElMenuItem',
@@ -83,7 +83,7 @@ function submenuOptions() {
 
 function placeSubmenu() {
 	if (!submenuPanel.value || !trigger.value) return;
-	positionPopoverPanel(submenuPanel.value, trigger.value, submenuOptions());
+	positionSubmenuPanel(submenuPanel.value, trigger.value, submenuOptions());
 }
 
 function openSubmenu(focusFirst = false) {
@@ -191,19 +191,17 @@ onBeforeUnmount(() => {
 		</component>
 	</div>
 
-	<Teleport to="body">
-		<div
-			v-if="open"
-			:ref="setSubmenuPanel"
-			data-el-menu-submenu-panel
-			class="el-popover-panel el-glass-surface fixed z-50 min-w-48 rounded-2xl p-1 outline-none"
-			@keydown="onSubmenuKeydown"
-			@mouseenter="cancelSubmenuClose"
-			@mouseleave="maybeCloseSubmenuPanel"
-		>
-			<ElMenu :surface="false" @select="onNestedSelect" @change="onNestedSelect">
-				<slot name="submenu" />
-			</ElMenu>
-		</div>
-	</Teleport>
+	<div
+		v-if="open"
+		:ref="setSubmenuPanel"
+		data-el-menu-submenu-panel
+		class="el-popover-panel el-glass-surface absolute z-50 min-w-48 rounded-2xl p-1 outline-none"
+		@keydown="onSubmenuKeydown"
+		@mouseenter="cancelSubmenuClose"
+		@mouseleave="maybeCloseSubmenuPanel"
+	>
+		<ElMenu :surface="false" @select="onNestedSelect" @change="onNestedSelect">
+			<slot name="submenu" />
+		</ElMenu>
+	</div>
 </template>

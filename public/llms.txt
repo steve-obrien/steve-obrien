@@ -63,11 +63,11 @@ Use `@elements/headless` to register headless custom elements such as dropdown, 
 
 ## Forms
 
-Form-capable controls share a field contract. Prefer `fieldProps`, `useField`, `ElFieldChrome`, and parent `ElForm` instead of duplicating label, description, id, validation, errors, touched, dirty, or path logic.
+Form-capable controls share a field contract. Prefer `fieldProps`, `useField`, `ElField`, and parent `ElForm` instead of duplicating label, description, id, validation, errors, touched, dirty, or path logic.
 
 Fields use local names. Parent forms derive nested dot paths, native HTML names, ids, validation state, and submit payloads.
 
-Use `chrome="field"` for standard labelled controls and `chrome="none"` when composing custom layouts.
+Use `chrome="field"` for standard labelled controls and `:chrome="false"` when another `ElField` owns the visual layout.
 
 ## Studio Specs
 

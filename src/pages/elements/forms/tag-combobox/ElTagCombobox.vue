@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue';
 import ElFieldLoadingSpinner from '../_shared/ElFieldLoadingSpinner.vue';
-import FieldChrome from '../field/FieldChrome.vue';
+import ElField from '../field/ElField.vue';
 import { fieldProps } from '../field/fieldProps.js';
 import { useField } from '../field/useField.js';
 
@@ -316,7 +316,7 @@ function booleanProp(value, defaultValue = false) {
 </script>
 
 <template>
-	<FieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
+	<ElField v-bind="field.fieldAttrs.value" :chrome="chrome">
 		<div class="relative">
 			<div
 				class="flex min-h-10 w-full flex-wrap items-center gap-1.5 rounded-2xl border border-input bg-background px-2 py-1.5 text-sm shadow-sm transition focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/20 data-[invalid]:border-destructive"
@@ -409,5 +409,5 @@ function booleanProp(value, defaultValue = false) {
 				</li>
 			</ul>
 		</div>
-	</FieldChrome>
+	</ElField>
 </template>

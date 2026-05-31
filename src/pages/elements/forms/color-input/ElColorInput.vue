@@ -1,5 +1,5 @@
 <script setup>
-import FieldChrome from '../field/FieldChrome.vue';
+import ElField from '../field/ElField.vue';
 import { fieldProps } from '../field/fieldProps.js';
 import { useField } from '../field/useField.js';
 
@@ -29,7 +29,7 @@ const field = useField(props, emit, { idPrefix: 'el-color-input' });
 </script>
 
 <template>
-	<FieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
+	<ElField v-bind="field.fieldAttrs.value" :chrome="chrome">
 		<div class="flex items-center gap-2">
 			<input
 				:id="`${field.id.value}-swatch`"
@@ -52,5 +52,5 @@ const field = useField(props, emit, { idPrefix: 'el-color-input' });
 				@blur="field.onBlur"
 			/>
 		</div>
-	</FieldChrome>
+	</ElField>
 </template>

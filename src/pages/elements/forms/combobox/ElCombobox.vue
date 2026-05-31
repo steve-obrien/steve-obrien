@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, useId, watch } from 'vue';
 import ElFieldLoadingSpinner from '../_shared/ElFieldLoadingSpinner.vue';
-import FieldChrome from '../field/FieldChrome.vue';
+import ElField from '../field/ElField.vue';
 import { fieldProps } from '../field/fieldProps.js';
 import { useField } from '../field/useField.js';
 
@@ -151,7 +151,7 @@ function booleanProp(value, defaultValue = false) {
 </script>
 
 <template>
-	<FieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
+	<ElField v-bind="field.fieldAttrs.value" :chrome="chrome">
 		<element-combobox
 			ref="root"
 			:data-menu-id="listId"
@@ -215,5 +215,5 @@ function booleanProp(value, defaultValue = false) {
 				</ul>
 			</Teleport>
 		</element-combobox>
-	</FieldChrome>
+	</ElField>
 </template>

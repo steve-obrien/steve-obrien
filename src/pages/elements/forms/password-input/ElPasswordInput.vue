@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue';
-import FieldChrome from '../field/FieldChrome.vue';
+import ElField from '../field/ElField.vue';
 import { fieldProps } from '../field/fieldProps.js';
 import { useField } from '../field/useField.js';
 
@@ -131,7 +131,7 @@ const strengthTones = ['', 'bg-destructive', 'bg-destructive', 'bg-warning', 'bg
 </script>
 
 <template>
-	<FieldChrome :field-attrs="passwordFieldAttrs" :chrome="chrome">
+	<ElField v-bind="passwordFieldAttrs" :chrome="chrome">
 		<div class="relative">
 			<input
 				v-bind="field.inputAttrs.value"
@@ -178,5 +178,5 @@ const strengthTones = ['', 'bg-destructive', 'bg-destructive', 'bg-warning', 'bg
 		<p v-if="compromised" class="mt-3 rounded-lg border border-warning/40 bg-warning/15 px-3 py-2 text-xs leading-5 text-warning">
 			{{ compromisedMessage }}
 		</p>
-	</FieldChrome>
+	</ElField>
 </template>

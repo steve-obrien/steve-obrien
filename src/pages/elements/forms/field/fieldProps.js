@@ -81,9 +81,9 @@ export const fieldProps = {
 		_edit: { description: 'Run validators when the field loses focus.' },
 	}),
 	chrome: fieldProp({
-		type: String,
+		type: [String, Boolean],
 		default: 'field',
-		_edit: { options: ['field', 'none'], description: 'Render default field chrome, or render only the control while keeping form state wiring.' },
+		_edit: { options: ['field', false], description: 'Render default field chrome, or false to render only the control while keeping form state wiring.' },
 	}),
 };
 

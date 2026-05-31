@@ -1,4 +1,4 @@
-import { labelFromSlug } from './componentManager.js';
+import { labelFromExportName, labelFromSlug } from './componentManager.js';
 
 export function inspectComponentRecord(record) {
 	const component = record.component;
@@ -8,7 +8,7 @@ export function inspectComponentRecord(record) {
 		...record,
 		doc,
 		studio,
-		label: doc.name || labelFromSlug(record.slug),
+		label: doc.name || labelFromExportName(record.exportName) || labelFromSlug(record.slug),
 		badge: doc.nav?.badge || doc.badge || null,
 		icon: doc.nav?.icon || doc.icon || studio.icon || null,
 		order: doc.order ?? 100,

@@ -1,5 +1,5 @@
 <script setup>
-import FieldChrome from '../field/FieldChrome.vue';
+import ElField from '../field/ElField.vue';
 import ElButton from '../../components/button/ElButton.vue';
 import { fieldProps } from '../field/fieldProps.js';
 import { useField } from '../field/useField.js';
@@ -42,7 +42,7 @@ function select(value) {
 </script>
 
 <template>
-	<FieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
+	<ElField v-bind="field.fieldAttrs.value" :chrome="chrome">
 		<input
 			v-if="field.htmlName.value"
 			type="hidden"
@@ -76,5 +76,5 @@ function select(value) {
 				]"
 			>{{ labelOf(opt) }}</ElButton>
 		</div>
-	</FieldChrome>
+	</ElField>
 </template>

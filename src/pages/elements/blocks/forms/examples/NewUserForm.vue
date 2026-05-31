@@ -60,7 +60,7 @@ const teams = [
 					<p class="text-sm font-medium">Send invitation email</p>
 					<p class="mt-1 text-sm text-muted-foreground">Email the user a secure setup link after creation.</p>
 				</div>
-				<ElToggle name="sendInvite" label="Send invitation email" chrome="none" />
+				<ElToggle name="sendInvite" label="Send invitation email" :chrome="false" />
 			</div>
 
 			<div class="flex flex-wrap justify-end gap-2 border-t border-border pt-6">

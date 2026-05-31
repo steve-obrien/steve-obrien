@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue';
-import FieldChrome from '../field/FieldChrome.vue';
+import ElField from '../field/ElField.vue';
 import ElJsonInput from '../json-input/ElJsonInput.vue';
 import { fieldProps } from '../field/fieldProps.js';
 import { useField } from '../field/useField.js';
@@ -133,7 +133,7 @@ function setRawJson(value) {
 </script>
 
 <template>
-	<FieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
+	<ElField v-bind="field.fieldAttrs.value" :chrome="chrome">
 		<input
 			v-if="field.htmlName.value"
 			type="hidden"
@@ -236,5 +236,5 @@ function setRawJson(value) {
 				>{{ addLabel }}</button>
 			</template>
 		</div>
-	</FieldChrome>
+	</ElField>
 </template>

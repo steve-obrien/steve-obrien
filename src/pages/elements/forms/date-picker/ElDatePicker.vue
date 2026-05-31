@@ -2,7 +2,7 @@
 import { computed, nextTick, ref, useId, watch } from 'vue';
 import ElPopover, { popoverProps } from '../../components/popover/ElPopover.vue';
 import ElCalendar, { calendarProps } from '../calendar/ElCalendar.vue';
-import FieldChrome from '../field/FieldChrome.vue';
+import ElField from '../field/ElField.vue';
 import { fieldProps } from '../field/fieldProps.js';
 import { useField } from '../field/useField.js';
 
@@ -255,7 +255,7 @@ async function focusCalendar() {
 </script>
 
 <template>
-	<FieldChrome :field-attrs="fieldAttrs" :chrome="chrome">
+	<ElField v-bind="fieldAttrs" :chrome="chrome">
 		<div class="relative w-full">
 			<input
 				v-bind="inputAttrs"
@@ -295,5 +295,5 @@ async function focusCalendar() {
 				@change="selectCalendarDate"
 			/>
 		</ElPopover>
-	</FieldChrome>
+	</ElField>
 </template>

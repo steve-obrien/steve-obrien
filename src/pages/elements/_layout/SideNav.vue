@@ -75,6 +75,22 @@ onMounted(restoreScroll);
 watch(() => route.fullPath, restoreScroll);
 
 onBeforeUnmount(saveScroll);
+
+function isItemActive(item) {
+	return route.path === item.to || route.path === item.to?.split('#')[0];
+}
+
+function isChildActive(child) {
+	const [path, hash] = String(child.to || '').split('#');
+	return route.path === path && (!hash || route.hash === `#${hash}`);
+}
+
+function isFamilyOpen(item) {
+	return item.children?.length && (
+		route.path === item.to
+		|| item.children.some((child) => isChildActive(child))
+	);
+}
 </script>
 
 <template>
@@ -82,25 +98,41 @@ onBeforeUnmount(saveScroll);
 		<div v-for="(group, gi) in sideNavLinks" :key="group.label" :class="gi > 0 && 'mt-5'">
 			<p class="px-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{{ group.label }}</p>
 			<nav class="mt-2 space-y-0.5">
-				<RouterLink
-					v-for="c in group.items"
-					:key="c.to"
-					:to="c.to"
-					class="flex items-center justify-between rounded-lg px-3 py-1.5 text-sm font-medium transition"
-					:class="route.path === c.to
-						? 'bg-secondary text-secondary-foreground'
-						: 'text-muted-foreground hover:bg-secondary hover:text-foreground'"
-					@mousedown.prevent="rememberScroll"
-					@click="rememberScroll"
-				>
-					<span class="flex min-w-0 items-center gap-2">
-						<svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-							<path :d="c.icon" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
-						</svg>
-						<span class="truncate">{{ c.label }}</span>
-					</span>
-					<span v-if="c.tag" class="rounded-full bg-success/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-success dark:text-success">{{ c.tag }}</span>
-				</RouterLink>
+				<div v-for="c in group.items" :key="c.to">
+					<RouterLink
+						:to="c.to"
+						class="flex items-center justify-between rounded-lg px-3 py-1.5 text-sm font-medium transition"
+						:class="isItemActive(c)
+							? 'bg-secondary text-secondary-foreground'
+							: 'text-muted-foreground hover:bg-secondary hover:text-foreground'"
+						@mousedown.prevent="rememberScroll"
+						@click="rememberScroll"
+					>
+						<span class="flex min-w-0 items-center gap-2">
+							<svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+								<path :d="c.icon" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+							</svg>
+							<span class="truncate">{{ c.label }}</span>
+						</span>
+						<span v-if="c.tag" class="rounded-full bg-success/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-success dark:text-success">{{ c.tag }}</span>
+					</RouterLink>
+					<div v-if="isFamilyOpen(c)" class="ml-5 mt-0.5 space-y-0.5 border-l border-border pl-2">
+						<RouterLink
+							v-for="child in c.children"
+							:key="child.to"
+							:to="child.to"
+							class="flex items-center justify-between rounded-md px-2 py-1 text-sm font-medium transition"
+							:class="isChildActive(child)
+								? 'bg-secondary text-secondary-foreground'
+								: 'text-muted-foreground hover:bg-secondary hover:text-foreground'"
+							@mousedown.prevent="rememberScroll"
+							@click="rememberScroll"
+						>
+							<span class="truncate">{{ child.label }}</span>
+							<span v-if="child.tag" class="rounded-full bg-success/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-success dark:text-success">{{ child.tag }}</span>
+						</RouterLink>
+					</div>
+				</div>
 			</nav>
 		</div>
 		<div class="mt-8 rounded-2xl border border-border bg-gradient-to-br from-secondary to-transparent p-4">

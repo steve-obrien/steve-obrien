@@ -68,7 +68,7 @@ export const calendarProps = {
 
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue';
-import FieldChrome from '../field/FieldChrome.vue';
+import ElField from '../field/ElField.vue';
 import { useField } from '../field/useField.js';
 
 defineOptions({
@@ -292,7 +292,7 @@ defineExpose({
 </script>
 
 <template>
-	<FieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
+	<ElField v-bind="field.fieldAttrs.value" :chrome="chrome">
 		<input
 			v-if="nativeInput && field.htmlName.value"
 			type="hidden"
@@ -411,5 +411,5 @@ defineExpose({
 				</button>
 			</div>
 		</div>
-	</FieldChrome>
+	</ElField>
 </template>

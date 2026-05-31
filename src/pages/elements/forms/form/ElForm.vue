@@ -17,7 +17,7 @@ import ElTagCombobox from '../tag-combobox/ElTagCombobox.vue';
 import ElTextInput from '../text-input/ElTextInput.vue';
 import ElTextareaInput from '../textarea-input/ElTextareaInput.vue';
 import ElToggle from '../toggle/ElToggle.vue';
-import { formFieldProviderKey } from '../field/useField.js';
+import { formFieldProviderKey, normalizeErrors } from '../field/useField.js';
 import { deletePathValue, forms, getPathValue, setPathValue } from './formApi.js';
 import { zodSchemaToChildren } from './schemaAdapter.js';
 
@@ -77,6 +77,71 @@ function clone(value) {
 
 function snapshot(value) {
 	return clone(value || {});
+}
+
+function normalizeFieldState(state = {}) {
+	const errors = normalizeErrors(state.errors);
+	const hasValidationSignal = (
+		'validating' in state
+		|| 'invalid' in state
+		|| 'valid' in state
+		|| 'errors' in state
+	);
+	const interaction = state.interaction || (state.focused ? 'focused' : state.touched ? 'blurred' : 'untouched');
+	const modification = state.modification || (state.dirty ? 'changed' : 'clean');
+	let validation = 'unknown';
+
+	if (state.validating) validation = 'validating';
+	else if (state.invalid || errors.length) validation = 'invalid';
+	else if (state.valid) validation = 'valid';
+	else if (state.validation && state.validation !== 'unknown') validation = state.validation;
+	else if (state.validation === 'unknown') validation = 'unknown';
+	else if (hasValidationSignal) validation = 'valid';
+
+	return {
+		...state,
+		interaction,
+		modification,
+		validation,
+		focused: interaction === 'focused',
+		touched: interaction !== 'untouched',
+		dirty: modification === 'changed',
+		validating: validation === 'validating',
+		invalid: validation === 'invalid',
+		valid: validation === 'valid',
+		errors,
+	};
+}
+
+function mergeFieldState(previous = {}, patch = {}) {
+	const next = {
+		...previous,
+		...patch,
+	};
+
+	if (!('interaction' in patch)) {
+		if (patch.focused === true) next.interaction = 'focused';
+		else if (patch.touched === true) next.interaction = 'blurred';
+		else if (patch.focused === false && patch.touched === false) next.interaction = 'untouched';
+		else if ('focused' in patch || 'touched' in patch) delete next.interaction;
+	}
+	if (!('modification' in patch) && 'dirty' in patch) {
+		next.modification = patch.dirty ? 'changed' : 'clean';
+	}
+	if (!('validation' in patch) && ('validating' in patch || 'invalid' in patch || 'valid' in patch || 'errors' in patch)) {
+		const patchErrors = 'errors' in patch ? normalizeErrors(patch.errors) : null;
+		if (patch.validating === true) next.validation = 'validating';
+		else if (patch.invalid === true || patchErrors?.length) next.validation = 'invalid';
+		else if (patch.valid === true || patch.invalid === false || (patchErrors && !patchErrors.length)) next.validation = 'valid';
+		else delete next.validation;
+	}
+	if ('validation' in patch || 'validating' in patch || 'invalid' in patch || 'valid' in patch || 'errors' in patch) {
+		if (patch.validating !== true) delete next.validating;
+		if (patch.invalid !== true) delete next.invalid;
+		if (patch.valid !== true) delete next.valid;
+	}
+
+	return normalizeFieldState(next);
 }
 
 const RenderNode = defineComponent({
@@ -179,15 +244,33 @@ ElFormComponent = defineComponent({
 		const state = computed(() => {
 			const states = Object.entries(fieldStates)
 				.filter(([path]) => ownField(path, scopePath.value))
-				.map(([, field]) => field);
+				.map(([, field]) => normalizeFieldState(field));
+			const fieldErrorCount = states.reduce((count, field) => count + field.errors.length, 0);
+			const nextErrorCount = Math.max(errorCount.value, fieldErrorCount);
+			const validation = states.some((field) => field.validation === 'validating')
+				? 'validating'
+				: nextErrorCount > 0 || states.some((field) => field.validation === 'invalid')
+					? 'invalid'
+					: states.length && states.every((field) => field.validation === 'valid')
+						? 'valid'
+						: 'unknown';
+			const interaction = states.some((field) => field.interaction === 'focused')
+				? 'focused'
+				: states.some((field) => field.interaction === 'blurred')
+					? 'blurred'
+					: 'untouched';
+			const modification = states.some((field) => field.modification === 'changed') ? 'changed' : 'clean';
 			return {
-				dirty: states.some((field) => field.dirty),
-				touched: states.some((field) => field.touched),
-				focused: states.some((field) => field.focused),
-				validating: states.some((field) => field.validating),
-				invalid: errorCount.value > 0,
-				valid: errorCount.value === 0,
-				errorCount: errorCount.value,
+				interaction,
+				modification,
+				validation,
+				dirty: modification === 'changed',
+				touched: interaction !== 'untouched',
+				focused: interaction === 'focused',
+				validating: validation === 'validating',
+				invalid: validation === 'invalid',
+				valid: validation === 'valid',
+				errorCount: nextErrorCount,
 				fieldCount: scopedFieldEntries.value.length,
 				path: scopePath.value,
 			};
@@ -333,12 +416,9 @@ ElFormComponent = defineComponent({
 					emitModel();
 					emitChange(path);
 				},
-				getState: () => getPathValue(fieldStates, path) || {},
+				getState: () => normalizeFieldState(getPathValue(fieldStates, path) || {}),
 				setState: (patch) => {
-					setPathValue(fieldStates, path, {
-						...(getPathValue(fieldStates, path) || {}),
-						...patch,
-					});
+					setPathValue(fieldStates, path, mergeFieldState(getPathValue(fieldStates, path) || {}, patch));
 					if ('errors' in patch) setFieldErrors(path, patch.errors);
 				},
 			});
@@ -346,7 +426,7 @@ ElFormComponent = defineComponent({
 				setPathValue(values, path, field.initialValue ?? '');
 				emitModel();
 			}
-			if (!getPathValue(fieldStates, path)) setPathValue(fieldStates, path, {});
+			if (!getPathValue(fieldStates, path)) setPathValue(fieldStates, path, normalizeFieldState());
 		}
 
 		function unregisterField(name) {
@@ -376,7 +456,7 @@ ElFormComponent = defineComponent({
 		}
 
 		function getFieldState(name) {
-			return getPathValue(fieldStates, getFieldPath(name)) || {};
+			return normalizeFieldState(getPathValue(fieldStates, getFieldPath(name)) || {});
 		}
 
 		function getSubform(name) {
@@ -406,11 +486,37 @@ ElFormComponent = defineComponent({
 
 		function setFieldState(name, patch) {
 			const path = getFieldPath(name);
-			setPathValue(fieldStates, path, {
-				...(getPathValue(fieldStates, path) || {}),
-				...patch,
-			});
+			setPathValue(fieldStates, path, mergeFieldState(getPathValue(fieldStates, path) || {}, patch));
 			if ('errors' in patch) setFieldErrors(path, patch.errors);
+		}
+
+		function getState() {
+			const fieldEntries = scopedFieldEntries.value.map(([path, field]) => {
+				const fieldState = normalizeFieldState(getPathValue(fieldStates, path) || {});
+				return [path, {
+					name: field.name,
+					path,
+					label: field.label,
+					required: Boolean(field.required),
+					htmlName: field.htmlName,
+					htmlId: field.htmlId,
+					value: typeof field.getValue === 'function' ? field.getValue() : getPathValue(values, path),
+					state: fieldState,
+					errors: fieldState.errors,
+				}];
+			});
+
+			return {
+				path: scopePath.value,
+				state: state.value,
+				values: snapshot(scopePath.value ? getPathValue(values, scopePath.value) : values),
+				errors: snapshot(errors),
+				fieldStates: Object.fromEntries(scopedFieldEntries.value.map(([path]) => [
+					path,
+					normalizeFieldState(getPathValue(fieldStates, path) || {}),
+				])),
+				fields: Object.fromEntries(fieldEntries),
+			};
 		}
 
 		async function validate() {
@@ -461,6 +567,7 @@ ElFormComponent = defineComponent({
 			getHtmlId,
 			getFieldState,
 			setFieldState,
+			getState,
 			getFieldValue,
 			setFieldValue,
 			get,

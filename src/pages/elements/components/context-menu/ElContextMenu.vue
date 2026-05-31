@@ -77,9 +77,15 @@ function isOpen() {
 	return panel.value?.matches?.(':popover-open');
 }
 
+function isSubmenuTarget(target) {
+	return target instanceof Element && target.closest('[data-el-menu-submenu-panel]');
+}
+
 function isInside(event) {
 	const path = event.composedPath?.() || [];
-	return path.includes(panel.value) || path.includes(trigger.value);
+	return path.includes(panel.value)
+		|| path.includes(trigger.value)
+		|| path.some(isSubmenuTarget);
 }
 
 function onDocumentPointerDown(event) {

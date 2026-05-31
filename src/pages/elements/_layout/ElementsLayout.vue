@@ -105,7 +105,7 @@ watch(() => route.fullPath, async () => {
 				<SideNav persist-scroll class="hidden w-56 shrink-0 md:block md:h-full md:overflow-y-auto md:py-10 md:pr-2" />
 
 				<main ref="detailsPanel" class="min-w-0 flex-1 md:h-full md:overflow-y-auto md:py-10 md:pr-2">
-					<div class="mx-auto w-full max-w-4xl px-6">
+					<div class="mx-auto w-full max-w-4xl">
 						<slot />
 					</div>
 					<ElementsFooter class="mt-16" />
@@ -116,7 +116,7 @@ watch(() => route.fullPath, async () => {
 		<div v-else class="w-full px-4">
 			<div class="flex gap-12 py-10" :class="fullWidth && 'py-6'">
 				<main class="min-w-0 flex-1">
-					<div class="mx-auto w-full max-w-4xl px-6">
+					<div class="mx-auto w-full max-w-4xl">
 						<slot />
 					</div>
 				</main>

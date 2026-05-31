@@ -8,6 +8,7 @@ import ComponentProps from '../../_layout/docs/ComponentProps.vue';
 import ComponentSlots from '../../_layout/docs/ComponentSlots.vue';
 import ComponentEvents from '../../_layout/docs/ComponentEvents.vue';
 import ComponentKeyboard from '../../_layout/docs/ComponentKeyboard.vue';
+import RelatedComponents from '../../_layout/docs/RelatedComponents.vue';
 import { ElDialog } from '../../lib/vue';
 
 import PlaygroundDialog from './examples/Playground.vue';
@@ -140,6 +141,7 @@ const doc = ElDialog.__doc;
 			<ComponentSlots :component="ElDialog" />
 			<ComponentEvents :component="ElDialog" />
 			<ComponentKeyboard :component="ElDialog" />
+			<RelatedComponents />
 		</DocPage>
 	</ElementsLayout>
 </template>

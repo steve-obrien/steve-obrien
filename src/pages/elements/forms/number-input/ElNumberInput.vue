@@ -1,5 +1,5 @@
 <script setup>
-import FieldChrome from '../field/FieldChrome.vue';
+import ElField from '../field/ElField.vue';
 import { fieldProps } from '../field/fieldProps.js';
 import { useField } from '../field/useField.js';
 
@@ -25,7 +25,7 @@ function toNumber(value) {
 </script>
 
 <template>
-	<FieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
+	<ElField v-bind="field.fieldAttrs.value" :chrome="chrome">
 		<input
 			v-bind="field.inputAttrs.value"
 			type="number"
@@ -37,5 +37,5 @@ function toNumber(value) {
 			@focus="field.onFocus"
 			@blur="field.onBlur"
 		/>
-	</FieldChrome>
+	</ElField>
 </template>

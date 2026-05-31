@@ -25,7 +25,7 @@ Read only what the task needs:
 - `src/pages/elements/ai/Index.vue`: strategy and AI-facing examples.
 - `src/pages/elements/theming/Index.vue`: token names and color usage.
 - `src/pages/elements/component-spec/Index.vue`: discovery, `__doc`, `_edit`, and Studio spec contracts.
-- `src/pages/elements/forms/FORM_APPROACH.md`: form field architecture.
+- `src/pages/elements/forms/Index.vue`: form field architecture overview.
 - `src/pages/elements/lib/vue/index.js`: public Vue export surface.
 - `src/pages/elements/lib/headless/index.js`: headless custom element registration.
 
@@ -63,7 +63,7 @@ Form-capable controls should use the shared field contract. Do not duplicate lab
 
 ```vue
 <script setup>
-import { ElFieldChrome, fieldProps, useField } from '@elements/vue';
+import { ElField, fieldProps, useField } from '@elements/vue';
 
 const props = defineProps({
 	...fieldProps,
@@ -77,7 +77,7 @@ const field = useField(props, emit, {
 </script>
 
 <template>
-	<ElFieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
+	<ElField v-bind="field.fieldAttrs.value" :chrome="chrome">
 		<input
 			v-bind="field.inputAttrs.value"
 			:type="type"
@@ -86,7 +86,7 @@ const field = useField(props, emit, {
 			@focus="field.onFocus"
 			@blur="field.onBlur"
 		>
-	</ElFieldChrome>
+	</ElField>
 </template>
 ```
 

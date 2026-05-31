@@ -18,6 +18,8 @@ defineProps({
 	description: { type: String, default: '' },
 	filename: { type: String, default: '' },
 	defaultOpen: { type: Boolean, default: false },
+	codeFirst: { type: Boolean, default: false },
+	previewLines: { type: Number, default: 5 },
 });
 </script>
 
@@ -28,16 +30,26 @@ defineProps({
 			<p v-if="description" class="mt-0.5 text-sm text-muted-foreground">{{ description }}</p>
 		</figcaption>
 
+		<CodePanel
+			v-if="codeFirst"
+			:source="source"
+			:lang="lang"
+			:filename="filename"
+			:default-open="defaultOpen"
+			:preview-lines="previewLines"
+		/>
+
 		<div class="flex min-h-[200px] items-center justify-center p-10">
 			<slot />
 		</div>
 
 		<CodePanel
+			v-if="!codeFirst"
 			:source="source"
 			:lang="lang"
 			:filename="filename"
 			:default-open="defaultOpen"
-			:preview-lines="5"
+			:preview-lines="previewLines"
 		/>
 	</figure>
 </template>

@@ -50,7 +50,7 @@ export { default as ElAutocomplete } from '../../forms/autocomplete/ElAutocomple
 export { default as ElTagCombobox } from '../../forms/tag-combobox/ElTagCombobox.vue';
 export { default as ElClassToggleInput } from '../../forms/class-toggle-input/ElClassToggleInput.vue';
 export { default as ElField } from '../../forms/field/ElField.vue';
-export { default as ElFieldChrome } from '../../forms/field/FieldChrome.vue';
+export { default as ElGridFieldLayout } from '../../forms/field/layouts/ElGridFieldLayout.vue';
 export { default as ElForm } from '../../forms/form/ElForm.vue';
 export { default as ElTextInput } from '../../forms/text-input/ElTextInput.vue';
 export { default as ElEmailInput } from '../../forms/email-input/ElEmailInput.vue';
@@ -71,7 +71,8 @@ export { default as ElJsonListInput } from '../../forms/json-list-input/ElJsonLi
 export { default as ElCodeInput } from '../../forms/code-input/ElCodeInput.vue';
 export { default as ElJsonInput } from '../../forms/json-input/ElJsonInput.vue';
 export { fieldProps } from '../../forms/field/fieldProps.js';
-export { formFieldProviderKey, useField } from '../../forms/field/useField.js';
+export { fieldLayoutProviderKey } from '../../forms/field/fieldLayout.js';
+export { fieldDisplayProviderKey, formFieldProviderKey, normalizeErrors, useField } from '../../forms/field/useField.js';
 export { createValidator, emailValidator, requiredValidator, urlValidator } from '../../forms/field/validators.js';
 export { createFormRegistry, forms, getPathValue, setPathValue } from '../../forms/form/formApi.js';
 export { zodSchemaToChildren } from '../../forms/form/schemaAdapter.js';

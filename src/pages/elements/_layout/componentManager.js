@@ -54,6 +54,29 @@ export function labelFromSlug(slug) {
 		.join(' ');
 }
 
+export function labelFromExportName(exportName) {
+	return labelFromSlug(
+		String(exportName || '')
+			.replace(/^El/, '')
+			.replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+			.toLowerCase(),
+	);
+}
+
+export function componentAnchor(record) {
+	return String(record?.exportName || record?.slug || '')
+		.replace(/^El/, 'el-')
+		.replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+		.toLowerCase();
+}
+
+export function primaryExportNameForSlug(slug) {
+	return `El${slug
+		.split('-')
+		.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+		.join('')}`;
+}
+
 function recordsFromModules(modules, valueKey) {
 	return Object.entries(modules)
 		.map(([path, value]) => recordFromPath(path, valueKey, value))

@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
-import { positionPopoverPanel } from '../../lib/headless/popover-panel.js';
 import { provideMenuContext, useParentMenuContext } from './menuContext.js';
+import { positionSubmenuPanel } from './menuPlacement.js';
 
 defineOptions({
 	__doc: {
@@ -140,7 +140,7 @@ function submenuOptions() {
 
 function placeSubmenu() {
 	if (!submenuPanel.value || !submenuTrigger.value) return;
-	positionPopoverPanel(submenuPanel.value, submenuTrigger.value, submenuOptions());
+	positionSubmenuPanel(submenuPanel.value, submenuTrigger.value, submenuOptions());
 }
 
 function openSubmenu(value, trigger = null, focusFirst = false) {
@@ -286,21 +286,19 @@ onBeforeUnmount(() => {
 		</template>
 	</element-menu>
 
-	<Teleport to="body">
-		<div
-			v-if="openPath"
-			:ref="setSubmenuPanel"
-			data-el-menu-submenu-panel
-			class="el-popover-panel el-glass-surface fixed z-50 min-w-40 rounded-2xl p-1 outline-none"
-			@keydown="onSubmenuKeydown($event, { value: openPath })"
-			@mouseenter="cancelSubmenuClose"
-			@mouseleave="maybeCloseSubmenuPanel"
-		>
-			<ElMenu :items="activeChildItems()" :surface="false" @select="onSelect" @change="onChange">
-				<template v-for="(_, slotName) in $slots" #[slotName]="childSlotProps">
-					<slot :name="slotName" v-bind="childSlotProps" />
-				</template>
-			</ElMenu>
-		</div>
-	</Teleport>
+	<div
+		v-if="openPath"
+		:ref="setSubmenuPanel"
+		data-el-menu-submenu-panel
+		class="el-popover-panel el-glass-surface absolute z-50 min-w-40 rounded-2xl p-1 outline-none"
+		@keydown="onSubmenuKeydown($event, { value: openPath })"
+		@mouseenter="cancelSubmenuClose"
+		@mouseleave="maybeCloseSubmenuPanel"
+	>
+		<ElMenu :items="activeChildItems()" :surface="false" @select="onSelect" @change="onChange">
+			<template v-for="(_, slotName) in $slots" #[slotName]="childSlotProps">
+				<slot :name="slotName" v-bind="childSlotProps" />
+			</template>
+		</ElMenu>
+	</div>
 </template>

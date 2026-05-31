@@ -3,6 +3,18 @@ import { ref, watch } from 'vue';
 import ElButton from '../button/ElButton.vue';
 import ElForm from '../../forms/form/ElForm.vue';
 
+defineOptions({
+	__doc: {
+		name: 'Dialog schema form',
+		tag: '<ElDialogSchemaForm>',
+		description: 'Internal renderer used by dialogForm(schema) to resolve an ElForm children schema from a programmatic dialog.',
+		events: [
+			{ name: 'resolve', payload: 'Record<string, unknown>', description: 'Emitted with validated form values.' },
+			{ name: 'dismiss', description: 'Emitted when the form is cancelled.' },
+		],
+	},
+});
+
 const props = defineProps({
 	schema: {
 		type: Array,

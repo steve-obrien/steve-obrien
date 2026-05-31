@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import FieldChrome from '../field/FieldChrome.vue';
+import ElField from '../field/ElField.vue';
 import { fieldProps } from '../field/fieldProps.js';
 import { useField } from '../field/useField.js';
 
@@ -73,7 +73,7 @@ function toNumber(value) {
 </script>
 
 <template>
-	<FieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
+	<ElField v-bind="field.fieldAttrs.value" :chrome="chrome">
 		<div class="flex w-full items-center gap-3">
 			<input
 				v-bind="field.inputAttrs.value"
@@ -92,7 +92,7 @@ function toNumber(value) {
 				{{ displayValue }}{{ suffix }}
 			</output>
 		</div>
-	</FieldChrome>
+	</ElField>
 </template>
 
 <style scoped>

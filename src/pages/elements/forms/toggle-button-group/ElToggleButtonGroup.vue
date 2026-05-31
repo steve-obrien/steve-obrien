@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue';
-import FieldChrome from '../field/FieldChrome.vue';
+import ElField from '../field/ElField.vue';
 import { fieldProps } from '../field/fieldProps.js';
 import { useField } from '../field/useField.js';
 
@@ -120,7 +120,7 @@ function onKeydown(event, index, option) {
 </script>
 
 <template>
-	<FieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
+	<ElField v-bind="field.fieldAttrs.value" :chrome="chrome">
 		<input
 			v-if="field.htmlName.value"
 			type="hidden"
@@ -155,5 +155,5 @@ function onKeydown(event, index, option) {
 				<slot name="option" :option="option" :index="index" :selected="selected(option)">{{ labelOf(option) }}</slot>
 			</button>
 		</div>
-	</FieldChrome>
+	</ElField>
 </template>

@@ -2090,7 +2090,7 @@ function isEmptyElement(node) {
 								<div class="template-class-input">
 									<ElClassToggleInput
 										:key="selectedNode.id"
-										chrome="none"
+										:chrome="false"
 										:model-value="selectedNode.props?.class || ''"
 										:inactive-values="inactiveClassesForSelection"
 										:options="tailwindClassIndex"
@@ -2165,7 +2165,7 @@ function isEmptyElement(node) {
 								:rows="26"
 								:editor="true"
 								_register-field="false"
-								chrome="none"
+								:chrome="false"
 								lang="vue"
 								class="template-code-input"
 								@update:model-value="onCodeInput"

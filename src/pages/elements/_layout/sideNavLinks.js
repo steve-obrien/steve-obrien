@@ -1,4 +1,9 @@
-import { getComponentRecords, labelFromSection } from './componentManager.js';
+import {
+	componentAnchor,
+	getComponentRecords,
+	labelFromSection,
+	primaryExportNameForSlug,
+} from './componentManager.js';
 import { inspectComponentRecord } from './componentInspector.js';
 
 const sidebarComponentSectionOrder = ['components', 'forms', 'visual'];
@@ -113,20 +118,53 @@ function groupsFromDiscoveredComponents() {
 		.map(inspectComponentRecord)
 		.filter((record) => !record.navHidden)
 		.sort(sortRecords);
+	const families = records.reduce((map, record) => {
+		const key = `${record.section}/${record.slug}`;
+		if (!map.has(key)) map.set(key, []);
+		map.get(key).push(record);
+		return map;
+	}, new Map());
 
 	return sidebarComponentSectionOrder
 		.map((section) => ({
 			label: labelFromSection(section),
-			items: records
-				.filter((record) => record.section === section)
-				.map((record) => ({
-					to: record.route,
-					label: record.label,
-					tag: record.badge,
-					icon: record.icon,
-				})),
+			items: [
+				...(section === 'forms' ? [{ to: '/elements/forms', label: 'Overview', icon: staticIconPaths.Overview }] : []),
+				...Array.from(families.values())
+					.filter((family) => family[0]?.section === section)
+					.map(navItemFromFamily),
+			],
 		}))
 		.filter((group) => group.items.length);
+}
+
+function navItemFromFamily(family) {
+	const primary = primaryRecord(family);
+	const children = family
+		.filter((record) => record !== primary)
+		.sort(sortRecords)
+		.map((record) => ({
+			to: `${record.route}#${componentAnchor(record)}`,
+			label: record.label,
+			tag: record.badge,
+			icon: record.icon,
+		}));
+
+	return {
+		to: primary.route,
+		label: primary.label,
+		tag: primary.badge,
+		icon: primary.icon,
+		children,
+	};
+}
+
+function primaryRecord(family) {
+	const slug = family[0]?.slug || '';
+	const expected = primaryExportNameForSlug(slug);
+	return family.find((record) => record.doc.nav?.primary)
+		|| family.find((record) => record.exportName === expected)
+		|| family[0];
 }
 
 function sortRecords(a, b) {

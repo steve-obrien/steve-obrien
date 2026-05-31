@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue';
-import FieldChrome from '../field/FieldChrome.vue';
+import ElField from '../field/ElField.vue';
 import { fieldProps } from '../field/fieldProps.js';
 import { useField } from '../field/useField.js';
 
@@ -68,7 +68,7 @@ const valueOf = (option) => String(option && typeof option === 'object' ? (optio
 </script>
 
 <template>
-	<FieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
+	<ElField v-bind="field.fieldAttrs.value" :chrome="chrome">
 		<input
 			v-if="field.htmlName.value"
 			type="hidden"
@@ -101,5 +101,5 @@ const valueOf = (option) => String(option && typeof option === 'object' ? (optio
 				<slot name="option" :option="option" :index="index">{{ labelOf(option) }}</slot>
 			</button>
 		</element-listbox>
-	</FieldChrome>
+	</ElField>
 </template>

@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue';
-import FieldChrome from '../field/FieldChrome.vue';
+import ElField from '../field/ElField.vue';
 import { fieldProps } from '../field/fieldProps.js';
 import { useField } from '../field/useField.js';
 
@@ -301,7 +301,7 @@ function booleanProp(value, defaultValue = false) {
 </script>
 
 <template>
-	<FieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
+	<ElField v-bind="field.fieldAttrs.value" :chrome="chrome">
 		<div class="relative">
 			<input
 				v-bind="inputAttrs"
@@ -362,5 +362,5 @@ function booleanProp(value, defaultValue = false) {
 				</label>
 			</div>
 		</div>
-	</FieldChrome>
+	</ElField>
 </template>

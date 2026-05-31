@@ -3,7 +3,7 @@ import { reactive, ref } from 'vue';
 import { ElButton, ElEmailInput, ElForm, ElTextInput, ElUrlInput } from '../../../lib/vue';
 
 const account = ref({
-	name: 'Steve O\'Brien',
+	name: '',
 	email: '',
 	website: '',
 });

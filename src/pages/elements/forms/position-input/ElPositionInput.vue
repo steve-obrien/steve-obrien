@@ -1,5 +1,5 @@
 <script setup>
-import FieldChrome from '../field/FieldChrome.vue';
+import ElField from '../field/ElField.vue';
 import { fieldProps } from '../field/fieldProps.js';
 import { useField } from '../field/useField.js';
 
@@ -40,7 +40,7 @@ const positions = [
 </script>
 
 <template>
-	<FieldChrome :field-attrs="field.fieldAttrs.value" :chrome="chrome">
+	<ElField v-bind="field.fieldAttrs.value" :chrome="chrome">
 		<input
 			v-if="field.htmlName.value"
 			type="hidden"
@@ -77,5 +77,5 @@ const positions = [
 			</button>
 		</div>
 		<p class="font-mono text-xs text-muted-foreground">{{ field.value.value }}</p>
-	</FieldChrome>
+	</ElField>
 </template>
