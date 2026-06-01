@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import {
 	buildSource,
+	extractTemplateSource,
 	literalExpressionValue,
+	parseScriptSetupData,
 	parseRepeatSource,
 	parseSource,
 	stampEditorNode,
@@ -54,6 +56,47 @@ assert.match(rebuilt, /@click="save"/);
 assert.match(rebuilt, /v-if="ready"/);
 assert.match(rebuilt, /v-model="selected"/);
 assert.match(rebuilt, /v-for="\(task, index\) in tasks"/);
+
+const nestedTemplateSource = `<template>
+	<section>
+		<template v-if="ready">
+			<p>Nested template content</p>
+		</template>
+		<button>Done</button>
+	</section>
+</template>`;
+const extractedNestedTemplate = extractTemplateSource(nestedTemplateSource);
+assert.match(extractedNestedTemplate.template, /<template v-if="ready">/);
+assert.match(extractedNestedTemplate.template, /<button>Done<\/button>/);
+assert.equal(extractedNestedTemplate.hasTemplateBlock, true);
+const parsedNested = parseSource(nestedTemplateSource, { componentName: 'NestedTemplate', stamp });
+assert.equal(parsedNested.tree.children[0].tag, 'section');
+assert.equal(parsedNested.tree.children[0].children.length, 2);
+
+const parsedVoidTags = parseSource('<section><input value="Search"><img src="/icon.png" alt=""></section>', { componentName: 'VoidTags', stamp });
+assert.equal(parsedVoidTags.tree.children[0].children[0].tag, 'input');
+assert.equal(parsedVoidTags.tree.children[0].children[1].tag, 'img');
+
+const scriptDataSource = `<template>
+	<nav>
+		<a v-for="item in nav" :key="item.href" :href="item.href">{{ item.label }}</a>
+	</nav>
+</template>
+
+<script setup>
+const nav = [
+	{ label: 'Hero', href: '#hero' },
+	{ label: 'Pricing', href: '#pricing' },
+];
+const ignored = buildNavigation();
+</script>`;
+const parsedScriptData = parseSource(scriptDataSource, { componentName: 'ScriptData', stamp });
+assert.deepEqual(parsedScriptData.scriptData.nav, [
+	{ label: 'Hero', href: '#hero' },
+	{ label: 'Pricing', href: '#pricing' },
+]);
+assert.equal(parsedScriptData.scriptData.ignored, undefined);
+assert.deepEqual(parseScriptSetupData(scriptDataSource).nav[0], { label: 'Hero', href: '#hero' });
 
 assert.deepEqual(parseRepeatSource('item of items'), {
 	source: 'item of items',

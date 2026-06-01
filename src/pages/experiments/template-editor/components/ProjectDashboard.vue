@@ -10,7 +10,7 @@
 				<a href="#" class="group flex items-center gap-3">
 					<span class="grid size-10 place-items-center rounded-2xl bg-cyan-300 font-black text-slate-950 shadow-lg shadow-cyan-300/20 transition group-hover:rotate-3">E</span>
 					<span class="flex flex-col leading-none">
-						<span class="text-sm font-semibold tracking-wide text-white">Elemenvts Lab</span>
+						<span class="text-sm font-semibold tracking-wide text-white">Elements Lab</span>
 						<span class="text-xs text-slate-400">Template stress test</span>
 					</span>
 				</a>
@@ -19,7 +19,7 @@
 				</nav>
 				<div class="flex items-center gap-3">
 					<button class="hidden rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/10 sm:inline-flex">View docs</button>
-					<button class="rounded-full bg-cyan-300 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-cyan-200">Start edviting</button>
+					<button class="rounded-full bg-cyan-300 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-cyan-200">Start editing</button>
 				</div>
 			</div>
 		</header>
@@ -28,9 +28,9 @@
 				<div class="max-w-3xl">
 					<div class="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-sm text-cyan-100">
 						<span class="size-2 rounded-full bg-cyan-300" />
-						Designed for nestedf template editor testingv
+						Designed for nested template editor testing
 					</div>
-					<h1 class="text-balance text-5xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl">Navigate complex HTML</h1>
+					<h1 class="text-balance text-5xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl">Navigate deeply nested HTML without losing the page structure.</h1>
 					<p class="mt-6 max-w-2xl text-pretty text-lg leading-8 text-slate-300">This component includes repeated cards, responsive grids, nested forms, pricing sections, accordions, tables, and Vue-rendered lists so you can test editing classes, attributes, and text content.</p>
 					<div class="mt-8 flex flex-col gap-3 sm:flex-row">
 						<a href="#builder" class="inline-flex items-center justify-center rounded-2xl bg-white px-6 py-3 font-bold text-slate-950 shadow-xl shadow-white/10 transition hover:-translate-y-0.5 hover:bg-slate-100">Explore builder</a>

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, defineComponent, h, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { cloneVNode, computed, defineComponent, h, isVNode, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { ElClassToggleInput, ElCodeInput, ElSplitterPanel, ElTreeView } from '../../elements/lib/vue';
 import { tailwindClassIndex } from '../../elements/forms/_shared/serverLookup.js';
 import { componentRegistry as elementsComponentRegistry, groupedRegistry as elementsGroupedRegistry } from '../../elements/_layout/inspector/componentRegistry.js';
@@ -8,6 +8,7 @@ import { inferSchema } from '../../elements/_layout/inspector/useInspector.js';
 import TemplateMonacoEditor from './components/TemplateMonacoEditor.vue';
 import {
 	buildSource,
+	extractTemplateSource,
 	isNativeTag,
 	literalExpressionValue,
 	parseRepeatSource,
@@ -320,6 +321,7 @@ const tree = ref(null);
 const codeText = ref('');
 const codeError = ref('');
 const codeDirty = ref(false);
+const activeScriptData = ref({});
 const rootData = ref(structuredClone(initialRootData));
 const rootDataText = ref(JSON.stringify(initialRootData, null, '\t'));
 const rootDataError = ref('');
@@ -341,6 +343,7 @@ const createNameError = ref('');
 const codeEditorEl = ref(null);
 const isCodeDrawerOpen = ref(true);
 const codeDrawerHeight = ref(340);
+const selectedCodeLineOverride = ref(0);
 const hoveredNodeId = ref('');
 const inactiveClassesForSelection = ref([]);
 const componentPreviewCache = new Map();
@@ -358,10 +361,15 @@ const sourceFile = computed(() => activeComponent.value?.file || 'experiment://c
 const sourceFileName = computed(() => shortSourceFile(sourceFile.value));
 const flatNodes = computed(() => tree.value ? flatten(tree.value) : []);
 const selectedNode = computed(() => findNode(tree.value, selectedId.value) || tree.value);
-const selectedData = computed(() => selectedNode.value?.binding ? getPath(rootData.value, selectedNode.value.binding) : null);
+const stageRootScope = computed(() => ({
+	...rootData.value,
+	...activeScriptData.value,
+}));
+const selectedData = computed(() => selectedNode.value?.binding ? getPath(stageRootScope.value, selectedNode.value.binding) : null);
 const source = computed(() => buildSource(tree.value, activeComponent.value));
 const sourceText = computed(() => source.value.rows.map((row) => row.text).join('\n'));
-const selectedSourceLine = computed(() => source.value.lineMap[selectedId.value] || selectedNode.value?.sourceLine || 1);
+const codeLineMode = computed(() => codeDirty.value || codeText.value !== sourceText.value);
+const selectedSourceLine = computed(() => sourceLineForNode(selectedNode.value, selectedId.value) || 1);
 const sourceFileLabel = computed(() => `${sourceFileName.value}:${selectedSourceLine.value}`);
 const sourceFileTitle = computed(() => `${sourceFile.value}:${selectedSourceLine.value}`);
 const selectedBaseClass = computed(() => selectedNode.value ? stageBaseClassForNode(selectedNode.value) : '');
@@ -374,7 +382,7 @@ const layerTreeItems = computed(() => tree.value ? [layerItemFromNode(tree.value
 const selectedLayerValue = computed(() => selectedId.value ? layerValueForNodeId(tree.value, selectedId.value) : '');
 const layerDragSourceValue = computed(() => draggingNodeId.value ? layerValueForNodeId(tree.value, draggingNodeId.value) : '');
 const hoveredLayerValue = computed(() => hoveredNodeId.value ? layerValueForNodeId(tree.value, hoveredNodeId.value) : '');
-const hoveredSourceLine = computed(() => hoveredNodeId.value ? source.value.lineMap[hoveredNodeId.value] || findNode(tree.value, hoveredNodeId.value)?.sourceLine || 0 : 0);
+const hoveredSourceLine = computed(() => hoveredNodeId.value ? sourceLineForNode(findNode(tree.value, hoveredNodeId.value), hoveredNodeId.value) : 0);
 const normalizedEditorTree = computed(() => tree.value ? normalizeEditorTree(tree.value) : null);
 const developerNodeSnapshot = computed(() => ({
 	activeComponent: activeComponentName.value,
@@ -382,6 +390,7 @@ const developerNodeSnapshot = computed(() => ({
 	selectedId: selectedId.value,
 	hoveredNodeId: hoveredNodeId.value,
 	nodeCount: flatNodes.value.length,
+	scriptData: activeScriptData.value,
 	tree: tree.value ? serializeEditorNode(tree.value) : null,
 	normalizedTree: normalizedEditorTree.value,
 }));
@@ -485,11 +494,7 @@ const TemplateNode = defineComponent({
 	},
 });
 
-watch(activeComponentName, loadActiveComponent, { immediate: true });
-
-watch(sourceText, (next) => {
-	if (!codeDirty.value) codeText.value = next;
-});
+watch(activeComponentName, loadActiveComponent);
 
 watch([selectedSourceLine, codeText], () => {
 	nextTick(applyCodeLineHighlight);
@@ -516,8 +521,8 @@ watch([isCodeDrawerOpen, codeDrawerHeight], () => {
 	});
 });
 
-onMounted(() => {
-	loadSavedComponents();
+onMounted(async () => {
+	await loadSavedComponents();
 	loadActiveComponent();
 	nextTick(applyCodeLineHighlight);
 	queueExperimentTailwindRefresh();
@@ -531,10 +536,20 @@ function applyCodeLineHighlight() {
 	codeEditorEl.value?.revealLine(selectedSourceLine.value);
 }
 
+function sourceLineForNode(node, id) {
+	if (!node) return 0;
+	if (codeLineMode.value && id === selectedId.value && selectedCodeLineOverride.value && nodeIdForSourceLine(selectedCodeLineOverride.value) === id) {
+		return selectedCodeLineOverride.value;
+	}
+	if (codeLineMode.value) return node.sourceLine || source.value.lineMap[id] || 0;
+	return source.value.lineMap[id] || node.sourceLine || 0;
+}
+
 function selectFromCodeLine(line) {
 	if (!line) return;
 	const nodeId = nodeIdForSourceLine(line);
 	if (!nodeId || !findNode(tree.value, nodeId)) return;
+	selectedCodeLineOverride.value = line;
 	selectedId.value = nodeId;
 	revealNodeInLayers(nodeId);
 	nextTick(applyCodeLineHighlight);
@@ -629,7 +644,6 @@ async function loadSavedComponents() {
 			...savedComponents.filter((component) => !existing.has(component.name)),
 		];
 		componentPreviewCache.clear();
-		loadActiveComponent();
 	} catch {
 		// The file-backed API only exists in Vite dev; the demo still works in static builds.
 	}
@@ -1056,6 +1070,7 @@ function addFromDrop(targetId) {
 function startNodeDrag(id) {
 	draggingNodeId.value = id;
 	dropTargetId.value = '';
+	selectedCodeLineOverride.value = 0;
 	selectedId.value = id;
 	revealNodeInLayers(id);
 }
@@ -1205,6 +1220,7 @@ function canContain(node) {
 }
 
 function selectNode(id) {
+	selectedCodeLineOverride.value = 0;
 	selectedId.value = id;
 	revealNodeInLayers(id);
 }
@@ -1510,6 +1526,7 @@ function updateSelectedInactiveClasses(values) {
  * regenerated immediately. Direct code edits go through `applyCode` instead.
  */
 function visualChanged() {
+	selectedCodeLineOverride.value = 0;
 	codeDirty.value = false;
 	codeText.value = sourceText.value;
 	savedAt.value = '';
@@ -1549,6 +1566,7 @@ function applyCode(value, options = {}) {
 		const previousLayerValue = options.keepSelection ? layerValueForNodeId(tree.value, selectedId.value) : '';
 		const parsed = parseSource(value);
 		tree.value = parsed.tree;
+		activeScriptData.value = parsed.scriptData || {};
 		if (parsed.props.length) activeComponent.value.props = parsed.props;
 		const preservedSelection = previousLayerValue ? nodeIdForLayerValue(tree.value, previousLayerValue) : '';
 		if (options.keepSelection && preservedSelection) {
@@ -1560,7 +1578,10 @@ function applyCode(value, options = {}) {
 			selectedId.value = tree.value.children[0]?.id || tree.value.id;
 		}
 		codeError.value = '';
-		if (!options.keepDirty) codeDirty.value = false;
+		if (!options.keepDirty) {
+			selectedCodeLineOverride.value = 0;
+			codeDirty.value = false;
+		}
 	} catch (error) {
 		codeError.value = error.message;
 	}
@@ -1578,6 +1599,7 @@ async function saveActiveComponent() {
 	const nextSource = codeForSave(codeText.value);
 	codeText.value = nextSource;
 	activeComponent.value.source = nextSource;
+	applyCode(nextSource, { keepDirty: false, keepSelection: true });
 	componentPreviewCache.clear();
 	const saved = await saveComponentToDisk(activeComponent.value, nextSource);
 	if (!saved) return;
@@ -1592,18 +1614,8 @@ async function saveActiveComponent() {
  * from the current tree. If they typed a full SFC, preserve it as written.
  */
 function codeForSave(value) {
-	if (hasTemplateBlock(value)) return replaceTemplateBlock(value, sourceText.value);
+	if (extractTemplateSource(value).hasTemplateBlock) return value;
 	return sourceText.value;
-}
-
-function hasTemplateBlock(value) {
-	return /<template>[\s\S]*?<\/template>/.test(value);
-}
-
-function replaceTemplateBlock(value, generatedSource) {
-	const generatedMatch = generatedSource.match(/<template>[\s\S]*?<\/template>/);
-	if (!generatedMatch) return generatedSource;
-	return value.replace(/<template>[\s\S]*?<\/template>/, generatedMatch[0]);
 }
 
 async function resetActiveComponent() {
@@ -1641,7 +1653,7 @@ function resolveExpression(expression, scope = {}) {
 	const literal = literalExpressionValue(path);
 	if (literal.matched) return literal.value;
 	const [rootKey, ...keys] = path.split('.');
-	const root = Object.prototype.hasOwnProperty.call(scope, rootKey) ? scope[rootKey] : rootData.value[rootKey];
+	const root = Object.prototype.hasOwnProperty.call(scope, rootKey) ? scope[rootKey] : stageRootScope.value[rootKey];
 	return keys.reduce((value, key) => value?.[key], root);
 }
 
@@ -1661,13 +1673,13 @@ function renderInlineValue(node, fallback = '', scope = {}) {
  * hard-coded placeholder. This reads the latest saved component source,
  * parses it once, and reuses the parsed tree until that source changes.
  */
-function componentPreviewTree(component) {
+function componentPreviewModel(component) {
 	const source = sourceForComponent(component);
 	const cacheKey = `${component.name}\n${source}`;
 	if (componentPreviewCache.has(cacheKey)) return componentPreviewCache.get(cacheKey);
 	const parsed = parseSource(source, component.name);
-	componentPreviewCache.set(cacheKey, parsed.tree);
-	return parsed.tree;
+	componentPreviewCache.set(cacheKey, parsed);
+	return parsed;
 }
 
 /**
@@ -1775,8 +1787,12 @@ function renderComponentPreview(node, ctx, common, scope, slotChildren, depth = 
 	if (!component) return null;
 
 	try {
-		const previewTree = componentPreviewTree(component);
-		const componentScope = componentScopeFor(node, component, scope);
+		const previewModel = componentPreviewModel(component);
+		const previewTree = previewModel.tree;
+		const componentScope = {
+			...(previewModel.scriptData || {}),
+			...componentScopeFor(node, component, scope),
+		};
 		const roots = previewTree.children.flatMap((child) => toArray(renderPreviewNode(child, ctx, node, componentScope, slotChildren, null, depth + 1)));
 		if (!roots.length) return null;
 		if (roots.length > 1) return h('section', common, roots);
@@ -1969,34 +1985,24 @@ function renderTaskListPreview(common) {
 function renderRepeatNode(node, ctx, common, scope) {
 	const items = resolveExpression(node.repeat.list, scope);
 	const rows = Array.isArray(items) && items.length ? items : [{ title: 'Example row' }];
-	return h('div', {
-		class: 'grid gap-2 rounded-md border border-dashed border-ring/60 bg-accent/40 p-2',
-		'data-repeat-template': node.id,
-	}, [
-		h('div', {
-			class: 'flex items-center justify-between px-1 text-[11px] font-medium uppercase tracking-[0.14em] text-accent-foreground',
-			onClick: common.onClick,
-			onDblclick: common.onDblclick,
-			onDrop: common.onDrop,
-			onDragover: common.onDragover,
-		}, [
-			h('span', `${node.repeat.item} in ${node.repeat.list}`),
-			h('span', 'template'),
-		]),
-		...rows.map((item, index) => {
-			const repeatScope = {
-				...scope,
-				[node.repeat.item]: item,
-				...(node.repeat.index ? { [node.repeat.index]: index } : {}),
-			};
-			const children = renderChildren(node, ctx, repeatScope);
-			return h(node.tag || 'div', {
-				...common,
-				key: `${node.id}-${index}`,
-				class: `${common.class} ${index > 0 ? 'opacity-90' : ''}`,
-			}, children.length ? children : `${node.repeat.item} ${index + 1}`);
-		}),
-	]);
+	return rows.flatMap((item, index) => {
+		const repeatScope = {
+			...scope,
+			[node.repeat.item]: item,
+			...(node.repeat.index ? { [node.repeat.index]: index } : {}),
+		};
+		return toArray(renderNode({ ...node, repeat: null }, { ...ctx, scope: repeatScope }))
+			.map((row) => withRepeatKey(row, node.id, index));
+	});
+}
+
+function withRepeatKey(row, nodeId, index) {
+	if (!isVNode(row)) return row;
+	return cloneVNode(row, {
+		key: row.key ?? `${nodeId}-${index}`,
+		'data-repeat-template': nodeId,
+		'data-repeat-index': String(index),
+	});
 }
 
 /**
@@ -2248,6 +2254,7 @@ function isEmptyElement(node) {
 								:selected-id="selectedId"
 								:hovered-id="hoveredNodeId"
 								:drop-target-id="dropTargetId"
+								:data-scope="stageRootScope"
 								@select="selectNode"
 								@open-component="openComponent"
 								@drop-on-node="addFromDrop"

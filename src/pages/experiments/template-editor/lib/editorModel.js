@@ -1,4 +1,5 @@
 import { baseParse, NodeTypes } from '@vue/compiler-dom';
+import { parse as parseSfc } from '@vue/compiler-sfc';
 
 export const voidTags = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
 export const replacedPreviewTags = new Set(['audio', 'canvas', 'embed', 'iframe', 'img', 'object', 'picture', 'svg', 'video']);
@@ -218,12 +219,16 @@ export function buildSource(root, component) {
 
 export function parseSource(value, { componentName = 'Component', stamp } = {}) {
 	const stampNode = stamp || ((node) => stampEditorNode(node, defaultAllocateId));
-	const templateMatch = value.match(/<template>([\s\S]*?)<\/template>/);
-	const template = templateMatch?.[1] ?? value;
+	const extracted = extractTemplateSource(value);
+	const template = extracted.template;
 	if (!template.trim()) throw new Error('Expected a Vue template.');
 
-	const templateStartLine = templateMatch ? value.slice(0, templateMatch.index).split('\n').length : 1;
-	const ast = baseParse(template, { comments: false, decodeEntities });
+	const templateStartLine = extracted.startLine;
+	const ast = baseParse(template, {
+		comments: false,
+		decodeEntities,
+		isVoidTag: (tag) => voidTags.has(tag),
+	});
 	const tree = stampNode({
 		type: 'root',
 		label: componentName,
@@ -234,7 +239,58 @@ export function parseSource(value, { componentName = 'Component', stamp } = {}) 
 	return {
 		tree,
 		props: parseProps(value),
+		scriptData: parseScriptSetupData(value),
 	};
+}
+
+export function extractTemplateSource(value) {
+	const source = String(value || '');
+	const parsed = parseSfc(source, { filename: 'TemplateEditor.vue' });
+	if (parsed.descriptor.template) {
+		return {
+			template: parsed.descriptor.template.content,
+			startLine: parsed.descriptor.template.loc.start.line,
+			hasTemplateBlock: true,
+		};
+	}
+
+	const leadingTemplate = /^\s*<template\b[^>]*>/i.exec(source);
+	if (!leadingTemplate) return { template: source, startLine: 1, hasTemplateBlock: false };
+	const first = {
+		0: leadingTemplate[0],
+		index: leadingTemplate.index + leadingTemplate[0].search(/<template\b/i),
+	};
+
+	const tagPattern = /<\/?template\b[^>]*>/gi;
+	tagPattern.lastIndex = first.index;
+	let depth = 0;
+	let contentStart = first.index + first[0].length;
+
+	for (let match = tagPattern.exec(source); match; match = tagPattern.exec(source)) {
+		const tag = match[0];
+		const closing = /^<\//.test(tag);
+		const selfClosing = /\/>$/.test(tag);
+		if (!closing && !selfClosing) {
+			depth += 1;
+			if (depth === 1) contentStart = match.index + tag.length;
+			continue;
+		}
+		if (!closing) continue;
+		depth -= 1;
+		if (depth === 0) {
+			return {
+				template: source.slice(contentStart, match.index),
+				startLine: lineNumberAt(source, contentStart),
+				hasTemplateBlock: true,
+			};
+		}
+	}
+
+	return { template: source, startLine: 1, hasTemplateBlock: false };
+}
+
+function lineNumberAt(value, offset) {
+	return value.slice(0, offset).split('\n').length;
 }
 
 export function parseProps(value) {
@@ -251,6 +307,28 @@ export function parseProps(value) {
 		.filter(Boolean);
 }
 
+export function parseScriptSetupData(value) {
+	const parsed = parseSfc(String(value || ''), { filename: 'TemplateEditor.vue' });
+	const content = parsed.descriptor.scriptSetup?.content || '';
+	const data = {};
+	const declarationPattern = /\bconst\s+([A-Za-z_$][\w$]*)\s*=/g;
+
+	for (let match = declarationPattern.exec(content); match; match = declarationPattern.exec(content)) {
+		const name = match[1];
+		const start = skipWhitespace(content, declarationPattern.lastIndex);
+		if (!isLiteralStart(content[start])) continue;
+		const end = readLiteralExpressionEnd(content, start);
+		if (end <= start) continue;
+
+		const literal = content.slice(start, end).trim();
+		const evaluated = safeJsLiteralValue(literal);
+		if (evaluated.matched) data[name] = evaluated.value;
+		declarationPattern.lastIndex = end;
+	}
+
+	return data;
+}
+
 export function parseRepeatSource(source) {
 	const normalized = source.trim();
 	const match = normalized.match(/^(?:\(([^)]+)\)|([A-Za-z_$][\w$]*))\s+(?:in|of)\s+(.+)$/);
@@ -263,6 +341,94 @@ export function parseRepeatSource(source) {
 		index: aliases[1] || '',
 		list: match[3].trim(),
 	};
+}
+
+function skipWhitespace(value, index) {
+	let next = index;
+	while (/\s/.test(value[next] || '')) next += 1;
+	return next;
+}
+
+function isLiteralStart(value) {
+	return value === '{'
+		|| value === '['
+		|| value === '\''
+		|| value === '"'
+		|| value === '-'
+		|| /\d/.test(value || '')
+		|| value === 't'
+		|| value === 'f'
+		|| value === 'n';
+}
+
+function readLiteralExpressionEnd(value, start) {
+	const first = value[start];
+	if (first === '\'' || first === '"') return readStringEnd(value, start);
+	if (first !== '{' && first !== '[') return readPrimitiveEnd(value, start);
+
+	const stack = [];
+	let quote = '';
+	for (let index = start; index < value.length; index += 1) {
+		const char = value[index];
+		const previous = value[index - 1];
+		if (quote) {
+			if (char === quote && previous !== '\\') quote = '';
+			continue;
+		}
+		if (char === '\'' || char === '"') {
+			quote = char;
+			continue;
+		}
+		if (char === '{' || char === '[' || char === '(') {
+			stack.push(char);
+			continue;
+		}
+		if (char === '}' || char === ']' || char === ')') {
+			const opener = stack.pop();
+			if (!matchesBracket(opener, char)) return start;
+			if (!stack.length) return index + 1;
+		}
+	}
+	return start;
+}
+
+function readStringEnd(value, start) {
+	const quote = value[start];
+	for (let index = start + 1; index < value.length; index += 1) {
+		if (value[index] === quote && value[index - 1] !== '\\') return index + 1;
+	}
+	return start;
+}
+
+function readPrimitiveEnd(value, start) {
+	const match = /^[^\n;,]+/.exec(value.slice(start));
+	return match ? start + match[0].length : start;
+}
+
+function matchesBracket(opener, closer) {
+	return (opener === '{' && closer === '}')
+		|| (opener === '[' && closer === ']')
+		|| (opener === '(' && closer === ')');
+}
+
+function safeJsLiteralValue(expression) {
+	if (!isSafeJsLiteralExpression(expression)) return { matched: false, value: null };
+	try {
+		return {
+			matched: true,
+			value: Function(`"use strict";return (${expression});`)(),
+		};
+	} catch {
+		return { matched: false, value: null };
+	}
+}
+
+function isSafeJsLiteralExpression(expression) {
+	const withoutStrings = expression.replace(/(['"])(?:\\[\s\S]|(?!\1)[^\\])*\1/g, '""');
+	if (/[;=]/.test(withoutStrings)) return false;
+	if (/[A-Za-z_$][\w$]*\s*\(/.test(withoutStrings)) return false;
+	if (/(?:\bfunction\b|=>|\bnew\b|\bthis\b|\bwindow\b|\bdocument\b|\bglobalThis\b|\bimport\b|\brequire\b|\bconstructor\b|__proto__|\bprototype\b)/.test(withoutStrings)) return false;
+	return /^[\s\w$.,:{}[\]()'"%+\-/*?!<>|&]*$/.test(withoutStrings);
 }
 
 export function literalExpressionValue(path) {
