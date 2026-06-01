@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {
 	buildSource,
+	evaluatePreviewExpression,
 	extractTemplateSource,
 	literalExpressionValue,
 	parseScriptSetupData,
@@ -97,6 +98,14 @@ assert.deepEqual(parsedScriptData.scriptData.nav, [
 ]);
 assert.equal(parsedScriptData.scriptData.ignored, undefined);
 assert.deepEqual(parseScriptSetupData(scriptDataSource).nav[0], { label: 'Hero', href: '#hero' });
+assert.deepEqual(evaluatePreviewExpression("{ width: node.score + '%' }", { node: { score: 62 } }), {
+	matched: true,
+	value: { width: '62%' },
+});
+assert.deepEqual(evaluatePreviewExpression("plan.highlight ? 'active' : 'idle'", { plan: { highlight: false } }), {
+	matched: true,
+	value: 'idle',
+});
 
 assert.deepEqual(parseRepeatSource('item of items'), {
 	source: 'item of items',

@@ -343,6 +343,19 @@ export function parseRepeatSource(source) {
 	};
 }
 
+export function evaluatePreviewExpression(expression, scope = {}) {
+	const path = String(expression || '').trim();
+	if (!path) return { matched: false, value: null };
+
+	const literal = literalExpressionValue(path);
+	if (literal.matched) return literal;
+
+	const scopedPath = scopedPathValue(scope, path);
+	if (scopedPath.matched) return scopedPath;
+
+	return safeScopedExpressionValue(path, scope);
+}
+
 function skipWhitespace(value, index) {
 	let next = index;
 	while (/\s/.test(value[next] || '')) next += 1;
@@ -423,6 +436,20 @@ function safeJsLiteralValue(expression) {
 	}
 }
 
+function safeScopedExpressionValue(expression, scope) {
+	if (!isSafeJsLiteralExpression(expression)) return { matched: false, value: null };
+	const names = Object.keys(scope).filter((name) => /^[A-Za-z_$][\w$]*$/.test(name));
+	const values = names.map((name) => scope[name]);
+	try {
+		return {
+			matched: true,
+			value: Function(...names, `"use strict";return (${expression});`)(...values),
+		};
+	} catch {
+		return { matched: false, value: null };
+	}
+}
+
 function isSafeJsLiteralExpression(expression) {
 	const withoutStrings = expression.replace(/(['"])(?:\\[\s\S]|(?!\1)[^\\])*\1/g, '""');
 	if (/[;=]/.test(withoutStrings)) return false;
@@ -444,6 +471,16 @@ export function literalExpressionValue(path) {
 		}
 	}
 	return { matched: false, value: null };
+}
+
+function scopedPathValue(scope, path) {
+	if (!/^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*$/.test(path)) return { matched: false, value: null };
+	const [rootKey, ...keys] = path.split('.');
+	if (!Object.prototype.hasOwnProperty.call(scope, rootKey)) return { matched: false, value: null };
+	return {
+		matched: true,
+		value: keys.reduce((value, key) => value?.[key], scope[rootKey]),
+	};
 }
 
 export function isNativeTag(tag) {

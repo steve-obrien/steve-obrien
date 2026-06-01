@@ -8,6 +8,7 @@ import { inferSchema } from '../../elements/_layout/inspector/useInspector.js';
 import TemplateMonacoEditor from './components/TemplateMonacoEditor.vue';
 import {
 	buildSource,
+	evaluatePreviewExpression,
 	extractTemplateSource,
 	isNativeTag,
 	literalExpressionValue,
@@ -1649,12 +1650,11 @@ function parseSource(value, componentName = activeComponentName.value) {
 
 function resolveExpression(expression, scope = {}) {
 	if (!expression) return null;
-	const path = expression.trim();
-	const literal = literalExpressionValue(path);
-	if (literal.matched) return literal.value;
-	const [rootKey, ...keys] = path.split('.');
-	const root = Object.prototype.hasOwnProperty.call(scope, rootKey) ? scope[rootKey] : stageRootScope.value[rootKey];
-	return keys.reduce((value, key) => value?.[key], root);
+	const evaluated = evaluatePreviewExpression(expression, {
+		...stageRootScope.value,
+		...scope,
+	});
+	return evaluated.matched ? evaluated.value : null;
 }
 
 function renderInlineValue(node, fallback = '', scope = {}) {
