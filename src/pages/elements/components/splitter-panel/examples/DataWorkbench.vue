@@ -13,7 +13,7 @@ const details = ref(260);
 			v-model:end-size="details"
 			class="h-[340px] min-w-[820px] overflow-hidden rounded-xl border border-border bg-background text-sm shadow-sm"
 			:min-start="180"
-			:min-main="360"
+			:min-main="260"
 			:min-end="220"
 		>
 			<template #start>

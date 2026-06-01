@@ -2,8 +2,8 @@
 import { ref } from 'vue';
 import { ElSplitterPanel } from '../../../lib/vue';
 
-const left = ref(240);
-const right = ref(300);
+const left = ref(220);
+const right = ref(260);
 </script>
 
 <template>
@@ -13,8 +13,8 @@ const right = ref(300);
 			v-model:end-size="right"
 			class="h-[360px] min-w-[860px] overflow-hidden rounded-xl border border-border bg-background text-sm shadow-sm"
 			:min-start="180"
-			:min-main="360"
-			:min-end="240"
+			:min-main="260"
+			:min-end="220"
 		>
 			<template #start>
 				<aside class="flex h-full flex-col bg-card">

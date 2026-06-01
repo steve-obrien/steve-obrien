@@ -6,6 +6,7 @@
 	"scripts": {
 		"dev": "vite",
 		"build": "vite-ssg build && node scripts/generate-seo-files.mjs",
+		"check:template-editor": "node scripts/check-template-editor-model.mjs",
 		"preview": "vite preview"
 	},
 	"repository": {
@@ -22,6 +23,7 @@
 	"dependencies": {
 		"@vitejs/plugin-basic-ssl": "^2.3.0",
 		"markdown-it": "^14.2.0",
+		"monaco-editor": "^0.55.1",
 		"vite-ssg": "^28.3.0",
 		"vue": "^3.5.33",
 		"vue-router": "^4.6.4"

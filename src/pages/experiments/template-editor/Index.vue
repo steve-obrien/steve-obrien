@@ -1,8 +1,22 @@
 <script setup>
-import { baseParse, NodeTypes } from '@vue/compiler-dom';
-import { computed, defineComponent, h, nextTick, onMounted, ref, watch } from 'vue';
-import { ElClassToggleInput, ElCodeInput, ElSplitterPanel } from '../../elements/lib/vue';
+import { computed, defineComponent, h, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { ElClassToggleInput, ElCodeInput, ElSplitterPanel, ElTreeView } from '../../elements/lib/vue';
 import { tailwindClassIndex } from '../../elements/forms/_shared/serverLookup.js';
+import { componentRegistry as elementsComponentRegistry, groupedRegistry as elementsGroupedRegistry } from '../../elements/_layout/inspector/componentRegistry.js';
+import InspectorField from '../../elements/_layout/inspector/InspectorField.vue';
+import { inferSchema } from '../../elements/_layout/inspector/useInspector.js';
+import TemplateMonacoEditor from './components/TemplateMonacoEditor.vue';
+import {
+	buildSource,
+	isNativeTag,
+	literalExpressionValue,
+	parseRepeatSource,
+	parseSource as parseEditorSource,
+	replacedPreviewTags,
+	stampEditorNode,
+	voidTags,
+} from './lib/editorModel.js';
+import { loadComponentFiles, saveComponentFile } from './lib/componentStorageClient.js';
 
 /**
  * This experiment is a small model of the future app-builder architecture:
@@ -51,7 +65,7 @@ import { tailwindClassIndex } from '../../elements/forms/_shared/serverLookup.js
  * Mock runtime data. The visual stage uses this to make bindings such as
  * `project.name` feel live without needing a real app data-source scanner yet.
  */
-const dataModel = {
+const initialRootData = {
 	project: {
 		name: 'Launch OS',
 		status: 'Prototype',
@@ -134,28 +148,26 @@ const componentStore = ref([
 		role: 'page',
 		editable: true,
 		insertable: false,
-		props: [
-			{ name: 'project', type: 'Object' },
-			{ name: 'metrics', type: 'Array' },
-			{ name: 'tasks', type: 'Array' },
-		],
-		source: `<template>
-	<TemplateFrame>
-		<HeroPanel>
-			<Badge>{{ project.status }}</Badge>
-			<h1>{{ project.name }}</h1>
-			<p>{{ project.nextMilestone }}</p>
-			<ElButton>Open roadmap</ElButton>
-		</HeroPanel>
-		<MetricGrid :items="metrics" />
-		<SplitPanel>
-			<TaskList :tasks="tasks" />
-			<section>
-				<ElTextInput model-value="designer@example.com" />
-				<ElButton>Send invite</ElButton>
-			</section>
-		</SplitPanel>
-	</TemplateFrame>
+			props: [
+				{ name: 'project', type: 'Object' },
+				{ name: 'metrics', type: 'Array' },
+				{ name: 'tasks', type: 'Array' },
+			],
+			source: `<template>
+	<HeroPanel>
+		<Badge>{{ project.status }}</Badge>
+		<h1>{{ project.name }}</h1>
+		<p>{{ project.nextMilestone }}</p>
+		<ElButton>Open roadmap</ElButton>
+	</HeroPanel>
+	<MetricGrid :items="metrics" />
+	<SplitPanel>
+		<TaskList :tasks="tasks" />
+		<section>
+			<ElTextInput model-value="designer@example.com" />
+			<ElButton>Send invite</ElButton>
+		</section>
+	</SplitPanel>
 </template>
 
 <script setup>
@@ -174,7 +186,7 @@ const props = defineProps({
 		insertable: false,
 		props: [],
 		source: `<template>
-	<div class="mx-auto space-y-5 rounded-xl border border-zinc-200 bg-white p-5 shadow-xl shadow-zinc-950/10">
+	<div class="mx-auto space-y-5 rounded-xl border border-border bg-background p-5 shadow-xl">
 		<slot />
 	</div>
 </template>`,
@@ -187,7 +199,7 @@ const props = defineProps({
 		insertable: true,
 		props: [],
 		source: `<template>
-	<section class="flex items-start gap-6 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+	<section class="flex items-start gap-6 rounded-xl border border-border bg-card p-6 text-card-foreground shadow-sm">
 		<div class="flex min-w-0 flex-1 flex-col gap-3">
 			<slot />
 		</div>
@@ -202,7 +214,7 @@ const props = defineProps({
 		insertable: true,
 		props: [],
 		source: `<template>
-	<span class="inline-flex w-fit rounded bg-teal-50 px-2.5 py-1 text-xs font-medium text-teal-700">
+	<span class="inline-flex w-fit rounded bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
 		<slot />
 	</span>
 </template>`,
@@ -216,7 +228,7 @@ const props = defineProps({
 		props: [{ name: 'items', type: 'Array' }],
 	source: `<template>
 	<section class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-		<article v-for="item in items" :key="item.label" class="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
+		<article v-for="item in items" :key="item.label" class="rounded-lg border border-border bg-card p-4 text-card-foreground shadow-sm">
 			<p>{{ item.label }}</p>
 			<strong>{{ item.value }}</strong>
 		</article>
@@ -250,9 +262,9 @@ const props = defineProps({
 		insertable: true,
 		props: [{ name: 'tasks', type: 'Array' }],
 		source: `<template>
-	<section class="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+	<section class="rounded-xl border border-border bg-card p-4 text-card-foreground shadow-sm">
 		<p>Tasks</p>
-		<article v-for="task in tasks" :key="task.title" class="border-t border-zinc-100 py-2">
+		<article v-for="task in tasks" :key="task.title" class="border-t border-border py-2">
 			<p>{{ task.title }}</p>
 			<p>{{ task.owner }}</p>
 			<p>{{ task.due }}</p>
@@ -274,7 +286,7 @@ const props = defineProps({
 		insertable: true,
 		props: [],
 		source: `<template>
-	<button type="button" class="inline-flex h-10 w-fit items-center justify-center rounded-md bg-zinc-950 px-4 text-sm font-medium text-white shadow-sm">
+	<button type="button" class="inline-flex h-10 w-fit items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm">
 		<slot />
 	</button>
 </template>`,
@@ -287,7 +299,7 @@ const props = defineProps({
 		insertable: true,
 		props: [{ name: 'modelValue', type: 'String' }],
 		source: `<template>
-	<input class="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-700" :value="modelValue" readonly>
+	<input class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground" :value="modelValue" readonly>
 </template>
 
 <script setup>
@@ -298,6 +310,8 @@ const props = defineProps({
 	},
 ]);
 
+const seedSources = new Map(componentStore.value.map((component) => [component.name, component.source]));
+
 let nextId = 0;
 const activeComponentName = ref('ProjectDashboard');
 const componentStack = ref(['ProjectDashboard']);
@@ -306,32 +320,72 @@ const tree = ref(null);
 const codeText = ref('');
 const codeError = ref('');
 const codeDirty = ref(false);
+const rootData = ref(structuredClone(initialRootData));
+const rootDataText = ref(JSON.stringify(initialRootData, null, '\t'));
+const rootDataError = ref('');
 const savedAt = ref('');
-const saveTarget = ref('Draft');
+const saveTarget = ref('Disk');
 const draggingEntry = ref(null);
 const draggingNodeId = ref('');
 const dropTargetId = ref('');
 const newProp = ref({ name: '', type: 'String' });
+const newAttr = ref({ name: '', value: '' });
 const isCreateMenuOpen = ref(false);
 const isCreateDialogOpen = ref(false);
+const isDeveloperMenuOpen = ref(false);
+const sidebarPanels = ref({ components: true, layers: true });
 const createKind = ref('component');
 const createFromSelection = ref(false);
 const createName = ref('');
 const createNameError = ref('');
-const codePanelEl = ref(null);
+const codeEditorEl = ref(null);
+const isCodeDrawerOpen = ref(true);
+const codeDrawerHeight = ref(340);
+const hoveredNodeId = ref('');
 const inactiveClassesForSelection = ref([]);
 const componentPreviewCache = new Map();
 let tailwindRefreshTimer = null;
+let codeDrawerDrag = null;
+let suppressLayerRevealOnce = false;
+const componentApiEndpoint = '/experiments/template-editor/components';
+const minCodeDrawerHeight = 220;
+const maxCodeDrawerHeight = 560;
+const paletteDragType = 'application/x-template-component';
+const templateNodeDragType = 'application/x-template-node';
 
 const activeComponent = computed(() => componentStore.value.find((component) => component.name === activeComponentName.value));
 const sourceFile = computed(() => activeComponent.value?.file || 'experiment://components/Unknown.vue');
+const sourceFileName = computed(() => shortSourceFile(sourceFile.value));
 const flatNodes = computed(() => tree.value ? flatten(tree.value) : []);
 const selectedNode = computed(() => findNode(tree.value, selectedId.value) || tree.value);
-const selectedData = computed(() => selectedNode.value?.binding ? getPath(dataModel, selectedNode.value.binding) : null);
+const selectedData = computed(() => selectedNode.value?.binding ? getPath(rootData.value, selectedNode.value.binding) : null);
 const source = computed(() => buildSource(tree.value, activeComponent.value));
 const sourceText = computed(() => source.value.rows.map((row) => row.text).join('\n'));
 const selectedSourceLine = computed(() => source.value.lineMap[selectedId.value] || selectedNode.value?.sourceLine || 1);
+const sourceFileLabel = computed(() => `${sourceFileName.value}:${selectedSourceLine.value}`);
+const sourceFileTitle = computed(() => `${sourceFile.value}:${selectedSourceLine.value}`);
 const selectedBaseClass = computed(() => selectedNode.value ? stageBaseClassForNode(selectedNode.value) : '');
+const selectedInspectorFields = computed(() => inspectorFieldsForNode(selectedNode.value));
+const selectedInspectorAttrKeys = computed(() => new Set(selectedInspectorFields.value.flatMap((field) => propAttributeKeys(field.key))));
+const selectedAttrs = computed(() => Object.entries(selectedNode.value?.props || {})
+	.filter(([key]) => key !== 'class' && !selectedInspectorAttrKeys.value.has(key)));
+const layerOpenValues = ref(['root']);
+const layerTreeItems = computed(() => tree.value ? [layerItemFromNode(tree.value)] : []);
+const selectedLayerValue = computed(() => selectedId.value ? layerValueForNodeId(tree.value, selectedId.value) : '');
+const layerDragSourceValue = computed(() => draggingNodeId.value ? layerValueForNodeId(tree.value, draggingNodeId.value) : '');
+const hoveredLayerValue = computed(() => hoveredNodeId.value ? layerValueForNodeId(tree.value, hoveredNodeId.value) : '');
+const hoveredSourceLine = computed(() => hoveredNodeId.value ? source.value.lineMap[hoveredNodeId.value] || findNode(tree.value, hoveredNodeId.value)?.sourceLine || 0 : 0);
+const normalizedEditorTree = computed(() => tree.value ? normalizeEditorTree(tree.value) : null);
+const developerNodeSnapshot = computed(() => ({
+	activeComponent: activeComponentName.value,
+	sourceFile: sourceFile.value,
+	selectedId: selectedId.value,
+	hoveredNodeId: hoveredNodeId.value,
+	nodeCount: flatNodes.value.length,
+	tree: tree.value ? serializeEditorNode(tree.value) : null,
+	normalizedTree: normalizedEditorTree.value,
+}));
+const developerNodeSnapshotText = computed(() => JSON.stringify(developerNodeSnapshot.value, null, '\t'));
 
 /**
  * The insert palette is intentionally narrower than the component registry.
@@ -352,8 +406,22 @@ const componentPalette = computed(() => componentStore.value
 			children: component.name === 'Badge' || component.name === 'ElButton'
 				? [{ type: 'paragraph', label: 'Text', text: component.name === 'Badge' ? 'New' : 'Action', children: [] }]
 				: [],
-		}),
-	})));
+			}),
+		})));
+
+const elementsPaletteGroups = computed(() => Object.entries(elementsGroupedRegistry)
+	.map(([group, entries]) => ({
+		group,
+		entries: entries
+			.filter((entry) => entry.group !== 'HTML' && entry.group !== 'Content')
+			.map((entry) => ({
+				id: `elements:${entry.id}`,
+				label: entry.label,
+				icon: svgPathIcon(entry.icon),
+				create: () => editorNodeFromElementsEntry(entry),
+			})),
+	}))
+	.filter((group) => group.entries.length));
 
 /**
  * Recursive render component for the stage. It keeps Vue's normal event model
@@ -365,6 +433,7 @@ const TemplateNode = defineComponent({
 	props: {
 		node: { type: Object, required: true },
 		selectedId: { type: String, required: true },
+		hoveredId: { type: String, default: '' },
 		dropTargetId: { type: String, default: '' },
 		dataScope: { type: Object, default: () => ({}) },
 	},
@@ -396,12 +465,14 @@ const TemplateNode = defineComponent({
 			if (props.node.type === 'root') return;
 			event.stopPropagation();
 			event.dataTransfer.effectAllowed = 'move';
-			event.dataTransfer.setData('application/x-template-node', props.node.id);
+			event.dataTransfer.setData(templateNodeDragType, props.node.id);
+			event.dataTransfer.setData('text/plain', props.node.label || props.node.tag || props.node.id);
 			emit('node-drag-start', props.node.id);
 		}
 
 		return () => renderNode(props.node, {
 			selectedId: props.selectedId,
+			hoveredId: props.hoveredId,
 			dropTargetId: props.dropTargetId,
 			scope: props.dataScope,
 			select,
@@ -424,76 +495,49 @@ watch([selectedSourceLine, codeText], () => {
 	nextTick(applyCodeLineHighlight);
 });
 
-watch(selectedId, () => {
+watch(selectedId, (id) => {
 	inactiveClassesForSelection.value = [];
+	if (suppressLayerRevealOnce) {
+		suppressLayerRevealOnce = false;
+	} else {
+		revealNodeInLayers(id);
+	}
+	nextTick(applyCodeLineHighlight);
 });
 
 watch(codeText, () => {
 	queueExperimentTailwindRefresh();
 });
 
+watch([isCodeDrawerOpen, codeDrawerHeight], () => {
+	nextTick(() => {
+		codeEditorEl.value?.layout();
+		applyCodeLineHighlight();
+	});
+});
+
 onMounted(() => {
-	loadCustomComponents();
+	loadSavedComponents();
 	loadActiveComponent();
 	nextTick(applyCodeLineHighlight);
 	queueExperimentTailwindRefresh();
 });
 
+onBeforeUnmount(() => {
+	endCodeDrawerResize();
+});
+
 function applyCodeLineHighlight() {
-	const root = codePanelEl.value;
-	if (!root) return;
-	root.querySelectorAll('.template-selected-code-line, .template-selected-code-gutter').forEach((element) => {
-		element.classList.remove('template-selected-code-line', 'template-selected-code-gutter');
-	});
-
-	const line = Math.max(selectedSourceLine.value, 1);
-	const codeLines = [...root.querySelectorAll('.cm-line')];
-	if (!codeLines.length) {
-		window.setTimeout(applyCodeLineHighlight, 150);
-		return;
-	}
-	const targetLine = codeLines[line - 1];
-	if (targetLine) {
-		targetLine.classList.add('template-selected-code-line');
-		targetLine.scrollIntoView({ block: 'nearest' });
-	}
-
-	const gutter = [...root.querySelectorAll('.cm-lineNumbers .cm-gutterElement')]
-		.find((element) => element.textContent?.trim() === String(line));
-	gutter?.classList.add('template-selected-code-gutter');
+	codeEditorEl.value?.revealLine(selectedSourceLine.value);
 }
 
-function selectFromCodeEvent(event) {
-	const root = codePanelEl.value;
-	if (!root) return;
-	const line = codeLineFromEvent(event);
+function selectFromCodeLine(line) {
 	if (!line) return;
 	const nodeId = nodeIdForSourceLine(line);
 	if (!nodeId || !findNode(tree.value, nodeId)) return;
 	selectedId.value = nodeId;
+	revealNodeInLayers(nodeId);
 	nextTick(applyCodeLineHighlight);
-}
-
-function codeLineFromEvent(event) {
-	const root = codePanelEl.value;
-	const directLine = event?.target?.closest?.('.cm-line');
-	if (directLine && root.contains(directLine)) return codeLineIndex(directLine);
-
-	const activeLine = root.querySelector('.cm-activeLine');
-	if (activeLine) return codeLineIndex(activeLine);
-
-	const selection = window.getSelection?.();
-	const anchor = selection?.anchorNode?.nodeType === Node.TEXT_NODE ? selection.anchorNode.parentElement : selection?.anchorNode;
-	const selectedLine = anchor?.closest?.('.cm-line');
-	if (selectedLine && root.contains(selectedLine)) return codeLineIndex(selectedLine);
-	return 0;
-}
-
-function codeLineIndex(lineElement) {
-	const root = codePanelEl.value;
-	const lines = [...root.querySelectorAll('.cm-line')];
-	const index = lines.indexOf(lineElement);
-	return index >= 0 ? index + 1 : 0;
 }
 
 function nodeIdForSourceLine(line) {
@@ -547,31 +591,58 @@ async function refreshExperimentTailwind() {
 
 /**
  * Loads the active component source into both editor surfaces:
- * the CodeMirror-backed code input and the visual stage tree.
+ * the Monaco-backed source editor and the visual stage tree.
  */
-function loadActiveComponent({ preferDraft = true } = {}) {
+function loadActiveComponent() {
 	const component = activeComponent.value;
 	if (!component) return;
-	const draft = preferDraft && typeof localStorage !== 'undefined'
-		? localStorage.getItem(draftStorageKey(component.name))
-		: null;
-	const nextSource = draft || component.source;
+	const nextSource = component.source;
 	codeText.value = nextSource;
 	applyCode(nextSource, { keepDirty: false, keepSelection: false });
 }
 
-function draftStorageKey(componentName) {
-	return `template-editor:v2:${componentName}`;
-}
-
 /**
  * Returns the most recent source known to the experiment for a component.
- * Reading localStorage here keeps parent previews up to date after a reload,
- * even before the user has drilled into that child component in this session.
+ * Parent previews use this so they stay in sync with saved child component
+ * edits even before the user drills into that child component.
  */
 function sourceForComponent(component) {
-	if (typeof localStorage === 'undefined') return component.source;
-	return localStorage.getItem(draftStorageKey(component.name)) || component.source;
+	return component.source;
+}
+
+async function loadSavedComponents() {
+	try {
+		const savedComponents = await loadComponentFiles(componentApiEndpoint);
+		if (!savedComponents.length) return;
+
+		const savedByName = new Map(savedComponents.map((component) => [component.name, component]));
+		const merged = componentStore.value.map((component) => savedByName.has(component.name)
+			? {
+				...component,
+				...savedByName.get(component.name),
+				props: Array.isArray(savedByName.get(component.name).props) ? savedByName.get(component.name).props : component.props,
+			}
+			: component);
+		const existing = new Set(merged.map((component) => component.name));
+		componentStore.value = [
+			...merged,
+			...savedComponents.filter((component) => !existing.has(component.name)),
+		];
+		componentPreviewCache.clear();
+		loadActiveComponent();
+	} catch {
+		// The file-backed API only exists in Vite dev; the demo still works in static builds.
+	}
+}
+
+async function saveComponentToDisk(component, source) {
+	if (!component) return null;
+	try {
+		return await saveComponentFile(componentApiEndpoint, component, source);
+	} catch (error) {
+		codeError.value = error instanceof Error ? error.message : 'Could not save component to disk.';
+		return null;
+	}
 }
 
 /**
@@ -583,13 +654,12 @@ function sourceForComponent(component) {
  * @returns {EditorNode}
  */
 function stamp(node) {
-	return {
-		...node,
-		id: node.id || `template-node-${++nextId}`,
-		props: { ...(node.props || {}) },
-		sourceLine: node.sourceLine || null,
-		children: (node.children || []).map(stamp),
-	};
+	return stampEditorNode(node, allocateTemplateNodeId);
+}
+
+function allocateTemplateNodeId() {
+	nextId += 1;
+	return `template-node-${nextId}`;
 }
 
 /**
@@ -606,6 +676,248 @@ function flatten(node, depth = 0, out = []) {
 	out.push({ node, depth });
 	(node.children || []).forEach((child) => flatten(child, depth + 1, out));
 	return out;
+}
+
+function layerItemFromNode(node, path = []) {
+	const children = (node.children || []).map((child, index) => layerItemFromNode(child, [...path, index]));
+	return {
+		id: layerValueForPath(path),
+		nodeId: node.id,
+		label: node.tag || node.label,
+		icon: iconForEditorNode(node),
+		acceptsChildren: canContain(node),
+		draggable: node.type !== 'root',
+		children,
+	};
+}
+
+function serializeEditorNode(node, path = []) {
+	const snapshot = {
+		id: node.id,
+		path: layerValueForPath(path),
+		type: node.type,
+	};
+	for (const key of ['tag', 'label', 'text', 'binding', 'sourceLine']) {
+		if (node[key] !== undefined && node[key] !== null && node[key] !== '') snapshot[key] = node[key];
+	}
+	if (node.inline?.length) snapshot.inline = node.inline;
+	if (node.repeat) snapshot.repeat = node.repeat;
+	if (node.props && Object.keys(node.props).length) snapshot.props = node.props;
+	if (node.children?.length) {
+		snapshot.children = node.children.map((child, index) => serializeEditorNode(child, [...path, index]));
+	}
+	return snapshot;
+}
+
+function normalizeEditorTree(node) {
+	const normalized = {
+		rootId: node.id,
+		selectedId: selectedId.value,
+		hoveredId: hoveredNodeId.value,
+		layerValueById: {},
+		sourceLineById: {},
+		nodesById: {},
+	};
+	normalizeEditorNode(node, normalized, null, []);
+	return normalized;
+}
+
+function normalizeEditorNode(node, normalized, parentId, path) {
+	const layerValue = layerValueForPath(path);
+	normalized.layerValueById[node.id] = layerValue;
+	if (node.sourceLine) normalized.sourceLineById[node.id] = node.sourceLine;
+	normalized.nodesById[node.id] = {
+		id: node.id,
+		parentId,
+		childIds: (node.children || []).map((child) => child.id),
+		path: layerValue,
+		type: node.type,
+		tag: node.tag || null,
+		label: node.label || node.tag || node.type,
+		sourceLine: node.sourceLine || null,
+		props: node.props && Object.keys(node.props).length ? node.props : undefined,
+		repeat: node.repeat || undefined,
+	};
+	(node.children || []).forEach((child, index) => normalizeEditorNode(child, normalized, node.id, [...path, index]));
+}
+
+function svgPathIcon(icon) {
+	return typeof icon === 'string' && /^M[\d\s.,-]/.test(icon)
+		? icon
+		: 'M5 5h14v14H5V5Zm4 4h6M9 13h6';
+}
+
+function revealNodeInLayers(id) {
+	const path = nodePathToLayerValues(tree.value, id);
+	if (!path.length) return;
+	sidebarPanels.value = {
+		...sidebarPanels.value,
+		layers: true,
+	};
+	const ancestorIds = path.slice(0, -1);
+	if (!ancestorIds.length) return;
+	const openValues = new Set(layerOpenValues.value.map(String));
+	ancestorIds.forEach((value) => openValues.add(String(value)));
+	layerOpenValues.value = [...openValues];
+}
+
+function layerValueForPath(path) {
+	return path.length ? `root/${path.join('/')}` : 'root';
+}
+
+function layerValueForNodeId(node, id, path = []) {
+	if (!node || !id) return '';
+	if (node.id === id) return layerValueForPath(path);
+	for (let index = 0; index < (node.children || []).length; index += 1) {
+		const value = layerValueForNodeId(node.children[index], id, [...path, index]);
+		if (value) return value;
+	}
+	return '';
+}
+
+function nodeIdForLayerValue(node, value, path = []) {
+	if (!node || !value) return '';
+	if (layerValueForPath(path) === value) return node.id;
+	for (let index = 0; index < (node.children || []).length; index += 1) {
+		const id = nodeIdForLayerValue(node.children[index], value, [...path, index]);
+		if (id) return id;
+	}
+	return '';
+}
+
+function nodePathToLayerValues(node, id, path = [], values = []) {
+	if (!node) return [];
+	const nextValues = [...values, layerValueForPath(path)];
+	if (node.id === id) return nextValues;
+	for (let index = 0; index < (node.children || []).length; index += 1) {
+		const childPath = nodePathToLayerValues(node.children[index], id, [...path, index], nextValues);
+		if (childPath.length) return childPath;
+	}
+	return [];
+}
+
+function iconForEditorNode(node) {
+	if (node.type === 'root') return 'M4 5h16v14H4V5Zm4 0v14M4 9h16';
+	if (node.type === 'component') return 'M5 5h14v14H5V5Zm4 4h6M9 13h6';
+	if (node.type === 'headline') return 'M6 5v14M18 5v14M6 12h12';
+	if (node.type === 'text' || node.type === 'paragraph' || node.type === 'literal') return 'M6 7h12M6 12h9M6 17h11';
+	return 'M5 6h14v12H5V6Z';
+}
+
+function editorNodeFromElementsEntry(entry) {
+	const component = entry.componentName || entry.component;
+	if (component == null) {
+		return { type: 'paragraph', label: entry.label, text: entry.defaults?.text || 'Edit me', props: {}, children: [] };
+	}
+
+	const tag = typeof component === 'string' ? component : entry.componentName;
+	const props = propsForTemplate(entry.defaults?.props || {});
+	const children = (entry.defaults?.children || []).map((child) => editorNodeFromStudioSpec(child));
+	const inlineText = entry.defaults?.text || '';
+	const type = isNativeTag(tag) ? nativeEditorType(tag, children, inlineText) : 'component';
+
+	return {
+		type,
+		tag,
+		label: entry.label,
+		text: inlineText,
+		props,
+		children,
+	};
+}
+
+function editorNodeFromStudioSpec(spec) {
+	if (spec.component == null && spec.text != null) {
+		return { type: 'paragraph', label: 'Text', text: spec.text, props: {}, children: [] };
+	}
+
+	const tag = typeof spec.component === 'string' ? spec.component : spec.componentName;
+	const children = (spec.children || []).map((child) => editorNodeFromStudioSpec(child));
+	const text = spec.text || '';
+	return {
+		type: isNativeTag(tag) ? nativeEditorType(tag, children, text) : 'component',
+		tag,
+		label: spec.label || tag || 'Node',
+		text,
+		props: propsForTemplate(spec.props || {}),
+		children,
+	};
+}
+
+function nativeEditorType(tag, children, text) {
+	if (tag === 'h1' || tag === 'h2' || tag === 'h3') return 'headline';
+	if (tag === 'p') return text || !children.length ? 'paragraph' : 'element';
+	return 'element';
+}
+
+function propsForTemplate(props) {
+	return Object.fromEntries(Object.entries(props)
+		.filter(([, value]) => value !== undefined && value !== null)
+		.map(([key, value]) => typeof value === 'string'
+			? [key, value]
+			: [`:${key}`, JSON.stringify(value)]));
+}
+
+function templateExpressionForValue(value) {
+	return JSON.stringify(value);
+}
+
+function inspectorFieldsForNode(node) {
+	if (!node || node.type !== 'component') return [];
+
+	const entry = elementsEntryForTag(node.tag);
+	if (entry?.component && typeof entry.component !== 'string') {
+		return inferSchema({
+			id: node.id,
+			label: node.label || entry.label,
+			component: entry.component,
+			props: node.props || {},
+			children: [],
+		}).filter((field) => field.key !== 'class');
+	}
+
+	const component = componentStore.value.find((item) => item.name === node.tag);
+	return (component?.props || []).map((prop) => fieldForComponentProp(prop));
+}
+
+function elementsEntryForTag(tag) {
+	return elementsComponentRegistry.find((entry) => entry.componentName === tag || entry.tag === tag);
+}
+
+function fieldForComponentProp(prop) {
+	const type = prop.type || 'String';
+	return {
+		key: prop.name,
+		label: prettifyPropName(prop.name),
+		component: editorForPropType(type),
+		props: type === 'Array' || type === 'Object'
+			? { rows: 5, editor: false }
+			: {},
+	};
+}
+
+function editorForPropType(type) {
+	if (type === 'Boolean') return 'ElToggle';
+	if (type === 'Number') return 'ElNumberInput';
+	if (type === 'Array' || type === 'Object') return 'ElJsonInput';
+	return 'ElTextInput';
+}
+
+function propAttributeKeys(key) {
+	const kebab = kebabCase(key);
+	return [key, `:${key}`, kebab, `:${kebab}`];
+}
+
+function prettifyPropName(value) {
+	return value
+		.replace(/([A-Z])/g, ' $1')
+		.replace(/^./, (letter) => letter.toUpperCase())
+		.replace(/Model Value/, 'Value');
+}
+
+function shortSourceFile(file) {
+	const parts = String(file || '').split('/').filter(Boolean);
+	return parts[parts.length - 1] || 'Unknown.vue';
 }
 
 /**
@@ -684,7 +996,8 @@ function onDragStart(entry, event) {
 	draggingEntry.value = entry;
 	dropTargetId.value = '';
 	event.dataTransfer.effectAllowed = 'copy';
-	event.dataTransfer.setData('application/x-template-component', entry.id);
+	event.dataTransfer.setData(paletteDragType, entry.id);
+	event.dataTransfer.setData('text/plain', entry.label || entry.id);
 }
 
 function onDragEnd() {
@@ -693,13 +1006,43 @@ function onDragEnd() {
 	dropTargetId.value = '';
 }
 
+function markHoveredStageNode(event) {
+	const target = event.target instanceof Element
+		? event.target.closest('[data-template-node]')
+		: null;
+	const id = target?.getAttribute('data-template-node') || '';
+	setHoveredNode(id);
+}
+
+function clearHoveredStageNode() {
+	setHoveredNode('');
+}
+
+function setHoveredNode(id) {
+	if (hoveredNodeId.value !== id) hoveredNodeId.value = id;
+}
+
+function hoverNodeFromLayer(event) {
+	setHoveredNode(event.item?.nodeId || '');
+}
+
+function clearNodeHoverFromLayer(event) {
+	if (event?.item?.nodeId && hoveredNodeId.value !== event.item.nodeId) return;
+	setHoveredNode('');
+}
+
+function hoverNodeFromCodeLine(line) {
+	const nodeId = nodeIdForSourceLine(line);
+	setHoveredNode(nodeId && findNode(tree.value, nodeId) ? nodeId : '');
+}
+
 function addToSelected(entry) {
 	insertEntry(entry, selectedId.value);
 }
 
 function addFromDrop(targetId) {
 	if (draggingNodeId.value) {
-		moveNodeAfter(draggingNodeId.value, targetId);
+		moveNodeTo(draggingNodeId.value, targetId, 'after');
 		draggingNodeId.value = '';
 		dropTargetId.value = '';
 		return;
@@ -714,6 +1057,12 @@ function startNodeDrag(id) {
 	draggingNodeId.value = id;
 	dropTargetId.value = '';
 	selectedId.value = id;
+	revealNodeInLayers(id);
+}
+
+function toggleDeveloperMenu() {
+	isDeveloperMenuOpen.value = !isDeveloperMenuOpen.value;
+	if (isDeveloperMenuOpen.value) isCreateMenuOpen.value = false;
 }
 
 function markDropTarget(id) {
@@ -723,6 +1072,47 @@ function markDropTarget(id) {
 
 function clearDropTarget() {
 	dropTargetId.value = '';
+}
+
+function canDropLayerItem({ source, target, position }) {
+	return canMoveNodeTo(source?.nodeId, target?.nodeId, position);
+}
+
+function canDropExternalLayer({ item, position }) {
+	if (!draggingEntry.value) return false;
+	return canInsertAtLayer(item?.nodeId, position);
+}
+
+function onLayerReorder(event) {
+	const sourceId = event.item?.nodeId || event.source?.nodeId || nodeIdForLayerValue(tree.value, event.sourceValue);
+	const targetId = event.target?.nodeId || nodeIdForLayerValue(tree.value, event.targetValue);
+	if (!moveNodeTo(sourceId, targetId, event.position)) return;
+	draggingNodeId.value = '';
+	dropTargetId.value = '';
+}
+
+function onLayerExternalDrop(event) {
+	const entry = paletteEntryForId(event.getData(paletteDragType));
+	if (!entry || !canInsertAtLayer(event.item?.nodeId, event.position)) return;
+	insertEntryAt(entry, event.item.nodeId, event.position);
+	draggingEntry.value = null;
+	dropTargetId.value = '';
+}
+
+function paletteEntryForId(id) {
+	if (!id) return null;
+	return [
+		...componentPalette.value,
+		...primitivePalette,
+		...elementsPaletteGroups.value.flatMap((group) => group.entries),
+	].find((entry) => entry.id === id);
+}
+
+function canInsertAtLayer(targetId, position) {
+	const target = findNode(tree.value, targetId);
+	if (!target) return false;
+	if (position === 'inside') return canContain(target);
+	return target.type !== 'root' && Boolean(findParent(tree.value, target.id));
 }
 
 /**
@@ -739,35 +1129,66 @@ function insertEntry(entry, targetId) {
 	visualChanged();
 }
 
-function moveNodeAfter(draggedId, targetId) {
-	if (!tree.value || draggedId === targetId) return;
+function insertEntryAt(entry, targetId, position = 'inside') {
+	const node = stamp(entry.create());
+	if (!insertNodeAt(node, targetId, position)) return;
+	selectedId.value = node.id;
+	visualChanged();
+}
+
+function insertNodeAt(node, targetId, position = 'inside') {
+	const target = findNode(tree.value, targetId) || tree.value;
+	if (!target) return false;
+	if (position === 'inside') {
+		const parent = canContain(target) ? target : findParent(tree.value, target.id);
+		if (!parent) return false;
+		parent.children = [...(parent.children || []), node];
+		return true;
+	}
+
+	if (target.type === 'root') return false;
+	const parent = findParent(tree.value, target.id);
+	if (!parent) return false;
+	const targetIndex = parent.children.findIndex((child) => child.id === target.id);
+	if (targetIndex < 0) return false;
+	parent.children.splice(position === 'before' ? targetIndex : targetIndex + 1, 0, node);
+	parent.children = [...parent.children];
+	return true;
+}
+
+function moveNodeTo(draggedId, targetId, position = 'after') {
+	if (!canMoveNodeTo(draggedId, targetId, position)) return false;
 	const dragged = findNode(tree.value, draggedId);
 	const oldParent = findParent(tree.value, draggedId);
-	if (!dragged || !oldParent || isDescendant(dragged, targetId)) return;
+	const target = findNode(tree.value, targetId);
+	const targetParent = position === 'inside' ? target : findParent(tree.value, targetId);
+	if (!dragged || !oldParent || !target || !targetParent) return false;
 
 	oldParent.children = oldParent.children.filter((child) => child.id !== draggedId);
-	const target = findNode(tree.value, targetId);
-	if (!target) {
-		oldParent.children = [...oldParent.children, dragged];
-		return;
-	}
+	oldParent.children = [...oldParent.children];
 
-	const targetParent = target.type === 'root' ? target : findParent(tree.value, targetId);
-	if (!targetParent) {
-		oldParent.children = [...oldParent.children, dragged];
-		return;
-	}
-
-	if (target.type === 'root') {
+	if (position === 'inside') {
 		target.children = [...(target.children || []), dragged];
 	} else {
 		const targetIndex = targetParent.children.findIndex((child) => child.id === targetId);
-		targetParent.children.splice(targetIndex + 1, 0, dragged);
+		targetParent.children.splice(position === 'before' ? targetIndex : targetIndex + 1, 0, dragged);
 		targetParent.children = [...targetParent.children];
 	}
 
 	selectedId.value = draggedId;
 	visualChanged();
+	return true;
+}
+
+function canMoveNodeTo(draggedId, targetId, position) {
+	if (!tree.value || !draggedId || !targetId || draggedId === targetId) return false;
+	const dragged = findNode(tree.value, draggedId);
+	const target = findNode(tree.value, targetId);
+	const oldParent = findParent(tree.value, draggedId);
+	if (!dragged || !target || !oldParent || isDescendant(dragged, targetId)) return false;
+	if (position === 'inside') return canContain(target);
+	if (target.type === 'root') return false;
+	return Boolean(findParent(tree.value, targetId));
 }
 
 function isDescendant(node, id) {
@@ -785,6 +1206,7 @@ function canContain(node) {
 
 function selectNode(id) {
 	selectedId.value = id;
+	revealNodeInLayers(id);
 }
 
 /**
@@ -850,7 +1272,7 @@ function normalizeComponentName(value) {
 	return /^[A-Za-z]/.test(name) ? name : `Component${name}`;
 }
 
-function createComponentRecord() {
+async function createComponentRecord() {
 	if (!createName.value.trim()) {
 		createNameError.value = 'Name required.';
 		return;
@@ -880,10 +1302,10 @@ function createComponentRecord() {
 	componentStore.value = [...componentStore.value, component];
 	if (role === 'component' && createFromSelection.value) {
 		replaceSelectedWithComponent(name);
-		saveCurrentDraft();
+		await saveCurrentDraft();
 	}
-	persistCustomComponents();
-	localStorage.setItem(draftStorageKey(name), source);
+	const saved = await saveComponentToDisk(component, source);
+	if (saved) Object.assign(component, saved);
 	componentPreviewCache.clear();
 	activeComponentName.value = name;
 	componentStack.value = [...componentStack.value, name];
@@ -900,7 +1322,7 @@ function sourceFromSelectedNode(name) {
 function blankComponentSource(name, role) {
 	const label = role === 'page' ? `${name} page` : name;
 	return `<template>
-	<section class="space-y-3 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
+	<section class="space-y-3 rounded-lg border border-border bg-card p-4 text-card-foreground shadow-sm">
 		<h1>${label}</h1>
 		<p>Start building visually or paste Vue template code here.</p>
 	</section>
@@ -919,37 +1341,12 @@ function replaceSelectedWithComponent(name) {
 	visualChanged();
 }
 
-function saveCurrentDraft() {
-	if (!activeComponent.value || typeof localStorage === 'undefined') return;
+async function saveCurrentDraft() {
+	if (!activeComponent.value) return;
 	const nextSource = sourceText.value;
 	activeComponent.value.source = nextSource;
-	localStorage.setItem(draftStorageKey(activeComponent.value.name), nextSource);
-	if (activeComponent.value.custom) persistCustomComponents();
-}
-
-function persistCustomComponents() {
-	if (typeof localStorage === 'undefined') return;
-	const customComponents = componentStore.value.filter((component) => component.custom);
-	localStorage.setItem(customComponentStorageKey(), JSON.stringify(customComponents));
-}
-
-function loadCustomComponents() {
-	if (typeof localStorage === 'undefined') return;
-	try {
-		const customComponents = JSON.parse(localStorage.getItem(customComponentStorageKey()) || '[]');
-		if (!Array.isArray(customComponents)) return;
-		const existing = new Set(componentStore.value.map((component) => component.name));
-		componentStore.value = [
-			...componentStore.value,
-			...customComponents.filter((component) => component?.name && !existing.has(component.name)),
-		];
-	} catch {
-		// Ignore broken experimental drafts rather than blocking the editor.
-	}
-}
-
-function customComponentStorageKey() {
-	return 'template-editor:v2:custom-components';
+	const saved = await saveComponentToDisk(activeComponent.value, nextSource);
+	if (saved) Object.assign(activeComponent.value, saved);
 }
 
 function clearIds(node) {
@@ -981,6 +1378,61 @@ function updateBinding(value) {
 	visualChanged();
 }
 
+function updateRootData(value) {
+	rootDataText.value = value;
+	try {
+		const parsed = JSON.parse(value);
+		if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Root data must be a JSON object.');
+		rootData.value = parsed;
+		rootDataError.value = '';
+	} catch (error) {
+		rootDataError.value = error instanceof Error ? error.message : 'Invalid JSON.';
+	}
+}
+
+function toggleSidebarPanel(panel) {
+	sidebarPanels.value = {
+		...sidebarPanels.value,
+		[panel]: !sidebarPanels.value[panel],
+	};
+}
+
+function toggleCodeDrawer() {
+	isCodeDrawerOpen.value = !isCodeDrawerOpen.value;
+}
+
+function beginCodeDrawerResize(event) {
+	if (!isCodeDrawerOpen.value) return;
+	event.preventDefault();
+	codeDrawerDrag = {
+		y: event.clientY,
+		height: codeDrawerHeight.value,
+	};
+	window.addEventListener('pointermove', resizeCodeDrawer);
+	window.addEventListener('pointerup', endCodeDrawerResize, { once: true });
+	document.body.style.cursor = 'row-resize';
+	document.body.style.userSelect = 'none';
+}
+
+function resizeCodeDrawer(event) {
+	if (!codeDrawerDrag) return;
+	const delta = codeDrawerDrag.y - event.clientY;
+	codeDrawerHeight.value = clamp(codeDrawerDrag.height + delta, minCodeDrawerHeight, maxCodeDrawerHeight);
+}
+
+function endCodeDrawerResize() {
+	if (typeof window === 'undefined') return;
+	window.removeEventListener('pointermove', resizeCodeDrawer);
+	window.removeEventListener('pointerup', endCodeDrawerResize);
+	document.body.style.cursor = '';
+	document.body.style.userSelect = '';
+	codeDrawerDrag = null;
+}
+
+function clamp(value, min, max) {
+	return Math.min(Math.max(value, min), max);
+}
+
 function updateRepeatSource(value) {
 	if (!selectedNode.value?.repeat) return;
 	selectedNode.value.repeat = parseRepeatSource(value);
@@ -992,6 +1444,56 @@ function updateSelectedProp(key, value) {
 		...(selectedNode.value.props || {}),
 		[key]: value,
 	};
+	visualChanged();
+}
+
+function selectedInspectorFieldValue(field) {
+	const node = selectedNode.value;
+	if (!node?.props) return undefined;
+
+	const props = node.props;
+	const keys = propAttributeKeys(field.key);
+	const dynamicKey = keys.find((key) => key.startsWith(':') && Object.prototype.hasOwnProperty.call(props, key));
+	if (dynamicKey) {
+		const literal = literalExpressionValue(props[dynamicKey]);
+		if (literal.matched) return literal.value;
+		return resolveExpression(props[dynamicKey]) ?? props[dynamicKey];
+	}
+
+	const staticKey = keys.find((key) => !key.startsWith(':') && Object.prototype.hasOwnProperty.call(props, key));
+	return staticKey ? props[staticKey] : undefined;
+}
+
+function updateSelectedInspectorField(field, value) {
+	const node = selectedNode.value;
+	if (!node) return;
+
+	const nextProps = { ...(node.props || {}) };
+	for (const key of propAttributeKeys(field.key)) delete nextProps[key];
+
+	if (value !== undefined && value !== null && value !== '') {
+		if (typeof value === 'string') {
+			nextProps[field.key] = value;
+		} else {
+			nextProps[`:${field.key}`] = templateExpressionForValue(value);
+		}
+	}
+
+	node.props = nextProps;
+	visualChanged();
+}
+
+function addSelectedAttr() {
+	const name = newAttr.value.name.trim();
+	if (!name || !selectedNode.value || selectedNode.value.type === 'root') return;
+	updateSelectedProp(name, newAttr.value.value);
+	newAttr.value = { name: '', value: '' };
+}
+
+function removeSelectedAttr(key) {
+	if (!selectedNode.value?.props) return;
+	const { [key]: removed, ...nextProps } = selectedNode.value.props;
+	selectedNode.value.props = nextProps;
 	visualChanged();
 }
 
@@ -1044,10 +1546,17 @@ function onCodeInput(value) {
  */
 function applyCode(value, options = {}) {
 	try {
+		const previousLayerValue = options.keepSelection ? layerValueForNodeId(tree.value, selectedId.value) : '';
 		const parsed = parseSource(value);
 		tree.value = parsed.tree;
 		if (parsed.props.length) activeComponent.value.props = parsed.props;
-		if (!options.keepSelection || !findNode(tree.value, selectedId.value)) {
+		const preservedSelection = previousLayerValue ? nodeIdForLayerValue(tree.value, previousLayerValue) : '';
+		if (options.keepSelection && preservedSelection) {
+			if (selectedId.value !== preservedSelection) {
+				suppressLayerRevealOnce = true;
+				selectedId.value = preservedSelection;
+			}
+		} else if (!options.keepSelection || !findNode(tree.value, selectedId.value)) {
 			selectedId.value = tree.value.children[0]?.id || tree.value.id;
 		}
 		codeError.value = '';
@@ -1058,10 +1567,9 @@ function applyCode(value, options = {}) {
 }
 
 /**
- * Saves the active component inside this isolated experiment. For now that
- * means localStorage only: no dev middleware, no generated files, and no global
- * app behavior. A later app-builder shell can swap this for real project-file
- * or database persistence.
+ * Saves the active component through the experiment dev server. In Vite dev it
+ * writes a real `.vue` file under this experiment; static builds still keep the
+ * in-memory editor working without persistence.
  */
 async function saveActiveComponent() {
 	applyCode(codeText.value, { keepDirty: true, keepSelection: true });
@@ -1071,9 +1579,10 @@ async function saveActiveComponent() {
 	codeText.value = nextSource;
 	activeComponent.value.source = nextSource;
 	componentPreviewCache.clear();
-	localStorage.setItem(draftStorageKey(activeComponent.value.name), nextSource);
-	if (activeComponent.value.custom) persistCustomComponents();
-	saveTarget.value = 'Draft';
+	const saved = await saveComponentToDisk(activeComponent.value, nextSource);
+	if (!saved) return;
+	Object.assign(activeComponent.value, saved);
+	saveTarget.value = 'Disk';
 	codeDirty.value = false;
 	savedAt.value = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
@@ -1097,15 +1606,16 @@ function replaceTemplateBlock(value, generatedSource) {
 	return value.replace(/<template>[\s\S]*?<\/template>/, generatedMatch[0]);
 }
 
-function resetActiveComponent() {
+async function resetActiveComponent() {
 	const seed = componentStore.value.find((component) => component.name === activeComponentName.value);
 	if (!seed) return;
-	if (typeof localStorage !== 'undefined') localStorage.removeItem(draftStorageKey(seed.name));
+	if (seedSources.has(seed.name)) seed.source = seedSources.get(seed.name);
 	componentPreviewCache.clear();
-	loadActiveComponent({ preferDraft: false });
+	loadActiveComponent();
 	codeDirty.value = false;
 	codeError.value = '';
 	savedAt.value = '';
+	await saveComponentToDisk(seed, seed.source);
 }
 
 /**
@@ -1117,293 +1627,21 @@ function resetActiveComponent() {
  * @param {ComponentRecord | undefined} component
  * @returns {{ rows: { line: number, text: string, id: string | null }[], lineMap: Record<string, number> }}
  */
-function buildSource(root, component) {
-	const rows = [];
-	const lineMap = {};
-
-	push('<template>');
-	(root?.children || []).forEach((child) => emitNode(child, 1));
-	push('</template>');
-
-	if (component?.props?.length) {
-		push('');
-		push('<script setup>');
-		push('const props = defineProps({');
-		component.props.forEach((prop) => push(`\t${prop.name}: ${prop.type || 'String'},`));
-		push('});');
-		push('</' + 'script>');
-	}
-
-	function push(text, id = null, indent = 0) {
-		rows.push({
-			line: rows.length + 1,
-			text: `${'\t'.repeat(indent)}${text}`,
-			id,
-		});
-		if (id && !lineMap[id]) lineMap[id] = rows.length;
-	}
-
-	function emitNode(node, depth) {
-		if (node.type === 'literal') {
-			push(encodeText(node.text || ''), node.id, depth);
-			return;
-		}
-		if (node.type === 'headline') {
-			push(`<h1${attrsForNode(node)}>${inlineSource(node)}</h1>`, node.id, depth);
-			return;
-		}
-		if (node.type === 'text') {
-			push(`<p${attrsForNode(node)}>${inlineSource(node)}</p>`, node.id, depth);
-			return;
-		}
-		if (node.type === 'paragraph') {
-			push(`<p${attrsForNode(node)}>${inlineSource(node)}</p>`, node.id, depth);
-			return;
-		}
-		if (node.type === 'element') {
-			emitElement(node, node.tag || 'section', depth);
-			return;
-		}
-		if (node.type === 'component') {
-			emitElement(node, node.tag, depth);
-		}
-	}
-
-	function emitElement(node, tag, depth) {
-		const props = attrsForNode(node);
-		const inline = inlineSource(node);
-		if (!node.children?.length && inline) {
-			push(`<${tag}${props}>${inline}</${tag}>`, node.id, depth);
-			return;
-		}
-		if (!node.children?.length && voidTags.has(tag)) {
-			push(`<${tag}${props}>`, node.id, depth);
-			return;
-		}
-		if (!node.children?.length) {
-			push(`<${tag}${props} />`, node.id, depth);
-			return;
-		}
-		push(`<${tag}${props}>`, node.id, depth);
-		node.children.forEach((child) => emitNode(child, depth + 1));
-		push(`</${tag}>`, null, depth);
-	}
-
-	return { rows, lineMap };
-}
-
-function attrsForNode(node) {
-	const props = node.props || {};
-	const repeat = node.repeat?.source ? ` v-for="${encodeAttribute(node.repeat.source)}"` : '';
-	const attrs = Object.entries(props)
-		.filter(([, value]) => value !== '' && value != null)
-		.map(([key, value]) => key.startsWith(':')
-			? ` ${key}="${encodeAttribute(value)}"`
-			: ` ${key}="${encodeAttribute(value)}"`)
-		.join('');
-	return `${repeat}${attrs}`;
-}
-
-function bindingExpression(node) {
-	return node.binding ? node.binding : JSON.stringify(node.text || node.label);
-}
-
-function inlineSource(node) {
-	if (node.inline?.length) {
-		return node.inline.map((part) => part.type === 'binding'
-			? `{{ ${part.value} }}`
-			: encodeText(part.value))
-			.join('')
-			.trim();
-	}
-	if (node.binding) return `{{ ${bindingExpression(node)} }}`;
-	return encodeText(node.text || '');
-}
-
 /**
  * Parses either a full Vue SFC or a bare template fragment into the editor tree.
  * Vue compiler locations are kept so stage clicks can point back to source lines.
  */
 function parseSource(value, componentName = activeComponentName.value) {
-	const templateMatch = value.match(/<template>([\s\S]*?)<\/template>/);
-	const template = templateMatch?.[1] ?? value;
-	if (!template.trim()) throw new Error('Expected a Vue template.');
-
-	const templateStartLine = templateMatch ? value.slice(0, templateMatch.index).split('\n').length : 1;
-	const ast = baseParse(template, { comments: false, decodeEntities });
-	const tree = stamp({
-		type: 'root',
-		label: componentName,
-		sourceLine: templateStartLine,
-		children: ast.children.map((node) => nodeFromAst(node, templateStartLine)).filter(Boolean),
-	});
-
-	return {
-		tree,
-		props: parseProps(value),
-	};
-}
-
-/**
- * Converts Vue compiler AST nodes into the smaller node model used by the
- * visual editor. This is where arbitrary Vue syntax gets narrowed into POC
- * concepts such as component, element, paragraph, and binding.
- */
-function nodeFromAst(astNode, templateStartLine) {
-	if (astNode.type === NodeTypes.TEXT) {
-		const text = astNode.content.trim();
-		if (!text) return null;
-		return stamp({ type: 'literal', label: 'Text', text, sourceLine: sourceLineFor(astNode, templateStartLine), children: [] });
-	}
-	if (astNode.type === NodeTypes.INTERPOLATION) {
-		return stamp({ type: 'text', label: 'Binding', binding: astNode.content.content.trim(), sourceLine: sourceLineFor(astNode, templateStartLine), children: [] });
-	}
-	if (astNode.type !== NodeTypes.ELEMENT) return null;
-
-	const sourceLine = sourceLineFor(astNode, templateStartLine);
-	const attrs = propsFromAst(astNode);
-	const repeat = repeatFromAst(astNode);
-	const firstText = textContentFromChildren(astNode.children);
-	const firstBinding = bindingFromChildren(astNode.children);
-	const inline = inlinePartsFromChildren(astNode.children);
-	const children = inlineOnlyChildren(astNode.children)
-		? []
-		: astNode.children.map((child) => nodeFromAst(child, templateStartLine)).filter(Boolean);
-
-	if (astNode.tag === 'h1' && inlineOnlyChildren(astNode.children)) return stamp({ type: 'headline', label: 'Heading', binding: firstBinding, inline, text: firstText, props: attrs, sourceLine, children: [] });
-	if (astNode.tag === 'p' && inlineOnlyChildren(astNode.children)) return stamp({ type: firstBinding ? 'text' : 'paragraph', label: firstBinding ? 'Text' : 'Paragraph', binding: firstBinding, inline, text: firstText, props: attrs, sourceLine, children: [] });
-	if (isNativeTag(astNode.tag)) return stamp({ type: 'element', tag: astNode.tag, label: astNode.tag, props: attrs, repeat, binding: firstBinding, inline, text: firstText, sourceLine, children });
-	return stamp({ type: 'component', tag: astNode.tag, label: astNode.tag, props: attrs, repeat, binding: firstBinding, inline, text: firstText, sourceLine, children });
-}
-
-function parseProps(value) {
-	const match = value.match(/defineProps\(\{\s*([\s\S]*?)\s*\}\)/);
-	if (!match) return [];
-	return match[1]
-		.split('\n')
-		.map((line) => line.trim().replace(/,$/, ''))
-		.filter(Boolean)
-		.map((line) => {
-			const [name, type] = line.split(':').map((part) => part.trim());
-			return name ? { name, type: type || 'String' } : null;
-		})
-		.filter(Boolean);
-}
-
-function propsFromAst(astNode) {
-	const out = {};
-	const hasEditorMarker = astNode.props.some((prop) => prop.type === NodeTypes.ATTRIBUTE && prop.name === 'data-template-node');
-	for (const prop of astNode.props) {
-		if (prop.type === NodeTypes.ATTRIBUTE) {
-			if (prop.name === 'data-template-node') continue;
-			if (hasEditorMarker && prop.name === 'draggable') continue;
-			const value = prop.value?.content || '';
-			out[prop.name] = hasEditorMarker && prop.name === 'class'
-				? cleanPastedEditorClasses(value)
-				: value;
-		}
-		if (prop.type === NodeTypes.DIRECTIVE && prop.name !== 'for' && prop.arg?.content) out[`:${prop.arg.content}`] = prop.exp?.content || '';
-	}
-	return out;
-}
-
-function cleanPastedEditorClasses(value) {
-	const editorClasses = new Set([
-		'relative',
-		'transition',
-		'outline-none',
-		'hover:ring-2',
-		'hover:ring-teal-300/60',
-		'ring-2',
-		'ring-teal-500',
-		'ring-offset-2',
-		'ring-offset-zinc-50',
-		'template-drop-after',
-	]);
-	return value
-		.split(/\s+/)
-		.filter((token) => token && !editorClasses.has(token))
-		.join(' ');
-}
-
-function repeatFromAst(astNode) {
-	const directive = astNode.props.find((prop) => prop.type === NodeTypes.DIRECTIVE && prop.name === 'for');
-	if (!directive?.exp?.content) return null;
-	return parseRepeatSource(directive.exp.content);
-}
-
-/**
- * Supports the common `item in items` and `(item, index) in items` forms. The
- * full Vue compiler understands more, but this shape is enough to demonstrate
- * Webflow-style collection/template editing.
- */
-function parseRepeatSource(source) {
-	const normalized = source.trim();
-	const match = normalized.match(/^(?:\(([^)]+)\)|([A-Za-z_$][\w$]*))\s+(?:in|of)\s+(.+)$/);
-	if (!match) return { source: normalized, item: 'item', index: '', list: normalized };
-
-	const aliases = (match[1] || match[2] || 'item').split(',').map((part) => part.trim());
-	return {
-		source: normalized,
-		item: aliases[0] || 'item',
-		index: aliases[1] || '',
-		list: match[3].trim(),
-	};
-}
-
-function sourceLineFor(astNode, templateStartLine) {
-	return templateStartLine + astNode.loc.start.line - 1;
-}
-
-function decodeEntities(value) {
-	if (typeof document === 'undefined') {
-		return value
-			.replace(/&lt;/g, '<')
-			.replace(/&gt;/g, '>')
-			.replace(/&quot;/g, '"')
-			.replace(/&amp;/g, '&');
-	}
-	const textarea = document.createElement('textarea');
-	textarea.innerHTML = value;
-	return textarea.value;
-}
-
-function textContentFromChildren(children) {
-	return children.filter((child) => child.type === NodeTypes.TEXT).map((child) => child.content).join('').trim();
-}
-
-function bindingFromChildren(children) {
-	return children.find((child) => child.type === NodeTypes.INTERPOLATION)?.content.content.trim() || null;
-}
-
-function inlinePartsFromChildren(children) {
-	const parts = children
-		.map((child) => {
-			if (child.type === NodeTypes.TEXT) {
-				const value = child.content.replace(/\s+/g, ' ');
-				return value.trim() ? { type: 'text', value } : null;
-			}
-			if (child.type === NodeTypes.INTERPOLATION) {
-				return { type: 'binding', value: child.content.content.trim() };
-			}
-			return null;
-		})
-		.filter(Boolean);
-	return parts.length ? parts : null;
-}
-
-function inlineOnlyChildren(children) {
-	return children.every((child) => {
-		if (child.type === NodeTypes.TEXT) return true;
-		return child.type === NodeTypes.INTERPOLATION;
-	});
+	return parseEditorSource(value, { componentName, stamp });
 }
 
 function resolveExpression(expression, scope = {}) {
 	if (!expression) return null;
 	const path = expression.trim();
+	const literal = literalExpressionValue(path);
+	if (literal.matched) return literal.value;
 	const [rootKey, ...keys] = path.split('.');
-	const root = Object.prototype.hasOwnProperty.call(scope, rootKey) ? scope[rootKey] : dataModel[rootKey];
+	const root = Object.prototype.hasOwnProperty.call(scope, rootKey) ? scope[rootKey] : rootData.value[rootKey];
 	return keys.reduce((value, key) => value?.[key], root);
 }
 
@@ -1416,146 +1654,6 @@ function renderInlineValue(node, fallback = '', scope = {}) {
 		return resolved;
 	}).join('').replace(/\s+/g, ' ').trim();
 	return value || fallback;
-}
-
-function encodeText(value) {
-	return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function encodeAttribute(value) {
-	return encodeText(value).replace(/"/g, '&quot;');
-}
-
-const nativeTags = new Set([
-	'a',
-	'abbr',
-	'address',
-	'article',
-	'aside',
-	'audio',
-	'b',
-	'blockquote',
-	'br',
-	'button',
-	'canvas',
-	'caption',
-	'cite',
-	'code',
-	'col',
-	'colgroup',
-	'data',
-	'dd',
-	'del',
-	'details',
-	'dfn',
-	'div',
-	'dl',
-	'dt',
-	'em',
-	'fieldset',
-	'figcaption',
-	'figure',
-	'footer',
-	'form',
-	'h1',
-	'h2',
-	'h3',
-	'h4',
-	'h5',
-	'h6',
-	'header',
-	'hr',
-	'i',
-	'iframe',
-	'img',
-	'input',
-	'ins',
-	'kbd',
-	'label',
-	'legend',
-	'li',
-	'main',
-	'mark',
-	'meter',
-	'nav',
-	'ol',
-	'optgroup',
-	'option',
-	'output',
-	'p',
-	'picture',
-	'pre',
-	'progress',
-	'q',
-	'rp',
-	'rt',
-	'ruby',
-	's',
-	'samp',
-	'select',
-	'slot',
-	'small',
-	'source',
-	'span',
-	'strong',
-	'sub',
-	'summary',
-	'sup',
-	'svg',
-	'animate',
-	'circle',
-	'clipPath',
-	'defs',
-	'ellipse',
-	'feBlend',
-	'feColorMatrix',
-	'feComposite',
-	'feDropShadow',
-	'feFlood',
-	'feGaussianBlur',
-	'feMerge',
-	'feMergeNode',
-	'feOffset',
-	'filter',
-	'foreignObject',
-	'g',
-	'line',
-	'linearGradient',
-	'marker',
-	'mask',
-	'path',
-	'pattern',
-	'polygon',
-	'polyline',
-	'radialGradient',
-	'rect',
-	'stop',
-	'symbol',
-	'text',
-	'textPath',
-	'tspan',
-	'use',
-	'view',
-	'table',
-	'tbody',
-	'td',
-	'template',
-	'textarea',
-	'tfoot',
-	'th',
-	'thead',
-	'time',
-	'tr',
-	'u',
-	'ul',
-	'var',
-	'video',
-	'wbr',
-]);
-const voidTags = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
-const replacedPreviewTags = new Set(['audio', 'canvas', 'embed', 'iframe', 'img', 'object', 'picture', 'svg', 'video']);
-function isNativeTag(tag) {
-	return nativeTags.has(tag);
 }
 
 /**
@@ -1749,10 +1847,12 @@ function renderNode(node, ctx) {
 	if (node.type === 'literal') return renderInlineValue(node, node.text || 'Text', ctx.scope || {});
 
 	const selected = ctx.selectedId === node.id;
+	const hovered = ctx.hoveredId === node.id;
 	const scope = ctx.scope || {};
 	const dropTarget = ctx.dropTargetId === node.id && node.type !== 'root';
 	const common = previewAttrsForNode(node, scope, {
 		'data-template-node': node.id,
+		'data-template-hovered': hovered ? 'true' : null,
 		'data-template-selected': selected ? 'true' : null,
 		'data-template-drop-target': dropTarget ? 'true' : null,
 		draggable: node.type !== 'root',
@@ -1775,6 +1875,9 @@ function renderNode(node, ctx) {
 	if (node.type === 'root') return h('div', { ...common, class: ['min-w-[760px]', stageClass, common.class].filter(Boolean).join(' ') }, children);
 	if (node.type === 'component') {
 		const slotChildren = slotContentForNode(node, children, scope);
+		if (elementsEntryForTag(node.tag)?.component && stageClass && !common.class) common.class = stageClass;
+		const elementsPreview = renderElementsComponent(node, common, slotChildren);
+		if (elementsPreview) return elementsPreview;
 		const preview = renderComponentPreview(node, ctx, common, scope, slotChildren);
 		if (preview) return preview;
 		if (stageClass && !common.class) common.class = stageClass;
@@ -1788,18 +1891,24 @@ function renderNode(node, ctx) {
 	if (node.type === 'element' && node.tag === 'slot') return h('div', common, 'Slot content');
 	if (node.type === 'element') return h(node.tag || 'section', common, children.length ? children : inlineContentForNode(node, scope));
 	if (node.type === 'component' && node.tag === 'MetricGrid') {
-		return h('section', common, dataModel.metrics.map((item) => h('article', { class: 'rounded-lg border border-zinc-200 bg-white p-4 shadow-sm' }, [
-			h('p', { class: 'text-xs font-medium text-zinc-500' }, item.label),
-			h('strong', { class: 'mt-3 block text-2xl font-semibold text-zinc-950' }, item.value),
+		return h('section', common, rootData.value.metrics.map((item) => h('article', { class: 'rounded-lg border border-border bg-card p-4 text-card-foreground shadow-sm' }, [
+			h('p', { class: 'text-xs font-medium text-muted-foreground' }, item.label),
+			h('strong', { class: 'mt-3 block text-2xl font-semibold text-foreground' }, item.value),
 		])));
 	}
 	if (node.type === 'component' && node.tag === 'TaskList') {
 		return h('section', common, children.length ? children : renderTaskListPreview(common));
 	}
-	if (node.type === 'component' && node.tag === 'ElTextInput') return h('input', { ...common, value: node.props?.['model-value'] || node.props?.modelValue || '', readonly: true });
-	if (node.type === 'component' && node.tag === 'ElButton') return h('button', { ...common, type: 'button' }, children.length ? children : node.text || 'Button');
-	if (node.type === 'component') return h('section', common, children.length ? children : h('span', { class: 'text-xs text-zinc-500' }, `Double-click to edit ${node.tag}`));
+	if (node.type === 'component') return h('section', common, children.length ? children : h('span', { class: 'text-xs text-muted-foreground' }, `Double-click to edit ${node.tag}`));
 	return h('section', common, children.length ? children : node.label);
+}
+
+function renderElementsComponent(node, attrs, slotChildren) {
+	const entry = elementsComponentRegistry.find((item) => item.componentName === node.tag);
+	if (!entry || typeof entry.component === 'string' || !entry.component) return null;
+	const props = { ...attrs };
+	delete props.draggable;
+	return h(entry.component, props, slotChildren.length ? { default: () => slotChildren } : undefined);
 }
 
 function slotContentForNode(node, renderedChildren, scope) {
@@ -1813,6 +1922,7 @@ function renderChildren(node, ctx, scope) {
 		key: child.id,
 		node: child,
 		selectedId: ctx.selectedId,
+		hoveredId: ctx.hoveredId,
 		dropTargetId: ctx.dropTargetId,
 		dataScope: scope,
 		onSelect: (id) => ctx.emit('select', id),
@@ -1830,22 +1940,22 @@ function inlineContentForNode(node, scope) {
 
 function renderTaskListPreview(common) {
 	return [
-		h('p', { class: 'text-sm font-semibold text-zinc-950' }, 'Tasks'),
-		h('div', { class: 'grid gap-2 rounded-md border border-dashed border-teal-300/60 bg-teal-50/40 p-2' }, [
-			h('div', { class: 'flex items-center justify-between px-1 text-[11px] font-medium uppercase tracking-[0.14em] text-teal-700' }, [
+		h('p', { class: 'text-sm font-semibold text-foreground' }, 'Tasks'),
+		h('div', { class: 'grid gap-2 rounded-md border border-dashed border-ring/60 bg-accent/40 p-2' }, [
+			h('div', { class: 'flex items-center justify-between px-1 text-[11px] font-medium uppercase tracking-[0.14em] text-accent-foreground' }, [
 				h('span', 'task in tasks'),
 				h('span', 'template'),
 			]),
-			...dataModel.tasks.map((task, index) => h('article', {
-				class: `border-t border-zinc-100 py-2 ${index > 0 ? 'opacity-90' : ''}`,
+			...rootData.value.tasks.map((task, index) => h('article', {
+				class: `border-t border-border py-2 ${index > 0 ? 'opacity-90' : ''}`,
 				onClick: common.onClick,
 				onDblclick: common.onDblclick,
 				onDrop: common.onDrop,
 				onDragover: common.onDragover,
 			}, [
-				h('p', { class: 'text-sm text-zinc-700' }, task.title),
-				h('p', { class: 'text-xs text-zinc-500' }, task.owner),
-				h('p', { class: 'text-xs text-zinc-500' }, task.due),
+				h('p', { class: 'text-sm text-foreground' }, task.title),
+				h('p', { class: 'text-xs text-muted-foreground' }, task.owner),
+				h('p', { class: 'text-xs text-muted-foreground' }, task.due),
 			])),
 		]),
 	];
@@ -1860,11 +1970,11 @@ function renderRepeatNode(node, ctx, common, scope) {
 	const items = resolveExpression(node.repeat.list, scope);
 	const rows = Array.isArray(items) && items.length ? items : [{ title: 'Example row' }];
 	return h('div', {
-		class: 'grid gap-2 rounded-md border border-dashed border-teal-300/60 bg-teal-50/40 p-2',
+		class: 'grid gap-2 rounded-md border border-dashed border-ring/60 bg-accent/40 p-2',
 		'data-repeat-template': node.id,
 	}, [
 		h('div', {
-			class: 'flex items-center justify-between px-1 text-[11px] font-medium uppercase tracking-[0.14em] text-teal-700',
+			class: 'flex items-center justify-between px-1 text-[11px] font-medium uppercase tracking-[0.14em] text-accent-foreground',
 			onClick: common.onClick,
 			onDblclick: common.onDblclick,
 			onDrop: common.onDrop,
@@ -1895,19 +2005,19 @@ function renderRepeatNode(node, ctx, common, scope) {
  * `class=""` attribute so users can understand what the stage is adding.
  */
 function basePreviewClassForNode(node) {
-	if (node.type === 'root') return 'mx-auto space-y-5 rounded-xl border border-zinc-200 bg-zinc-50 p-5 shadow-xl shadow-zinc-950/10';
+	if (node.type === 'root') return 'min-h-full space-y-5 bg-card';
 	if (node.type === 'element' && node.tag === 'slot') return '';
-	if (node.type === 'component' && node.tag === 'HeroPanel') return 'flex items-start gap-6 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm';
-	if (node.type === 'component' && node.tag === 'TemplateFrame') return 'mx-auto space-y-5 rounded-xl border border-zinc-200 bg-zinc-50 p-5';
-	if (node.type === 'component' && node.tag === 'Badge') return 'inline-flex w-fit rounded bg-teal-50 px-2.5 py-1 text-xs font-medium text-teal-700';
+	if (node.type === 'component' && node.tag === 'HeroPanel') return 'flex items-start gap-6 rounded-xl border border-border bg-card p-6 text-card-foreground shadow-sm';
+	if (node.type === 'component' && node.tag === 'TemplateFrame') return 'space-y-5 bg-card';
+	if (node.type === 'component' && node.tag === 'Badge') return 'inline-flex w-fit rounded bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary';
 	if (node.type === 'component' && node.tag === 'SplitPanel') return 'grid grid-cols-1 gap-5 lg:grid-cols-[1.2fr_0.8fr]';
 	if (node.type === 'component' && node.tag === 'MetricGrid') return 'grid grid-cols-1 gap-3 sm:grid-cols-3';
-	if (node.type === 'component' && node.tag === 'TaskList') return 'rounded-xl border border-zinc-200 bg-white p-4 shadow-sm';
-	if (node.type === 'component' && node.tag === 'ElButton') return 'inline-flex h-10 w-fit items-center justify-center rounded-md bg-zinc-950 px-4 text-sm font-medium text-white shadow-sm';
-	if (node.type === 'component' && node.tag === 'ElTextInput') return 'h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-700';
-	if (node.type === 'headline') return 'max-w-xl text-3xl font-semibold tracking-tight text-zinc-950';
-	if (node.type === 'text' || node.type === 'paragraph') return 'max-w-lg text-sm leading-6 text-zinc-700';
-	if (node.type === 'element' && isEmptyElement(node)) return 'min-h-12 rounded-lg border border-dashed border-zinc-300 bg-white/80 p-4';
+	if (node.type === 'component' && node.tag === 'TaskList') return 'rounded-xl border border-border bg-card p-4 text-card-foreground shadow-sm';
+	if (node.type === 'component' && node.tag === 'ElButton') return 'inline-flex h-10 w-fit items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm';
+	if (node.type === 'component' && node.tag === 'ElTextInput') return 'h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground';
+	if (node.type === 'headline') return 'max-w-xl text-3xl font-semibold tracking-tight text-foreground';
+	if (node.type === 'text' || node.type === 'paragraph') return 'max-w-lg text-sm leading-6 text-muted-foreground';
+	if (node.type === 'element' && isEmptyElement(node)) return 'min-h-12 rounded-lg border border-dashed border-border bg-background/80 p-4';
 	return '';
 }
 
@@ -1925,168 +2035,319 @@ function isEmptyElement(node) {
 </script>
 
 <template>
-	<div class="min-h-screen bg-zinc-950 text-zinc-100">
-		<ElSplitterPanel class="h-screen min-h-screen" :start-size="280" :end-size="460" :min-start="220" :min-main="560" :min-end="340">
-			<template #start>
-				<aside class="h-screen overflow-y-auto border-r border-white/10 bg-zinc-950">
-				<div class="border-b border-white/10 p-4">
-					<p class="text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">Experiment</p>
-					<h1 class="mt-1 text-sm font-semibold text-white">Vue visual editor</h1>
-					<div class="mt-3 flex flex-wrap items-center gap-1 text-xs text-zinc-500">
-						<button
-							v-for="(name, index) in componentStack"
-							:key="`${name}-${index}`"
-							type="button"
-							class="rounded px-1.5 py-1 hover:bg-white/10 hover:text-white"
-							:class="index === componentStack.length - 1 && 'bg-teal-300 text-zinc-950 hover:bg-teal-200 hover:text-zinc-950'"
-							@click="openFromStack(index)"
-						>{{ name }}</button>
-					</div>
-				</div>
-
-				<div class="space-y-5 p-4">
-					<section>
-						<h2 class="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">Project components</h2>
-						<div class="grid gap-2">
-							<button
-								v-for="entry in componentPalette"
-								:key="entry.id"
-								type="button"
-								draggable="true"
-								class="group flex h-10 items-center gap-3 rounded-md border border-white/10 bg-white/[0.03] px-3 text-left transition hover:border-teal-400/50 hover:bg-teal-400/10"
-								@dragstart="onDragStart(entry, $event)"
-								@dragend="onDragEnd"
-								@click="addToSelected(entry)"
-							>
-								<svg class="size-4 shrink-0 text-zinc-400 group-hover:text-teal-300" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-									<path :d="entry.icon" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
-								</svg>
-								<span class="truncate text-sm font-medium text-zinc-100">{{ entry.label }}</span>
-							</button>
-						</div>
-					</section>
-
-					<section>
-						<h2 class="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">HTML</h2>
-						<div class="grid grid-cols-2 gap-2">
-							<button
-								v-for="entry in primitivePalette"
-								:key="entry.id"
-								type="button"
-								draggable="true"
-								class="flex h-9 items-center gap-2 rounded-md border border-white/10 bg-white/[0.03] px-2 text-xs text-zinc-200 hover:border-teal-400/50 hover:bg-teal-400/10"
-								@dragstart="onDragStart(entry, $event)"
-								@dragend="onDragEnd"
-								@click="addToSelected(entry)"
-							>
-								<svg class="size-3.5 shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-									<path :d="entry.icon" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
-								</svg>
-								{{ entry.label }}
-							</button>
-						</div>
-					</section>
-
-					<section>
-						<h2 class="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">Layers</h2>
-						<div class="max-h-[32vh] space-y-1 overflow-auto pr-1">
-							<button
-								v-for="{ node, depth } in flatNodes"
-								:key="node.id"
-								type="button"
-								class="flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-xs transition"
-								:class="selectedId === node.id ? 'bg-teal-400 text-zinc-950' : 'text-zinc-400 hover:bg-white/10 hover:text-white'"
-								:style="{ paddingLeft: `${8 + depth * 14}px` }"
-								@click="selectNode(node.id)"
-							>
-								<span class="size-1.5 rounded-full" :class="selectedId === node.id ? 'bg-zinc-950' : 'bg-zinc-600'"></span>
-								<span class="truncate">{{ node.tag || node.label }}</span>
-							</button>
-						</div>
-					</section>
-				</div>
-				</aside>
-			</template>
-
-			<main class="h-screen min-w-0 bg-zinc-100 text-zinc-950">
-				<div class="flex h-16 items-center justify-between gap-3 border-b border-zinc-200 bg-white px-4">
-					<div class="min-w-0">
-						<p class="truncate text-sm font-semibold">{{ activeComponentName }}</p>
-						<p class="truncate text-xs text-zinc-500">{{ sourceFile }}:{{ selectedSourceLine }}</p>
-					</div>
-					<div class="flex items-center gap-2">
-						<div class="relative">
-							<button type="button" class="flex h-8 w-8 items-center justify-center rounded-md bg-zinc-950 text-white hover:bg-zinc-800" aria-label="Create" @click="isCreateMenuOpen = !isCreateMenuOpen">
-								<svg class="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-									<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-								</svg>
-							</button>
-							<div v-if="isCreateMenuOpen" class="absolute right-0 top-10 z-40 grid w-48 gap-1 rounded-md border border-zinc-200 bg-white p-1 text-xs shadow-xl">
-								<button type="button" class="rounded px-3 py-2 text-left hover:bg-zinc-100" @click="openCreateDialog('component')">New component</button>
-								<button type="button" class="rounded px-3 py-2 text-left hover:bg-zinc-100" @click="openCreateDialog('page')">New page</button>
-								<button v-if="selectedNode && selectedNode.type !== 'root'" type="button" class="rounded px-3 py-2 text-left hover:bg-zinc-100" @click="openCreateDialog('component', { fromSelection: true })">Component from selection</button>
+		<div class="min-h-screen bg-background text-foreground">
+				<ElSplitterPanel class="h-screen min-h-screen" :start-size="280" :end-size="460" :min-start="240" :min-main="420" :min-end="360">
+				<template #start>
+					<aside class="flex h-screen min-h-0 flex-col overflow-hidden border-r border-border bg-card text-card-foreground">
+						<div class="shrink-0 border-b border-border p-4">
+							<p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Experiment</p>
+							<h1 class="mt-1 text-sm font-semibold text-foreground">Template Studio</h1>
+							<div class="mt-3 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+								<button
+									v-for="(name, index) in componentStack"
+									:key="`${name}-${index}`"
+									type="button"
+									class="rounded px-1.5 py-1 hover:bg-secondary hover:text-foreground"
+									:class="index === componentStack.length - 1 && 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground'"
+									@click="openFromStack(index)"
+								>{{ name }}</button>
 							</div>
 						</div>
-						<button type="button" class="h-8 rounded-md border border-zinc-200 px-3 text-xs font-medium hover:bg-zinc-50" @click="duplicateSelected">Duplicate</button>
-						<button type="button" class="h-8 rounded-md border border-rose-200 px-3 text-xs font-medium text-rose-700 hover:bg-rose-50" @click="removeSelected">Delete</button>
-					</div>
-				</div>
 
-				<div
-					class="h-[calc(100vh-4rem)] overflow-auto p-5"
-					:class="(draggingEntry || draggingNodeId) && 'bg-teal-50'"
-					@dragover.prevent
-					@dragleave="clearDropTarget"
-					@drop="addFromDrop(selectedId)"
-				>
-					<TemplateNode
-						v-if="tree"
-						:node="tree"
-						:selected-id="selectedId"
-						:drop-target-id="dropTargetId"
-						@select="selectNode"
-						@open-component="openComponent"
-						@drop-on-node="addFromDrop"
-						@node-drag-start="startNodeDrag"
-						@node-drag-over="markDropTarget"
-					/>
-				</div>
-			</main>
+						<section
+							class="flex min-h-0 flex-col border-b border-border"
+							:class="sidebarPanels.components ? 'flex-[1.25_1_0]' : 'flex-none'"
+						>
+							<button
+								type="button"
+								class="flex h-10 shrink-0 items-center justify-between border-b border-border px-4 text-left text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground hover:bg-secondary hover:text-foreground"
+								:aria-expanded="sidebarPanels.components"
+								@click="toggleSidebarPanel('components')"
+							>
+								<span>Components</span>
+								<span class="font-mono text-sm">{{ sidebarPanels.components ? '-' : '+' }}</span>
+							</button>
+							<div v-show="sidebarPanels.components" class="min-h-0 flex-1 overflow-y-auto p-4">
+								<div class="grid gap-5">
+									<div>
+										<h2 class="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Project components</h2>
+										<div class="grid gap-2">
+											<button
+												v-for="entry in componentPalette"
+												:key="entry.id"
+												type="button"
+												draggable="true"
+												class="group flex h-10 items-center gap-3 rounded-md border border-border bg-background px-3 text-left transition hover:border-ring hover:bg-secondary"
+												@dragstart="onDragStart(entry, $event)"
+												@dragend="onDragEnd"
+												@click="addToSelected(entry)"
+											>
+												<svg class="size-4 shrink-0 text-muted-foreground group-hover:text-foreground" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+													<path :d="entry.icon" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+												</svg>
+												<span class="truncate text-sm font-medium text-foreground">{{ entry.label }}</span>
+											</button>
+										</div>
+									</div>
 
-			<template #end>
-				<aside class="h-screen min-w-0 overflow-hidden border-l border-white/10 bg-zinc-950">
-				<div class="grid h-full min-h-0 grid-rows-[minmax(12rem,auto)_minmax(0,1fr)]">
-					<section class="max-h-[48vh] overflow-y-auto border-b border-white/10 p-4">
-						<div class="flex items-center justify-between gap-3">
-							<div>
-								<h2 class="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">Component</h2>
-								<p class="mt-1 text-sm font-medium text-white">{{ activeComponentName }}</p>
+									<div>
+										<h2 class="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Elements</h2>
+										<div class="grid gap-3">
+											<div v-for="group in elementsPaletteGroups" :key="group.group" class="grid gap-2">
+												<p class="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">{{ group.group }}</p>
+												<div class="grid grid-cols-2 gap-2">
+													<button
+														v-for="entry in group.entries"
+														:key="entry.id"
+														type="button"
+														draggable="true"
+														class="flex h-9 min-w-0 items-center gap-2 rounded-md border border-border bg-background px-2 text-left text-xs text-foreground hover:border-ring hover:bg-secondary"
+														@dragstart="onDragStart(entry, $event)"
+														@dragend="onDragEnd"
+														@click="addToSelected(entry)"
+													>
+														<svg class="size-3.5 shrink-0 text-muted-foreground" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+															<path :d="entry.icon" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+														</svg>
+														<span class="truncate">{{ entry.label }}</span>
+													</button>
+												</div>
+											</div>
+										</div>
+									</div>
+
+									<div>
+										<h2 class="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">HTML</h2>
+										<div class="grid grid-cols-2 gap-2">
+											<button
+												v-for="entry in primitivePalette"
+												:key="entry.id"
+												type="button"
+												draggable="true"
+												class="flex h-9 items-center gap-2 rounded-md border border-border bg-background px-2 text-xs text-foreground hover:border-ring hover:bg-secondary"
+												@dragstart="onDragStart(entry, $event)"
+												@dragend="onDragEnd"
+												@click="addToSelected(entry)"
+											>
+												<svg class="size-3.5 shrink-0 text-muted-foreground" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+													<path :d="entry.icon" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+												</svg>
+												{{ entry.label }}
+											</button>
+										</div>
+									</div>
+								</div>
+							</div>
+						</section>
+
+						<section
+							class="flex min-h-0 flex-col"
+							:class="sidebarPanels.layers ? 'flex-1' : 'flex-none'"
+						>
+							<button
+								type="button"
+								class="flex h-10 shrink-0 items-center justify-between border-b border-border px-4 text-left text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground hover:bg-secondary hover:text-foreground"
+								:aria-expanded="sidebarPanels.layers"
+								@click="toggleSidebarPanel('layers')"
+							>
+								<span>Layers</span>
+								<span class="font-mono text-sm">{{ sidebarPanels.layers ? '-' : '+' }}</span>
+							</button>
+							<div v-show="sidebarPanels.layers" class="min-h-0 flex-1 overflow-y-auto bg-background">
+								<ElTreeView
+									:model-value="selectedLayerValue"
+									:items="layerTreeItems"
+									:open-values="layerOpenValues"
+									:hovered-value="hoveredLayerValue"
+									:external-drag-value="layerDragSourceValue"
+									:external-drop-types="[paletteDragType]"
+									:can-drop-item="canDropLayerItem"
+									:can-drop-external="canDropExternalLayer"
+									:chrome="false"
+									:draggable="true"
+									label="Template layers"
+									class="template-layer-tree"
+									external-drop-effect="copy"
+									@select="selectNode($event.item.nodeId)"
+									@hover="hoverNodeFromLayer"
+									@hover-end="clearNodeHoverFromLayer"
+									@reorder="onLayerReorder"
+									@external-drop="onLayerExternalDrop"
+									@update:open-values="layerOpenValues = $event"
+								/>
+							</div>
+						</section>
+					</aside>
+				</template>
+
+					<main class="flex h-screen min-w-0 flex-col bg-background text-foreground">
+						<div class="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-border bg-card px-4 text-card-foreground">
+							<div class="min-w-0">
+								<p class="truncate text-sm font-semibold">{{ activeComponentName }}</p>
+								<p class="truncate text-xs text-muted-foreground" :title="sourceFileTitle">{{ sourceFileLabel }}</p>
 							</div>
 							<div class="flex items-center gap-2">
-								<button type="button" class="h-7 rounded-md border border-white/10 px-2 text-[11px] font-medium text-zinc-300 hover:bg-white/10" @click="resetActiveComponent">Reset</button>
-								<button type="button" class="h-7 rounded-md bg-teal-300 px-2 text-[11px] font-semibold text-zinc-950 hover:bg-teal-200" @click="saveActiveComponent">Save</button>
+								<div class="relative">
+									<button type="button" class="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/90" aria-label="Create" @click="isCreateMenuOpen = !isCreateMenuOpen">
+										<svg class="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+											<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+										</svg>
+									</button>
+									<div v-if="isCreateMenuOpen" class="absolute right-0 top-10 z-40 grid w-48 gap-1 rounded-md border border-border bg-popover p-1 text-xs text-popover-foreground shadow-xl">
+										<button type="button" class="rounded px-3 py-2 text-left hover:bg-secondary" @click="openCreateDialog('component')">New component</button>
+										<button type="button" class="rounded px-3 py-2 text-left hover:bg-secondary" @click="openCreateDialog('page')">New page</button>
+										<button v-if="selectedNode && selectedNode.type !== 'root'" type="button" class="rounded px-3 py-2 text-left hover:bg-secondary" @click="openCreateDialog('component', { fromSelection: true })">Component from selection</button>
+									</div>
+								</div>
+								<div class="relative">
+									<button
+										type="button"
+										class="flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-secondary hover:text-foreground"
+										:aria-expanded="isDeveloperMenuOpen"
+										aria-label="Developer menu"
+										@click="toggleDeveloperMenu"
+									>
+										<svg class="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+											<path d="M8 7 4 12l4 5M16 7l4 5-4 5M14 4l-4 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+										</svg>
+									</button>
+									<div
+										v-if="isDeveloperMenuOpen"
+										class="absolute right-0 top-10 z-50 flex max-h-[70vh] w-[min(32rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-md border border-border bg-popover text-popover-foreground shadow-xl"
+									>
+										<div class="flex shrink-0 items-center justify-between gap-3 border-b border-border px-3 py-2">
+											<div class="min-w-0">
+												<p class="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Developer</p>
+												<p class="truncate text-xs text-foreground">{{ developerNodeSnapshot.nodeCount }} nodes in editor tree</p>
+											</div>
+											<button type="button" class="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground" @click="isDeveloperMenuOpen = false">Close</button>
+										</div>
+										<pre class="min-h-0 flex-1 overflow-auto bg-background p-3 font-mono text-[11px] leading-5 text-foreground">{{ developerNodeSnapshotText }}</pre>
+									</div>
+								</div>
+								<button type="button" class="h-8 rounded-md border border-border px-3 text-xs font-medium hover:bg-secondary" @click="duplicateSelected">Duplicate</button>
+								<button type="button" class="h-8 rounded-md border border-border px-3 text-xs font-medium hover:bg-secondary" @click="toggleCodeDrawer">
+									{{ isCodeDrawerOpen ? 'Hide code' : 'Show code' }}
+								</button>
+								<button type="button" class="h-8 rounded-md border border-destructive/30 px-3 text-xs font-medium text-destructive hover:bg-destructive/10" @click="removeSelected">Delete</button>
+							</div>
+						</div>
+
+						<div
+							class="min-h-0 flex-1 overflow-auto bg-neutral-100 p-6"
+							:class="(draggingEntry || draggingNodeId) && 'bg-accent/30'"
+							@dragover.prevent
+							@dragleave="clearDropTarget"
+							@drop="addFromDrop(selectedId)"
+							@pointermove="markHoveredStageNode"
+							@pointerleave="clearHoveredStageNode"
+						>
+							<TemplateNode
+								v-if="tree"
+								:node="tree"
+								:selected-id="selectedId"
+								:hovered-id="hoveredNodeId"
+								:drop-target-id="dropTargetId"
+								@select="selectNode"
+								@open-component="openComponent"
+								@drop-on-node="addFromDrop"
+								@node-drag-start="startNodeDrag"
+								@node-drag-over="markDropTarget"
+							/>
+						</div>
+
+						<section
+							class="template-code-drawer grid shrink-0 grid-rows-[auto_auto_minmax(0,1fr)] border-t border-border bg-card text-card-foreground transition-[height]"
+							:style="{ height: isCodeDrawerOpen ? `${codeDrawerHeight}px` : '3rem' }"
+						>
+							<button
+								v-if="isCodeDrawerOpen"
+								type="button"
+								class="group h-2 cursor-row-resize bg-border/60 outline-none transition hover:bg-ring/40 focus-visible:bg-ring/50"
+								aria-label="Resize code drawer"
+								@pointerdown="beginCodeDrawerResize"
+							>
+								<span class="mx-auto block h-0.5 w-10 rounded-full bg-muted-foreground/35 transition group-hover:bg-foreground/50"></span>
+							</button>
+							<div class="flex h-12 min-w-0 items-center justify-between gap-3 border-b border-border px-4">
+								<button
+									type="button"
+									class="flex min-w-0 items-center gap-2 text-left"
+									:aria-expanded="isCodeDrawerOpen"
+									@click="toggleCodeDrawer"
+								>
+									<span class="flex size-6 shrink-0 items-center justify-center rounded border border-border bg-background text-muted-foreground">
+										<svg class="size-3.5 transition-transform" :class="isCodeDrawerOpen ? '' : 'rotate-180'" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+											<path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+										</svg>
+									</span>
+									<span class="min-w-0">
+										<span class="block text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Code</span>
+										<code class="block truncate text-[11px] text-muted-foreground" :title="sourceFileTitle">{{ sourceFileLabel }}</code>
+									</span>
+								</button>
+								<div class="flex shrink-0 items-center gap-2">
+									<p class="text-[11px]" :class="codeError ? 'text-destructive' : 'text-muted-foreground'">
+										{{ codeError || (codeDirty ? 'Unsaved' : savedAt ? `${saveTarget} saved ${savedAt}` : 'Synced') }}
+									</p>
+									<button type="button" class="h-7 rounded-md border border-border px-2 text-[11px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground" @click="resetActiveComponent">Reset</button>
+									<button type="button" class="h-7 rounded-md bg-primary px-2 text-[11px] font-semibold text-primary-foreground hover:bg-primary/90" @click="saveActiveComponent">Save</button>
+								</div>
+							</div>
+							<div v-show="isCodeDrawerOpen" class="min-h-0">
+								<TemplateMonacoEditor
+									ref="codeEditorEl"
+									:model-value="codeText"
+									:selected-line="selectedSourceLine"
+									:hovered-line="hoveredSourceLine"
+									:path="sourceFile"
+									lang="vue"
+									@cursor-line-change="selectFromCodeLine"
+									@hover-line-change="hoverNodeFromCodeLine"
+									@ready="applyCodeLineHighlight"
+									@update:model-value="onCodeInput"
+								/>
+							</div>
+						</section>
+					</main>
+
+					<template #end>
+						<aside class="h-screen w-full min-w-0 overflow-hidden border-l border-border bg-card text-card-foreground">
+							<section class="h-full min-w-0 overflow-y-auto overflow-x-hidden p-4">
+						<div class="flex items-center justify-between gap-3">
+							<div>
+								<h2 class="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Component</h2>
+								<p class="mt-1 text-sm font-medium text-foreground">{{ activeComponentName }}</p>
+							</div>
+							<div class="flex items-center gap-2">
+								<button type="button" class="h-7 rounded-md border border-border px-2 text-[11px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground" @click="resetActiveComponent">Reset</button>
+								<button type="button" class="h-7 rounded-md bg-primary px-2 text-[11px] font-semibold text-primary-foreground hover:bg-primary/90" @click="saveActiveComponent">Save</button>
 							</div>
 						</div>
 
 						<div class="mt-4 grid gap-3">
 							<label class="grid gap-1">
-								<span class="text-xs text-zinc-500">Selected label</span>
-								<input class="h-9 rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white outline-none focus:border-teal-300" :value="selectedNode?.label || ''" @input="updateLabel($event.target.value)">
+								<span class="text-xs text-muted-foreground">Selected label</span>
+								<input class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus:border-ring" :value="selectedNode?.label || ''" @input="updateLabel($event.target.value)">
 							</label>
 							<label v-if="selectedNode && 'binding' in selectedNode" class="grid gap-1">
-								<span class="text-xs text-zinc-500">Data binding</span>
-								<input class="h-9 rounded-md border border-white/10 bg-white/5 px-3 font-mono text-xs text-white outline-none focus:border-teal-300" :value="selectedNode.binding || ''" @input="updateBinding($event.target.value)">
+								<span class="text-xs text-muted-foreground">Data binding</span>
+								<input class="h-9 rounded-md border border-input bg-background px-3 font-mono text-xs text-foreground outline-none focus:border-ring" :value="selectedNode.binding || ''" @input="updateBinding($event.target.value)">
 							</label>
+							<div v-if="selectedData != null" class="rounded-md border border-border bg-background px-3 py-2">
+								<p class="text-[11px] font-medium text-muted-foreground">Resolved value</p>
+								<code class="mt-1 block truncate font-mono text-xs text-primary">{{ selectedData }}</code>
+							</div>
 							<label v-if="selectedNode && 'text' in selectedNode" class="grid gap-1">
-								<span class="text-xs text-zinc-500">Text</span>
-								<input class="h-9 rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white outline-none focus:border-teal-300" :value="selectedNode.text || ''" @input="updateText($event.target.value)">
+								<span class="text-xs text-muted-foreground">Text</span>
+								<input class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus:border-ring" :value="selectedNode.text || ''" @input="updateText($event.target.value)">
 							</label>
 							<label v-if="selectedNode?.repeat" class="grid gap-1">
-								<span class="text-xs text-zinc-500">Repeated template</span>
-								<input class="h-9 rounded-md border border-white/10 bg-white/5 px-3 font-mono text-xs text-white outline-none focus:border-teal-300" :value="selectedNode.repeat.source" @input="updateRepeatSource($event.target.value)">
+								<span class="text-xs text-muted-foreground">Repeated template</span>
+								<input class="h-9 rounded-md border border-input bg-background px-3 font-mono text-xs text-foreground outline-none focus:border-ring" :value="selectedNode.repeat.source" @input="updateRepeatSource($event.target.value)">
 							</label>
 							<div v-if="selectedNode && selectedNode.type !== 'root'" class="grid gap-1">
-								<span class="text-xs text-zinc-500">Template class</span>
+								<span class="text-xs text-muted-foreground">Template class</span>
 								<div class="template-class-input">
 									<ElClassToggleInput
 										:key="selectedNode.id"
@@ -2100,103 +2361,121 @@ function isEmptyElement(node) {
 									/>
 								</div>
 							</div>
-							<label v-if="selectedBaseClass" class="grid gap-1">
-								<span class="text-xs text-zinc-500">Preview base classes</span>
-								<textarea class="min-h-16 resize-none rounded-md border border-white/10 bg-black/20 px-3 py-2 font-mono text-[11px] text-zinc-400 outline-none" readonly :value="selectedBaseClass"></textarea>
-							</label>
-						</div>
-
-						<div v-if="selectedNode?.type === 'component'" class="mt-4 rounded-md border border-white/10 bg-white/[0.03] p-3">
-							<div class="mb-2 flex items-center justify-between">
-								<p class="text-xs font-medium text-zinc-400">Instance props</p>
-								<button type="button" class="text-[11px] text-teal-300 hover:text-teal-100" @click="openComponent(selectedNode)">Edit {{ selectedNode.tag }}</button>
+							<div v-if="selectedNode && selectedNode.type !== 'root'" class="grid gap-2">
+								<div class="flex items-center justify-between">
+									<span class="text-xs text-muted-foreground">HTML attributes</span>
+									<span class="text-[11px] text-muted-foreground">{{ selectedAttrs.length }}</span>
+								</div>
+								<div v-if="selectedAttrs.length" class="grid gap-2">
+									<div
+										v-for="[key, value] in selectedAttrs"
+										:key="key"
+										class="grid min-w-0 grid-cols-[minmax(4.5rem,0.35fr)_minmax(0,1fr)_auto] gap-2"
+									>
+										<input class="h-8 min-w-0 rounded-md border border-input bg-muted px-2 font-mono text-[11px] text-muted-foreground outline-none" readonly :value="key">
+										<input class="h-8 min-w-0 rounded-md border border-input bg-background px-2 font-mono text-xs text-foreground outline-none focus:border-ring" :value="value" @input="updateSelectedProp(key, $event.target.value)">
+										<button type="button" class="h-8 rounded-md border border-border px-2 text-[11px] text-muted-foreground hover:bg-destructive/10 hover:text-destructive" @click="removeSelectedAttr(key)">Remove</button>
+									</div>
+								</div>
+								<div class="grid min-w-0 grid-cols-[minmax(4.5rem,0.35fr)_minmax(0,1fr)_auto] gap-2">
+									<input v-model="newAttr.name" class="h-8 min-w-0 rounded-md border border-input bg-background px-2 font-mono text-[11px] text-foreground outline-none focus:border-ring" placeholder="aria-label">
+									<input v-model="newAttr.value" class="h-8 min-w-0 rounded-md border border-input bg-background px-2 font-mono text-xs text-foreground outline-none focus:border-ring" placeholder="value">
+									<button type="button" class="h-8 rounded-md bg-secondary px-2 text-xs text-secondary-foreground hover:bg-secondary/80" @click="addSelectedAttr">Add</button>
+								</div>
 							</div>
-							<label
-								v-for="prop in componentStore.find((component) => component.name === selectedNode.tag)?.props || []"
-								:key="prop.name"
-								class="mb-2 grid gap-1 last:mb-0"
-							>
-								<span class="text-[11px] text-zinc-500">{{ prop.name }}</span>
-								<input class="h-8 rounded-md border border-white/10 bg-black/20 px-2 font-mono text-xs text-white outline-none focus:border-teal-300" :value="selectedNode.props?.[prop.name] || selectedNode.props?.[`:${prop.name}`] || ''" @input="updateSelectedProp(prop.name, $event.target.value)">
+							<label v-if="selectedBaseClass" class="grid gap-1">
+								<span class="text-xs text-muted-foreground">Preview base classes</span>
+								<textarea class="min-h-16 resize-none rounded-md border border-input bg-background px-3 py-2 font-mono text-[11px] text-muted-foreground outline-none" readonly :value="selectedBaseClass"></textarea>
 							</label>
 						</div>
 
-						<div class="mt-4 rounded-md border border-white/10 bg-white/[0.03] p-3">
+							<div v-if="selectedNode?.type === 'component'" class="mt-4 rounded-md border border-border bg-background p-3">
+								<div class="mb-2 flex items-center justify-between">
+									<p class="text-xs font-medium text-muted-foreground">Instance props</p>
+									<button type="button" class="text-[11px] text-primary hover:text-primary/80" @click="openComponent(selectedNode)">Edit {{ selectedNode.tag }}</button>
+								</div>
+								<div v-if="selectedInspectorFields.length" class="grid gap-3">
+									<InspectorField
+										v-for="field in selectedInspectorFields"
+										:key="field.key"
+										:field="field"
+										:model-value="selectedInspectorFieldValue(field)"
+										@update:model-value="updateSelectedInspectorField(field, $event)"
+									/>
+								</div>
+								<p v-else class="rounded-md border border-dashed border-border bg-secondary/40 p-3 text-xs text-muted-foreground">
+									This component has no inspector properties.
+								</p>
+							</div>
+
+						<div class="mt-4 rounded-md border border-border bg-background p-3">
 							<div class="mb-2 flex items-center justify-between">
-								<p class="text-xs font-medium text-zinc-400">Component props</p>
-								<span class="text-[11px] text-zinc-500">{{ activeComponent?.props?.length || 0 }}</span>
+								<p class="text-xs font-medium text-muted-foreground">Component props</p>
+								<span class="text-[11px] text-muted-foreground">{{ activeComponent?.props?.length || 0 }}</span>
 							</div>
 							<div class="mb-2 grid grid-cols-[1fr_84px_auto] gap-2">
-								<input v-model="newProp.name" class="h-8 rounded-md border border-white/10 bg-black/20 px-2 text-xs text-white outline-none focus:border-teal-300" placeholder="propName">
-								<select v-model="newProp.type" class="h-8 rounded-md border border-white/10 bg-black/20 px-2 text-xs text-white outline-none focus:border-teal-300">
+								<input v-model="newProp.name" class="h-8 min-w-0 rounded-md border border-input bg-background px-2 text-xs text-foreground outline-none focus:border-ring" placeholder="propName">
+								<select v-model="newProp.type" class="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground outline-none focus:border-ring">
 									<option>String</option>
 									<option>Number</option>
 									<option>Boolean</option>
 									<option>Array</option>
 									<option>Object</option>
 								</select>
-								<button type="button" class="h-8 rounded-md bg-white/10 px-2 text-xs text-white hover:bg-white/15" @click="addProp">Add</button>
+								<button type="button" class="h-8 rounded-md bg-secondary px-2 text-xs text-secondary-foreground hover:bg-secondary/80" @click="addProp">Add</button>
 							</div>
 							<div class="flex flex-wrap gap-1">
 								<button
 									v-for="prop in activeComponent?.props || []"
 									:key="prop.name"
 									type="button"
-									class="rounded bg-black/25 px-2 py-1 font-mono text-[11px] text-zinc-300 hover:bg-rose-500/20 hover:text-rose-100"
+									class="rounded bg-secondary px-2 py-1 font-mono text-[11px] text-secondary-foreground hover:bg-destructive/10 hover:text-destructive"
 									@click="removeProp(prop.name)"
 								>{{ prop.name }}: {{ prop.type }}</button>
 							</div>
 						</div>
-					</section>
 
-					<section class="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] p-4">
-						<div class="mb-2 flex items-center justify-between gap-3">
-							<div class="min-w-0">
-								<h2 class="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">Code</h2>
-								<code class="block truncate text-[11px] text-zinc-500">{{ sourceFile }}:{{ selectedSourceLine }}</code>
+						<div class="mt-4 rounded-md border border-border bg-background p-3">
+							<div class="mb-2 flex items-center justify-between">
+								<p class="text-xs font-medium text-muted-foreground">Page root data</p>
+								<span class="text-[11px]" :class="rootDataError ? 'text-destructive' : 'text-muted-foreground'">{{ rootDataError || 'Live' }}</span>
 							</div>
-							<p class="shrink-0 text-[11px]" :class="codeError ? 'text-rose-300' : 'text-zinc-500'">
-								{{ codeError || (codeDirty ? 'Unsaved' : savedAt ? `${saveTarget} saved ${savedAt}` : 'Synced') }}
-							</p>
-						</div>
-						<div ref="codePanelEl" class="template-code-panel min-h-0 overflow-hidden" @click="selectFromCodeEvent" @keyup="selectFromCodeEvent" @mouseup="selectFromCodeEvent">
 							<ElCodeInput
-								:model-value="codeText"
-								:rows="26"
+								:model-value="rootDataText"
+								:rows="9"
 								:editor="true"
-								_register-field="false"
+								:_register-field="false"
 								:chrome="false"
-								lang="vue"
-								class="template-code-input"
-								@update:model-value="onCodeInput"
+								lang="json"
+								class="template-root-data-input"
+								@update:model-value="updateRootData"
 							/>
 						</div>
-					</section>
-				</div>
-				</aside>
-			</template>
+						</section>
+					</aside>
+				</template>
 		</ElSplitterPanel>
 
-		<div v-if="isCreateDialogOpen" class="fixed inset-0 z-50 grid place-items-center bg-zinc-950/70 p-4">
-			<form class="w-full max-w-sm rounded-lg border border-white/10 bg-zinc-950 p-4 shadow-2xl" @submit.prevent="createComponentRecord">
+		<div v-if="isCreateDialogOpen" class="fixed inset-0 z-50 grid place-items-center bg-background/70 p-4 backdrop-blur-sm">
+			<form class="w-full max-w-sm rounded-lg border border-border bg-popover p-4 text-popover-foreground shadow-2xl" @submit.prevent="createComponentRecord">
 				<div class="flex items-start justify-between gap-3">
 					<div>
-						<p class="text-xs font-semibold uppercase tracking-[0.16em] text-teal-300">Create</p>
-						<h2 class="mt-1 text-base font-semibold text-white">{{ createKind === 'page' ? 'New page' : createFromSelection ? 'Component from selection' : 'New component' }}</h2>
+						<p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Create</p>
+						<h2 class="mt-1 text-base font-semibold text-foreground">{{ createKind === 'page' ? 'New page' : createFromSelection ? 'Component from selection' : 'New component' }}</h2>
 					</div>
-					<button type="button" class="rounded px-2 py-1 text-sm text-zinc-400 hover:bg-white/10 hover:text-white" @click="isCreateDialogOpen = false">Close</button>
+					<button type="button" class="rounded px-2 py-1 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground" @click="isCreateDialogOpen = false">Close</button>
 				</div>
 				<label class="mt-4 grid gap-1">
-					<span class="text-xs text-zinc-500">Name</span>
-					<input v-model="createName" class="h-9 rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white outline-none focus:border-teal-300" placeholder="HeroFeature">
+					<span class="text-xs text-muted-foreground">Name</span>
+					<input v-model="createName" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus:border-ring" placeholder="HeroFeature">
 				</label>
-				<p v-if="createNameError" class="mt-2 text-xs text-rose-300">{{ createNameError }}</p>
-				<p class="mt-3 text-xs leading-5 text-zinc-500">
+				<p v-if="createNameError" class="mt-2 text-xs text-destructive">{{ createNameError }}</p>
+				<p class="mt-3 text-xs leading-5 text-muted-foreground">
 					The draft opens immediately so you can build visually or paste Vue template code, then save it back into this experiment.
 				</p>
 				<div class="mt-4 flex justify-end gap-2">
-					<button type="button" class="h-8 rounded-md border border-white/10 px-3 text-xs font-medium text-zinc-300 hover:bg-white/10" @click="isCreateDialogOpen = false">Cancel</button>
-					<button type="submit" class="h-8 rounded-md bg-teal-300 px-3 text-xs font-semibold text-zinc-950 hover:bg-teal-200">Create</button>
+					<button type="button" class="h-8 rounded-md border border-border px-3 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground" @click="isCreateDialogOpen = false">Cancel</button>
+					<button type="submit" class="h-8 rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90">Create</button>
 				</div>
 			</form>
 		</div>
@@ -2204,72 +2483,37 @@ function isEmptyElement(node) {
 </template>
 
 <style scoped>
-:deep(.template-selected-code-line) {
-	background: color-mix(in oklch, var(--color-teal-300, #5eead4) 22%, transparent);
-	box-shadow: inset 3px 0 0 rgb(45 212 191);
-}
-
-:deep(.template-selected-code-gutter) {
-	background: color-mix(in oklch, var(--color-teal-300, #5eead4) 30%, transparent);
-	color: rgb(15 23 42);
-	font-weight: 700;
-}
-
-.template-code-panel {
-	height: 100%;
-	min-height: 0;
-}
-
-:deep(.template-code-panel [class*="border-input"]) {
-	box-sizing: border-box;
-	height: 100%;
-	min-height: 0;
-}
-
-:deep(.template-code-panel [class*="border-input"] > div) {
-	height: 100%;
-	min-height: 0;
-}
-
-:deep(.template-code-panel .cm-editor) {
-	height: 100%;
-	min-height: 0 !important;
-}
-
-:deep(.template-code-panel .cm-scroller) {
-	overflow: auto;
-}
-
-:deep(.template-code-panel textarea) {
-	height: 100%;
-	min-height: 0;
-	overflow: auto;
-	resize: none;
+.template-root-data-input {
+	min-height: 11rem;
 }
 
 .template-class-input :deep(.el-input) {
-	border-color: rgb(255 255 255 / 0.1);
-	background: rgb(255 255 255 / 0.05);
-	color: white;
+	border-color: var(--input);
+	background: var(--background);
+	color: var(--foreground);
 	outline: none;
 }
 
 .template-class-input :deep(.el-input:focus) {
-	border-color: rgb(94 234 212);
+	border-color: var(--ring);
 	box-shadow: none;
 }
 
 .template-class-input :deep(label) {
-	color: rgb(228 228 231);
+	color: var(--foreground);
 }
 
 .template-class-input :deep(label.opacity-50) {
-	color: rgb(113 113 122);
+	color: var(--muted-foreground);
 	opacity: 1;
 }
 
 .template-class-input :deep(input[type="checkbox"]) {
-	accent-color: rgb(45 212 191);
+	accent-color: var(--primary);
+}
+
+.template-layer-tree {
+	border-radius: 0.5rem;
 }
 
 :deep([data-template-node]) {
@@ -2278,17 +2522,17 @@ function isEmptyElement(node) {
 	transition: outline-color 120ms ease, box-shadow 120ms ease;
 }
 
-:deep([data-template-node]:hover) {
-	outline: 2px solid rgb(94 234 212 / 0.65);
+:deep([data-template-hovered="true"]) {
+	outline: 2px solid color-mix(in oklch, var(--ring) 65%, transparent);
 }
 
 :deep([data-template-selected="true"]) {
-	outline: 2px solid rgb(20 184 166);
-	box-shadow: 0 0 0 4px rgb(240 253 250 / 0.9);
+	outline: 2px solid var(--ring);
+	box-shadow: 0 0 0 4px color-mix(in oklch, var(--ring) 18%, transparent);
 }
 
 :deep([data-template-drop-target="true"]) {
-	outline: 3px dashed rgb(20 184 166);
-	box-shadow: 0 0 0 4px rgb(240 253 250 / 0.9), 0 8px 18px rgb(15 118 110 / 0.22);
+	outline: 3px dashed var(--ring);
+	box-shadow: 0 0 0 4px color-mix(in oklch, var(--ring) 18%, transparent), 0 8px 18px color-mix(in oklch, var(--ring) 22%, transparent);
 }
 </style>

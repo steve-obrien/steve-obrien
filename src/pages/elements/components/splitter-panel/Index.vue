@@ -15,6 +15,8 @@ import InboxReview from './examples/InboxReview.vue';
 import InboxReviewSrc from './examples/InboxReview.vue?raw';
 import DataWorkbench from './examples/DataWorkbench.vue';
 import DataWorkbenchSrc from './examples/DataWorkbench.vue?raw';
+import NestedWorkspace from './examples/NestedWorkspace.vue';
+import NestedWorkspaceSrc from './examples/NestedWorkspace.vue?raw';
 
 const doc = ElSplitterPanel.__doc;
 
@@ -34,6 +36,7 @@ const right = ref(360);
 \t\t:min-start="220"
 \t\t:min-main="560"
 \t\t:min-end="320"
+\t\thandle-class="transition hover:bg-border/70 data-[dragging=true]:bg-ring/30"
 \t>
 \t\t<template #start>
 \t\t\t<FileBrowser />
@@ -44,6 +47,30 @@ const right = ref(360);
 \t\t<template #end>
 \t\t\t<InspectorPanel />
 \t\t</template>
+\t</ElSplitterPanel>
+</template>`;
+
+const verticalVue = `<script setup>
+import { ref } from 'vue';
+import { ElSplitterPanel } from '@elements/vue';
+
+const previewHeight = ref(420);
+<\/script>
+
+<template>
+\t<ElSplitterPanel
+\t\tv-model:start-size="previewHeight"
+\t\torientation="vertical"
+\t\tclass="h-full"
+\t\t:min-start="240"
+\t\t:min-main="160"
+\t\t:handle-size="10"
+\t>
+\t\t<template #start>
+\t\t\t<PreviewCanvas />
+\t\t</template>
+
+\t\t<ConsolePanel />
 \t</ElSplitterPanel>
 </template>`;
 </script>
@@ -57,7 +84,7 @@ const right = ref(360);
 						A splitter rarely makes sense as an isolated widget. It is a layout primitive for tools where users need to balance navigation, work area, and detail panels without leaving the current screen.
 					</p>
 					<p>
-						The component keeps the center pane fluid, clamps the side panes to useful minimum widths, and emits size updates so an app can remember a user's preferred workspace.
+						The component keeps the center pane fluid, clamps the side panes to useful minimum widths, supports horizontal or vertical split directions, and emits size updates so an app can remember a user's preferred workspace.
 					</p>
 				</div>
 			</DocSection>
@@ -83,6 +110,16 @@ const right = ref(360);
 				</Example>
 			</DocSection>
 
+			<DocSection eyebrow="Demo" title="Nested layout">
+				<Example
+					:source="NestedWorkspaceSrc"
+					filename="NestedWorkspace.vue"
+					description="Combine horizontal and vertical splitters to build denser editor, console, and inspector layouts."
+				>
+					<NestedWorkspace />
+				</Example>
+			</DocSection>
+
 			<DocSection eyebrow="Demo" title="Data workbench">
 				<Example
 					:source="DataWorkbenchSrc"
@@ -95,6 +132,10 @@ const right = ref(360);
 
 			<DocSection eyebrow="Usage" title="Vue">
 				<CodeBlock :code="usageVue" lang="vue" />
+			</DocSection>
+
+			<DocSection eyebrow="Usage" title="Vertical splitter">
+				<CodeBlock :code="verticalVue" lang="vue" />
 			</DocSection>
 
 			<DocSection title="Reference">

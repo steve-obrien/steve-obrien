@@ -1,0 +1,40 @@
+{
+	"ProjectDashboard": {
+		"role": "page",
+		"insertable": false,
+		"props": [
+			{
+				"name": "project",
+				"type": "Object"
+			},
+			{
+				"name": "metrics",
+				"type": "Array"
+			},
+			{
+				"name": "tasks",
+				"type": "Array"
+			}
+		]
+	},
+	"Cta1": {
+		"role": "component",
+		"insertable": true,
+		"props": []
+	},
+	"NewPage": {
+		"role": "page",
+		"insertable": false,
+		"props": []
+	},
+	"HeroPanel": {
+		"role": "component",
+		"insertable": true,
+		"props": []
+	},
+	"Complex": {
+		"role": "page",
+		"insertable": false,
+		"props": []
+	}
+}

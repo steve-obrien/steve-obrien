@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, ref, useId, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue';
 import {
 	flattenTreeItems,
 	isSameOrDescendantPath,
@@ -24,10 +24,13 @@ defineOptions({
 		events: [
 			{ name: 'update:modelValue', payload: '(value)', description: 'Emitted when the selected node changes.' },
 			{ name: 'select', payload: '({ item, value, node })', description: 'Fired when a tree item is selected.' },
+			{ name: 'hover', payload: '({ item, value, node })', description: 'Fired when a pointer enters a tree row.' },
+			{ name: 'hover-end', payload: '({ item, value, node })', description: 'Fired when a pointer leaves a tree row.' },
 			{ name: 'action', payload: '({ action, item, value, node })', description: 'Fired when a right-side item action is clicked.' },
 			{ name: 'toggle', payload: '({ item, value, open })', description: 'Fired when a branch is opened or closed.' },
 			{ name: 'load-children', payload: '({ item, value })', description: 'Fired when a lazy node is opened and needs children.' },
-			{ name: 'reorder', payload: '({ items, item, target, position })', description: 'Fired after drag/drop with a reordered items array.' },
+			{ name: 'reorder', payload: '({ items, item, sourceValue, sourceNode, target, targetValue, targetNode, position })', description: 'Fired after drag/drop with a reordered items array.' },
+			{ name: 'external-drop', payload: '({ event, dataTransfer, types, getData, item, value, node, position })', description: 'Fired when accepted data from outside the tree is dropped onto a row.' },
 			{ name: 'update:items', payload: '(items)', description: 'Emitted with the reordered tree so callers can sync v-model:items.' },
 		],
 		keyboard: [
@@ -73,10 +76,45 @@ const props = defineProps({
 		default: () => [],
 		_edit: { component: 'ElJsonInput', description: 'Controlled open branch values. When empty, item.open seeds the initial state.' },
 	},
+	hoveredValue: {
+		type: [String, Number],
+		default: '',
+		_edit: { description: 'Value of a node currently hovered from another surface, such as a stage canvas.' },
+	},
 	draggable: {
 		type: Boolean,
 		default: true,
 		_edit: { description: 'Allow nodes to be reordered by drag and drop.' },
+	},
+	externalDragValue: {
+		type: [String, Number],
+		default: '',
+		_edit: { description: 'Tree item value currently being dragged from another surface, such as a stage canvas.' },
+	},
+	externalDropTypes: {
+		type: Array,
+		default: () => [],
+		_edit: { component: 'ElJsonInput', description: 'DataTransfer MIME types accepted from outside the tree.' },
+	},
+	externalDropEffect: {
+		type: String,
+		default: 'copy',
+		_edit: { options: ['copy', 'move', 'link'], description: 'Drop effect shown for accepted external drags.' },
+	},
+	dragExpandDelay: {
+		type: Number,
+		default: 800,
+		_edit: { description: 'Delay in milliseconds before a collapsed branch opens while dragging over it. Set to 0 to disable.' },
+	},
+	canDropItem: {
+		type: Function,
+		default: null,
+		_edit: { description: 'Optional predicate for tree-item drops. Return false to block a move.' },
+	},
+	canDropExternal: {
+		type: Function,
+		default: null,
+		_edit: { description: 'Optional predicate for external drops. Return false to block the drop target.' },
 	},
 	scrollIntoView: {
 		type: Boolean,
@@ -98,6 +136,11 @@ const props = defineProps({
 		default: 'default',
 		_edit: { options: ['default', 'finder'], description: 'Visual treatment for the tree surface.' },
 	},
+	chrome: {
+		type: Boolean,
+		default: true,
+		_edit: { description: 'Render the outer border, padding, radius, and shadow around the tree.' },
+	},
 	label: {
 		type: String,
 		default: 'Tree view',
@@ -105,7 +148,7 @@ const props = defineProps({
 	},
 });
 
-const emit = defineEmits(['update:modelValue', 'update:items', 'update:openValues', 'select', 'action', 'toggle', 'load-children', 'reorder']);
+const emit = defineEmits(['update:modelValue', 'update:items', 'update:openValues', 'select', 'hover', 'hover-end', 'action', 'toggle', 'load-children', 'reorder', 'external-drop']);
 const activeValue = ref(props.modelValue);
 const openSet = ref(new Set(seedTreeOpenValues(props.items, props.openValues)));
 const dropTarget = ref(null);
@@ -113,6 +156,9 @@ const draggedValue = ref(null);
 const liveMessage = ref('');
 const treeId = `el-tree-${useId()}`;
 const rowRefs = new Map();
+const treeItemDragType = 'application/x-el-tree-item';
+let dragExpandTimer = null;
+let dragExpandValue = '';
 
 const treeItems = computed(() => props.items || []);
 const visibleNodes = computed(() => flattenTreeItems(treeItems.value, openSet.value));
@@ -203,6 +249,14 @@ function selectNode(node) {
 	emit('select', { item: node.item, value: node.value, node });
 }
 
+function onRowPointerEnter(node) {
+	emit('hover', { item: node.item, value: node.value, node });
+}
+
+function onRowPointerLeave(node) {
+	emit('hover-end', { item: node.item, value: node.value, node });
+}
+
 function onActionClick(action, node) {
 	emit('action', {
 		action,
@@ -263,7 +317,7 @@ function reorderByKeyboard(event, node, direction) {
 	const target = visibleNodes.value[index + direction];
 	if (!target) return;
 	const position = direction < 0 ? 'before' : 'after';
-	if (!canDrop(String(node.value), target, position)) return;
+	if (!canDropTreeItem(String(node.value), target, position)) return;
 	event.preventDefault();
 	const result = moveTreeItem(treeItems.value, node.value, target.value, position);
 	if (!result) return;
@@ -271,7 +325,11 @@ function reorderByKeyboard(event, node, direction) {
 	emit('reorder', {
 		items: result.items,
 		item: result.item,
+		sourceValue: node.value,
+		sourceNode: node,
 		target: target.item,
+		targetValue: target.value,
+		targetNode: target,
 		position,
 	});
 	liveMessage.value = `Moved ${node.label} ${direction < 0 ? 'up' : 'down'}.`;
@@ -288,37 +346,56 @@ function onDragStart(event, node) {
 		return;
 	}
 	event.dataTransfer.effectAllowed = 'move';
+	event.dataTransfer.setData(treeItemDragType, String(node.value));
 	event.dataTransfer.setData('text/plain', String(node.value));
 	draggedValue.value = String(node.value);
 	dropTarget.value = null;
 }
 
 function onDragOver(event, node) {
-	const sourceValue = draggedValue.value || event.dataTransfer?.getData('text/plain');
-	if (!sourceValue || String(sourceValue) === String(node.value)) return;
 	// The row is split into three drop zones: top = before, middle = child,
 	// bottom = after. Locked/non-container nodes collapse this to before/after.
 	const position = dropPositionFromEvent(event, node);
-	if (!canDrop(sourceValue, node, position)) return;
+	const sourceValue = treeDragSourceValue(event);
+	if (sourceValue && canDropTreeItem(sourceValue, node, position)) {
+		event.preventDefault();
+		event.dataTransfer.dropEffect = 'move';
+		dropTarget.value = { value: node.value, position, kind: 'tree' };
+		scheduleDragExpand(node);
+		return;
+	}
+
+	if (!canDropExternalDrag(event, node, position)) {
+		cancelDragExpand(node.value);
+		return;
+	}
 	event.preventDefault();
-	event.dataTransfer.dropEffect = 'move';
-	dropTarget.value = { value: node.value, position };
+	event.dataTransfer.dropEffect = props.externalDropEffect;
+	dropTarget.value = { value: node.value, position, kind: 'external' };
+	scheduleDragExpand(node);
 }
 
 function onDragLeave(event, node) {
 	if (!event.currentTarget.contains(event.relatedTarget) && String(dropTarget.value?.value) === String(node.value)) {
 		dropTarget.value = null;
+		cancelDragExpand(node.value);
 	}
 }
 
 function onDrop(event, node) {
-	const sourceValue = draggedValue.value || event.dataTransfer?.getData('text/plain');
 	const target = dropTarget.value;
 	dropTarget.value = null;
+	cancelDragExpand();
+	const sourceValue = treeDragSourceValue(event);
 	draggedValue.value = null;
-	if (!sourceValue || !target || String(target.value) !== String(node.value)) return;
+	if (!target || String(target.value) !== String(node.value)) return;
 	event.preventDefault();
-	if (!canDrop(sourceValue, node, target.position)) return;
+	if (target.kind === 'external') {
+		emitExternalDrop(event, node, target.position);
+		return;
+	}
+	if (!sourceValue) return;
+	if (!canDropTreeItem(sourceValue, node, target.position)) return;
 	const result = moveTreeItem(treeItems.value, sourceValue, node.value, target.position);
 	if (!result) return;
 	if (target.position === 'inside') toggleNode(node, true);
@@ -326,7 +403,11 @@ function onDrop(event, node) {
 	emit('reorder', {
 		items: result.items,
 		item: result.item,
+		sourceValue,
+		sourceNode: visibleNodes.value.find((visible) => String(visible.value) === String(sourceValue)),
 		target: node.item,
+		targetValue: node.value,
+		targetNode: node,
 		position: target.position,
 	});
 }
@@ -343,11 +424,101 @@ function dropPositionFromEvent(event, node) {
 	return event.clientY - rect.top < rect.height / 2 ? 'before' : 'after';
 }
 
-function canDrop(sourceValue, targetNode, position) {
+function treeDragSourceValue(event) {
+	if (draggedValue.value) return String(draggedValue.value);
+	if (props.externalDragValue !== '' && props.externalDragValue != null) return String(props.externalDragValue);
+	return safeGetData(event, treeItemDragType) || safeGetData(event, 'text/plain');
+}
+
+function canDropTreeItem(sourceValue, targetNode, position) {
 	if (position === 'inside' && !treeItemCanAcceptChildren(targetNode.item)) return false;
 	const source = visibleNodes.value.find((node) => String(node.value) === String(sourceValue));
 	if (!source) return false;
-	return !isSameOrDescendantPath(targetNode.path, source.path);
+	if (isSameOrDescendantPath(targetNode.path, source.path)) return false;
+	if (typeof props.canDropItem !== 'function') return true;
+	return props.canDropItem({
+		items: treeItems.value,
+		source: source.item,
+		sourceValue,
+		sourceNode: source,
+		target: targetNode.item,
+		targetValue: targetNode.value,
+		targetNode,
+		position,
+	}) !== false;
+}
+
+function canDropExternalDrag(event, targetNode, position) {
+	if (!hasAcceptedExternalDropType(event)) return false;
+	if (position === 'inside' && !treeItemCanAcceptChildren(targetNode.item)) return false;
+	if (typeof props.canDropExternal !== 'function') return true;
+	return props.canDropExternal({
+		event,
+		dataTransfer: event.dataTransfer,
+		types: dataTransferTypes(event),
+		item: targetNode.item,
+		value: targetNode.value,
+		node: targetNode,
+		position,
+	}) !== false;
+}
+
+function hasAcceptedExternalDropType(event) {
+	const accepted = props.externalDropTypes.map(String);
+	if (!accepted.length) return false;
+	const types = dataTransferTypes(event);
+	return accepted.some((type) => types.includes(type));
+}
+
+function dataTransferTypes(event) {
+	return Array.from(event.dataTransfer?.types || []);
+}
+
+function safeGetData(event, type) {
+	try {
+		return event.dataTransfer?.getData(type) || '';
+	} catch {
+		return '';
+	}
+}
+
+function emitExternalDrop(event, node, position) {
+	if (!canDropExternalDrag(event, node, position)) return;
+	emit('external-drop', {
+		event,
+		dataTransfer: event.dataTransfer,
+		types: dataTransferTypes(event),
+		getData: (type) => safeGetData(event, type),
+		item: node.item,
+		value: node.value,
+		node,
+		position,
+	});
+}
+
+function scheduleDragExpand(node) {
+	if (!props.dragExpandDelay || !node.expandable || node.open || node.item?.disabled) {
+		cancelDragExpand(node.value);
+		return;
+	}
+
+	const key = String(node.value);
+	if (dragExpandValue === key && dragExpandTimer) return;
+	cancelDragExpand();
+	dragExpandValue = key;
+	dragExpandTimer = window.setTimeout(() => {
+		dragExpandTimer = null;
+		if (String(dropTarget.value?.value) !== key || openSet.value.has(key)) return;
+		toggleNode(node, true);
+		liveMessage.value = `Expanded ${node.label}.`;
+	}, props.dragExpandDelay);
+}
+
+function cancelDragExpand(value = null) {
+	if (value != null && dragExpandValue && String(value) !== dragExpandValue) return;
+	if (dragExpandTimer) window.clearTimeout(dragExpandTimer);
+	dragExpandTimer = null;
+	dragExpandValue = '';
 }
 
 function dropClass(node, position) {
@@ -362,14 +533,19 @@ defineExpose({
 	focusNode,
 	scrollToNode,
 });
+
+onBeforeUnmount(cancelDragExpand);
 </script>
 
 <template>
 	<div
 		role="tree"
 		:id="treeId"
-		class="w-full rounded-2xl border border-border p-1 text-sm text-foreground shadow-sm"
-		:class="variant === 'finder' ? 'bg-secondary/50 backdrop-blur' : 'bg-background'"
+		class="w-full text-sm text-foreground"
+		:class="[
+			chrome ? 'rounded-2xl border border-border p-1 shadow-sm' : '',
+			variant === 'finder' ? 'bg-secondary/50 backdrop-blur' : 'bg-background',
+		]"
 		:aria-label="label"
 		:aria-describedby="draggable ? `${treeId}-instructions` : undefined"
 	>
@@ -389,6 +565,7 @@ defineExpose({
 				:aria-expanded="node.expandable ? String(node.open) : null"
 				:aria-selected="String(String(selectedValue) === String(node.value))"
 				:aria-disabled="node.item?.disabled ? 'true' : null"
+				:data-hovered="String(hoveredValue) === String(node.value) && String(selectedValue) !== String(node.value) ? 'true' : null"
 				:tabindex="String(activeValue) === String(node.value) || (!activeValue && visibleNodes[0]?.value === node.value) ? 0 : -1"
 				:aria-keyshortcuts="draggable ? 'Alt+ArrowUp Alt+ArrowDown' : null"
 				:draggable="dragAllowed(node)"
@@ -399,16 +576,19 @@ defineExpose({
 					dropClass(node, 'inside'),
 					dropTarget?.value === node.value && dropTarget.position === 'before' ? 'before:opacity-100' : '',
 					dropTarget?.value === node.value && dropTarget.position === 'after' ? 'after:opacity-100' : '',
+					String(hoveredValue) === String(node.value) && String(selectedValue) !== String(node.value) ? 'bg-secondary text-foreground' : '',
 					'before:pointer-events-none before:absolute before:inset-x-2 before:top-0 before:h-0.5 before:rounded-full before:bg-ring before:opacity-0 after:pointer-events-none after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-full after:bg-ring after:opacity-0',
 				]"
 				:style="{ paddingLeft: `${(node.depth - 1) * 1.25}rem` }"
 				@click="selectNode(node)"
+				@pointerenter="onRowPointerEnter(node)"
+				@pointerleave="onRowPointerLeave(node)"
 				@keydown="onRowKeydown($event, node)"
 				@dragstart="onDragStart($event, node)"
 				@dragover="onDragOver($event, node)"
 				@dragleave="onDragLeave($event, node)"
 				@drop="onDrop($event, node)"
-				@dragend="draggedValue = null; dropTarget = null"
+				@dragend="draggedValue = null; dropTarget = null; cancelDragExpand()"
 				@focus="activeValue = node.value"
 			>
 				<slot

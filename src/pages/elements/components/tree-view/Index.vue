@@ -11,6 +11,8 @@ import ComponentKeyboard from '../../_layout/docs/ComponentKeyboard.vue';
 import { ElTreeView } from '../../lib/vue';
 import Layers from './examples/Layers.vue';
 import LayersSrc from './examples/Layers.vue?raw';
+import ExternalDrops from './examples/ExternalDrops.vue';
+import ExternalDropsSrc from './examples/ExternalDrops.vue?raw';
 import FileBrowser from './examples/FileBrowser.vue';
 import FileBrowserSrc from './examples/FileBrowser.vue?raw';
 import FinderMenu from './examples/FinderMenu.vue';
@@ -131,6 +133,16 @@ function applyDropToRows(rows, { item, target, position }) {
 				</Example>
 			</DocSection>
 
+			<DocSection eyebrow="Demo" title="External drag/drop">
+				<Example
+					:source="ExternalDropsSrc"
+					filename="ExternalDrops.vue"
+					description="Accept drops from a palette by declaring DataTransfer types, then apply the insertion in your store."
+				>
+					<ExternalDrops />
+				</Example>
+			</DocSection>
+
 			<DocSection eyebrow="Demo" title="File browser">
 				<Example
 					:source="FileBrowserSrc"
@@ -166,6 +178,9 @@ function applyDropToRows(rows, { item, target, position }) {
 					<p>
 						ElTreeView emits intent: selection, toggles, actions, lazy-load requests, and reorder results. For small local trees, use
 						<code class="text-foreground">v-model:items</code>. For a larger editor, keep the real source of truth in Pinia and decide in the store whether a drop is allowed, persisted, or transformed.
+					</p>
+					<p>
+						When a valid drag hovers over a collapsed branch, the branch opens after <code class="text-foreground">dragExpandDelay</code>. This matches file explorers and layers panels where users pause over a folder/group before dropping inside nested content.
 					</p>
 					<p>
 						The generic tree helpers are exported separately so a store can flatten visible rows, build an id index, and move nested items without mounting the component. A normalized store can still use the same event shape, then implement its own move operation against
