@@ -544,7 +544,7 @@ onBeforeUnmount(cancelDragExpand);
 		class="w-full text-sm text-foreground"
 		:class="[
 			chrome ? 'rounded-2xl border border-border p-1 shadow-sm' : '',
-			variant === 'finder' ? 'bg-secondary/50 backdrop-blur' : 'bg-background',
+		//	variant === 'finder' ? 'bg-secondary/50 backdrop-blur' : 'bg-background',
 		]"
 		:aria-label="label"
 		:aria-describedby="draggable ? `${treeId}-instructions` : undefined"
@@ -569,10 +569,10 @@ onBeforeUnmount(cancelDragExpand);
 				:tabindex="String(activeValue) === String(node.value) || (!activeValue && visibleNodes[0]?.value === node.value) ? 0 : -1"
 				:aria-keyshortcuts="draggable ? 'Alt+ArrowUp Alt+ArrowDown' : null"
 				:draggable="dragAllowed(node)"
-				class="group relative flex min-w-0 cursor-pointer items-center rounded-xl outline-none transition focus-visible:ring-2 focus-visible:ring-ring/50 aria-selected:bg-primary aria-selected:text-primary-foreground"
+				class="group relative flex min-w-0 cursor-pointer items-center rounded-lg outline-none transition focus-visible:ring-2 focus-visible:ring-ring/50 aria-selected:bg-primary aria-selected:text-primary-foreground"
 				:class="[
-					density === 'comfortable' ? 'min-h-10' : 'min-h-8',
-					variant === 'finder' ? 'hover:bg-background/80 aria-selected:bg-accent aria-selected:text-accent-foreground' : 'hover:bg-secondary',
+					density === 'comfortable' ? 'min-h-4' : 'min-h-6',
+					variant === 'finder' ? 'hover:bg-foreground/80 hover:text-background aria-selected:bg-accent aria-selected:text-accent-foreground' : 'hover:bg-secondary',
 					dropClass(node, 'inside'),
 					dropTarget?.value === node.value && dropTarget.position === 'before' ? 'before:opacity-100' : '',
 					dropTarget?.value === node.value && dropTarget.position === 'after' ? 'after:opacity-100' : '',
@@ -605,7 +605,7 @@ onBeforeUnmount(cancelDragExpand);
 					<button
 						v-if="node.expandable"
 						type="button"
-						class="grid size-7 shrink-0 cursor-pointer place-items-center rounded-lg text-muted-foreground transition hover:bg-secondary hover:text-foreground group-aria-selected:text-primary-foreground/80"
+						class="grid size-7 shrink-0 cursor-pointer place-items-center rounded-lg transition  group-aria-selected:text-primary-foreground/80"
 						:tabindex="-1"
 						:aria-label="node.open ? 'Collapse item' : 'Expand item'"
 						@click.stop="toggleNode(node)"
@@ -619,7 +619,7 @@ onBeforeUnmount(cancelDragExpand);
 						</svg>
 					</button>
 					<span v-else class="size-7 shrink-0" aria-hidden="true"></span>
-					<span class="grid size-6 shrink-0 place-items-center text-muted-foreground group-aria-selected:text-primary-foreground/80">
+					<span class="grid size-6 shrink-0 place-items-center group-aria-selected:text-primary-foreground/80">
 						<svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
 							<path :d="iconPath(node.item)" />
 						</svg>

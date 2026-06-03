@@ -15,6 +15,7 @@ import {
 	ElJsonInput,
 } from '../../lib/vue';
 import ElPropDefinitionInput from './editors/ElPropDefinitionInput.vue';
+import ElValidatorInput from './editors/ElValidatorInput.vue';
 
 // Editor components are referenced by their actual component name in spec
 // schemas (e.g. `_edit: { component: 'ElSelectInput' }`). The indirection keeps
@@ -38,6 +39,7 @@ const editors = {
 	ElCodeInput: markRaw(ElCodeInput),
 	ElJsonInput: markRaw(ElJsonInput),
 	ElPropDefinitionInput: markRaw(ElPropDefinitionInput),
+	ElValidatorInput: markRaw(ElValidatorInput),
 };
 
 export function getEditor(name) { return editors[name] || null; }

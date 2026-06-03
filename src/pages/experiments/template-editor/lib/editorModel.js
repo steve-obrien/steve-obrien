@@ -138,6 +138,7 @@ export function stampEditorNode(node, allocateId) {
 		id: node.id || allocateId(),
 		props: { ...(node.props || {}) },
 		sourceLine: node.sourceLine || null,
+		sourceEndLine: node.sourceEndLine || null,
 		children: (node.children || []).map((child) => stampEditorNode(child, allocateId)),
 	};
 }
@@ -211,7 +212,7 @@ export function buildSource(root, component) {
 		}
 		push(`<${tag}${props}>`, node.id, depth);
 		node.children.forEach((child) => emitNode(child, depth + 1));
-		push(`</${tag}>`, null, depth);
+		push(`</${tag}>`, node.id, depth);
 	}
 
 	return { rows, lineMap };
@@ -233,6 +234,7 @@ export function parseSource(value, { componentName = 'Component', stamp } = {}) 
 		type: 'root',
 		label: componentName,
 		sourceLine: templateStartLine,
+		sourceEndLine: templateStartLine + ast.loc.end.line - 1,
 		children: ast.children.map((node) => nodeFromAst(node, templateStartLine, stampNode)).filter(Boolean),
 	});
 
@@ -499,14 +501,15 @@ function nodeFromAst(astNode, templateStartLine, stamp) {
 	if (astNode.type === NodeTypes.TEXT) {
 		const text = astNode.content.trim();
 		if (!text) return null;
-		return stamp({ type: 'literal', label: 'Text', text, sourceLine: sourceLineFor(astNode, templateStartLine), children: [] });
+		return stamp({ type: 'literal', label: 'Text', text, sourceLine: sourceLineFor(astNode, templateStartLine), sourceEndLine: sourceEndLineFor(astNode, templateStartLine), children: [] });
 	}
 	if (astNode.type === NodeTypes.INTERPOLATION) {
-		return stamp({ type: 'text', label: 'Binding', binding: astNode.content.content.trim(), sourceLine: sourceLineFor(astNode, templateStartLine), children: [] });
+		return stamp({ type: 'text', label: 'Binding', binding: astNode.content.content.trim(), sourceLine: sourceLineFor(astNode, templateStartLine), sourceEndLine: sourceEndLineFor(astNode, templateStartLine), children: [] });
 	}
 	if (astNode.type !== NodeTypes.ELEMENT) return null;
 
 	const sourceLine = sourceLineFor(astNode, templateStartLine);
+	const sourceEndLine = sourceEndLineFor(astNode, templateStartLine);
 	const attrs = propsFromAst(astNode);
 	const repeat = repeatFromAst(astNode);
 	const firstText = textContentFromChildren(astNode.children);
@@ -516,10 +519,10 @@ function nodeFromAst(astNode, templateStartLine, stamp) {
 		? []
 		: astNode.children.map((child) => nodeFromAst(child, templateStartLine, stamp)).filter(Boolean);
 
-	if (astNode.tag === 'h1' && inlineOnlyChildren(astNode.children)) return stamp({ type: 'headline', label: 'Heading', binding: firstBinding, inline, text: firstText, props: attrs, sourceLine, children: [] });
-	if (astNode.tag === 'p' && inlineOnlyChildren(astNode.children)) return stamp({ type: firstBinding ? 'text' : 'paragraph', label: firstBinding ? 'Text' : 'Paragraph', binding: firstBinding, inline, text: firstText, props: attrs, sourceLine, children: [] });
-	if (isNativeTag(astNode.tag)) return stamp({ type: 'element', tag: astNode.tag, label: astNode.tag, props: attrs, repeat, binding: firstBinding, inline, text: firstText, sourceLine, children });
-	return stamp({ type: 'component', tag: astNode.tag, label: astNode.tag, props: attrs, repeat, binding: firstBinding, inline, text: firstText, sourceLine, children });
+	if (astNode.tag === 'h1' && inlineOnlyChildren(astNode.children)) return stamp({ type: 'headline', label: 'Heading', binding: firstBinding, inline, text: firstText, props: attrs, sourceLine, sourceEndLine, children: [] });
+	if (astNode.tag === 'p' && inlineOnlyChildren(astNode.children)) return stamp({ type: firstBinding ? 'text' : 'paragraph', label: firstBinding ? 'Text' : 'Paragraph', binding: firstBinding, inline, text: firstText, props: attrs, sourceLine, sourceEndLine, children: [] });
+	if (isNativeTag(astNode.tag)) return stamp({ type: 'element', tag: astNode.tag, label: astNode.tag, props: attrs, repeat, binding: firstBinding, inline, text: firstText, sourceLine, sourceEndLine, children });
+	return stamp({ type: 'component', tag: astNode.tag, label: astNode.tag, props: attrs, repeat, binding: firstBinding, inline, text: firstText, sourceLine, sourceEndLine, children });
 }
 
 function propsFromAst(astNode) {
@@ -607,6 +610,10 @@ function repeatFromAst(astNode) {
 
 function sourceLineFor(astNode, templateStartLine) {
 	return templateStartLine + astNode.loc.start.line - 1;
+}
+
+function sourceEndLineFor(astNode, templateStartLine) {
+	return templateStartLine + astNode.loc.end.line - 1;
 }
 
 function decodeEntities(value) {

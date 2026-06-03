@@ -4,9 +4,11 @@ import {
 	bindPopoverToggle,
 	closePopoverPanel,
 	isPopoverOpen,
+	lockDocumentScroll,
 	openPopoverPanel,
 	positionPopoverPanel,
 	preparePopoverPanel,
+	unlockDocumentScroll,
 } from './popover-panel.js';
 
 // Popover API for the menu layer (same as element-popover); dropdown adds
@@ -21,7 +23,7 @@ import './popover.js';
 // </element-dropdown>
 export class ElementDropdown extends ElementBase {
 	static get observedAttributes() {
-		return ['open', 'align', 'offset', 'placement', 'collision-padding', 'floating-mode'];
+		return ['open', 'align', 'offset', 'placement', 'collision-padding', 'floating-mode', 'lock-scroll'];
 	}
 
 	static __doc = {
@@ -38,6 +40,7 @@ export class ElementDropdown extends ElementBase {
 			{ name: 'offset', type: 'number', description: 'Gap in pixels between trigger and menu (default 4).' },
 			{ name: 'collision-padding', type: 'number', description: 'Viewport padding used when flipping or shifting the menu (default 8).' },
 			{ name: 'floating-mode', type: "'viewport' | 'anchor'", description: 'viewport keeps the menu inside the browser; anchor keeps it attached to the trigger while scrolling.' },
+			{ name: 'lock-scroll', type: 'boolean', description: 'Lock document scrolling while the menu is open.' },
 			{ name: 'data-menu-id', type: 'string', description: 'Id of an external (teleported) menu element. Used when the menu lives outside the host — e.g. portalled to <body>.' },
 		],
 		events: [
@@ -75,7 +78,9 @@ export class ElementDropdown extends ElementBase {
 		this._unbindToggle = null;
 		this._reflowOff = null;
 		this._onKey = this._onKey.bind(this);
+		this._onCompositeKey = this._onCompositeKey.bind(this);
 		this._itemClickHandlers = [];
+		this._scrollLocked = false;
 	}
 
 	_positionOpts() {
@@ -98,6 +103,16 @@ export class ElementDropdown extends ElementBase {
 		this._reflowOff = null;
 	}
 
+	_syncScrollLock(next) {
+		if (next && this.hasAttribute('lock-scroll') && !this._scrollLocked) {
+			lockDocumentScroll(this._menu);
+			this._scrollLocked = true;
+		} else if ((!next || !this.hasAttribute('lock-scroll')) && this._scrollLocked) {
+			unlockDocumentScroll(this._menu);
+			this._scrollLocked = false;
+		}
+	}
+
 	connectedCallback() {
 		this._trigger = this.querySelector('[slot="trigger"], [data-trigger]');
 		this._menu = this._resolveMenu();
@@ -105,7 +120,7 @@ export class ElementDropdown extends ElementBase {
 
 		if (this._menu) this._prepareMenu();
 
-		this._trigger.setAttribute('aria-haspopup', 'menu');
+		this._trigger.setAttribute('aria-haspopup', this._menu?.dataset.haspopup || 'menu');
 		this._trigger.setAttribute('aria-expanded', 'false');
 
 		this.on(this._trigger, 'click', () => this.toggle());
@@ -129,7 +144,13 @@ export class ElementDropdown extends ElementBase {
 	_prepareMenu() {
 		const id = uid('dd');
 		this._menu.id = this._menu.id || `${id}-menu`;
-		this._menu.setAttribute('role', 'menu');
+		if (this._isCompositePanel()) {
+			if (this._menu.getAttribute('role') === 'menu') this._menu.removeAttribute('role');
+			this._trigger?.setAttribute('aria-haspopup', this._menu.dataset.haspopup || 'true');
+		} else {
+			this._menu.setAttribute('role', 'menu');
+			this._trigger?.setAttribute('aria-haspopup', 'menu');
+		}
 		if (!this._menu.classList.contains('el-dropdown-menu')) {
 			this._menu.classList.add('el-dropdown-menu');
 		}
@@ -146,7 +167,28 @@ export class ElementDropdown extends ElementBase {
 		return this._menu;
 	}
 
+	_isCompositePanel() {
+		return this._menu?.dataset.compositePanel === 'true';
+	}
+
+	_focusFirstCompositeElement() {
+		const selector = [
+			'button:not([disabled])',
+			'[href]',
+			'input:not([disabled])',
+			'select:not([disabled])',
+			'textarea:not([disabled])',
+			'[tabindex]:not([tabindex="-1"])',
+		].join(',');
+		requestAnimationFrame(() => this._menu?.querySelector(selector)?.focus());
+	}
+
 	_setupMenuInteractions() {
+		if (this._isCompositePanel()) {
+			this._menu.addEventListener('keydown', this._onCompositeKey);
+			this._focusFirstCompositeElement();
+			return;
+		}
 		const items = Array.from(this._menu.querySelectorAll('[role="menuitem"]:not([disabled])'));
 		this._roving = createRoving({ items, orientation: 'vertical', loop: true });
 		items.forEach((el, i) => { el.tabIndex = i === 0 ? 0 : -1; });
@@ -161,6 +203,7 @@ export class ElementDropdown extends ElementBase {
 
 	_teardownMenuInteractions() {
 		this._menu?.removeEventListener('keydown', this._onKey);
+		this._menu?.removeEventListener('keydown', this._onCompositeKey);
 		for (const off of this._itemClickHandlers) off();
 		this._itemClickHandlers = [];
 		this._roving = null;
@@ -189,9 +232,11 @@ export class ElementDropdown extends ElementBase {
 			}
 			this._bindReflow();
 			this._setupMenuInteractions();
+			this._syncScrollLock(true);
 		} else {
 			this._unbindReflow();
 			this._teardownMenuInteractions();
+			this._syncScrollLock(false);
 			if (!fromPopover) closePopoverPanel(this._menu);
 		}
 
@@ -218,6 +263,13 @@ export class ElementDropdown extends ElementBase {
 		this.open = false;
 	}
 
+	_onCompositeKey(e) {
+		if (e.key === 'Escape' || e.key === 'Tab') {
+			if (e.key === 'Escape') e.preventDefault();
+			this.open = false;
+		}
+	}
+
 	_onKey(e) {
 		this._roving?.onKey(e);
 		if (e.key === 'Escape' || e.key === 'Tab') {
@@ -228,6 +280,9 @@ export class ElementDropdown extends ElementBase {
 
 	attributeChangedCallback(name) {
 		if (!this._open || !this._menu || !this._trigger) return;
+		if (name === 'lock-scroll') {
+			this._syncScrollLock(true);
+		}
 		if (name === 'align' || name === 'offset' || name === 'placement' || name === 'collision-padding' || name === 'floating-mode') {
 			this._placeMenu();
 		}
@@ -238,6 +293,7 @@ export class ElementDropdown extends ElementBase {
 		this._unbindToggle?.();
 		this._unbindToggle = null;
 		this._unbindReflow();
+		this._syncScrollLock(false);
 		super.disconnectedCallback();
 	}
 }

@@ -5,6 +5,7 @@ import { tailwindClassIndex } from '../../elements/forms/_shared/serverLookup.js
 import { componentRegistry as elementsComponentRegistry, groupedRegistry as elementsGroupedRegistry } from '../../elements/_layout/inspector/componentRegistry.js';
 import InspectorField from '../../elements/_layout/inspector/InspectorField.vue';
 import { inferSchema } from '../../elements/_layout/inspector/useInspector.js';
+import StageViewport from './components/StageViewport.vue';
 import TemplateMonacoEditor from './components/TemplateMonacoEditor.vue';
 import {
 	buildSource,
@@ -59,7 +60,8 @@ import { loadComponentFiles, saveComponentFile } from './lib/componentStorageCli
  * @property {{ type: 'text' | 'binding', value: string }[]=} inline Inline text/interpolation parts.
  * @property {Record<string, string>=} props Parsed attributes/directives.
  * @property {{ source: string, item: string, index: string, list: string }=} repeat Parsed `v-for` metadata.
- * @property {number=} sourceLine Best-effort original source line from Vue compiler locations.
+ * @property {number=} sourceLine Best-effort original source start line from Vue compiler locations.
+ * @property {number=} sourceEndLine Best-effort original source end line from Vue compiler locations.
  * @property {EditorNode[]=} children Child nodes rendered inside this node.
  */
 
@@ -342,9 +344,11 @@ const createFromSelection = ref(false);
 const createName = ref('');
 const createNameError = ref('');
 const codeEditorEl = ref(null);
+const stageViewportEl = ref(null);
 const isCodeDrawerOpen = ref(true);
 const codeDrawerHeight = ref(340);
 const selectedCodeLineOverride = ref(0);
+const hoveredCodeLineOverride = ref(0);
 const hoveredNodeId = ref('');
 const inactiveClassesForSelection = ref([]);
 const componentPreviewCache = new Map();
@@ -374,6 +378,8 @@ const selectedSourceLine = computed(() => sourceLineForNode(selectedNode.value, 
 const sourceFileLabel = computed(() => `${sourceFileName.value}:${selectedSourceLine.value}`);
 const sourceFileTitle = computed(() => `${sourceFile.value}:${selectedSourceLine.value}`);
 const selectedBaseClass = computed(() => selectedNode.value ? stageBaseClassForNode(selectedNode.value) : '');
+const selectedStageLabel = computed(() => selectedNode.value ? nodeDisplayLabel(selectedNode.value) : '');
+const canDeleteSelected = computed(() => Boolean(tree.value && selectedId.value && selectedId.value !== tree.value.id));
 const selectedInspectorFields = computed(() => inspectorFieldsForNode(selectedNode.value));
 const selectedInspectorAttrKeys = computed(() => new Set(selectedInspectorFields.value.flatMap((field) => propAttributeKeys(field.key))));
 const selectedAttrs = computed(() => Object.entries(selectedNode.value?.props || {})
@@ -383,7 +389,13 @@ const layerTreeItems = computed(() => tree.value ? [layerItemFromNode(tree.value
 const selectedLayerValue = computed(() => selectedId.value ? layerValueForNodeId(tree.value, selectedId.value) : '');
 const layerDragSourceValue = computed(() => draggingNodeId.value ? layerValueForNodeId(tree.value, draggingNodeId.value) : '');
 const hoveredLayerValue = computed(() => hoveredNodeId.value ? layerValueForNodeId(tree.value, hoveredNodeId.value) : '');
-const hoveredSourceLine = computed(() => hoveredNodeId.value ? sourceLineForNode(findNode(tree.value, hoveredNodeId.value), hoveredNodeId.value) : 0);
+const hoveredSourceLine = computed(() => {
+	if (!hoveredNodeId.value) return 0;
+	if (hoveredCodeLineOverride.value && nodeIdForSourceLine(hoveredCodeLineOverride.value) === hoveredNodeId.value) {
+		return hoveredCodeLineOverride.value;
+	}
+	return sourceLineForNode(findNode(tree.value, hoveredNodeId.value), hoveredNodeId.value);
+});
 const normalizedEditorTree = computed(() => tree.value ? normalizeEditorTree(tree.value) : null);
 const developerNodeSnapshot = computed(() => ({
 	activeComponent: activeComponentName.value,
@@ -539,7 +551,7 @@ function applyCodeLineHighlight() {
 
 function sourceLineForNode(node, id) {
 	if (!node) return 0;
-	if (codeLineMode.value && id === selectedId.value && selectedCodeLineOverride.value && nodeIdForSourceLine(selectedCodeLineOverride.value) === id) {
+	if (id === selectedId.value && selectedCodeLineOverride.value && nodeIdForSourceLine(selectedCodeLineOverride.value) === id) {
 		return selectedCodeLineOverride.value;
 	}
 	if (codeLineMode.value) return node.sourceLine || source.value.lineMap[id] || 0;
@@ -557,7 +569,15 @@ function selectFromCodeLine(line) {
 }
 
 function nodeIdForSourceLine(line) {
+	if (!codeLineMode.value) {
+		const rowId = source.value.rows[line - 1]?.id;
+		if (rowId) return rowId;
+	}
+
 	if (codeDirty.value || codeText.value !== sourceText.value) {
+		const rangeId = nodeIdForSourceLineRange(line);
+		if (rangeId) return rangeId;
+
 		const nodes = flatNodes.value
 			.map(({ node }) => node)
 			.filter((node) => node.id && node.sourceLine && node.sourceLine <= line)
@@ -565,11 +585,21 @@ function nodeIdForSourceLine(line) {
 		return nodes[0]?.id || null;
 	}
 
+	const rangeId = nodeIdForSourceLineRange(line);
+	if (rangeId) return rangeId;
+
 	const rows = source.value.rows;
 	for (let index = line - 1; index >= 0; index -= 1) {
 		if (rows[index]?.id) return rows[index].id;
 	}
 	return null;
+}
+
+function nodeIdForSourceLineRange(line) {
+	const matches = flatNodes.value
+		.filter(({ node }) => node.id && node.sourceLine && node.sourceLine <= line && (node.sourceEndLine || node.sourceLine) >= line)
+		.sort((a, b) => b.depth - a.depth || (b.node.sourceLine || 0) - (a.node.sourceLine || 0));
+	return matches[0]?.node.id || null;
 }
 
 function queueExperimentTailwindRefresh() {
@@ -698,12 +728,16 @@ function layerItemFromNode(node, path = []) {
 	return {
 		id: layerValueForPath(path),
 		nodeId: node.id,
-		label: node.tag || node.label,
+		label: nodeDisplayLabel(node),
 		icon: iconForEditorNode(node),
 		acceptsChildren: canContain(node),
 		draggable: node.type !== 'root',
 		children,
 	};
+}
+
+function nodeDisplayLabel(node) {
+	return node.tag || node.label || node.text || node.binding || node.type;
 }
 
 function serializeEditorNode(node, path = []) {
@@ -712,7 +746,7 @@ function serializeEditorNode(node, path = []) {
 		path: layerValueForPath(path),
 		type: node.type,
 	};
-	for (const key of ['tag', 'label', 'text', 'binding', 'sourceLine']) {
+	for (const key of ['tag', 'label', 'text', 'binding', 'sourceLine', 'sourceEndLine']) {
 		if (node[key] !== undefined && node[key] !== null && node[key] !== '') snapshot[key] = node[key];
 	}
 	if (node.inline?.length) snapshot.inline = node.inline;
@@ -731,6 +765,7 @@ function normalizeEditorTree(node) {
 		hoveredId: hoveredNodeId.value,
 		layerValueById: {},
 		sourceLineById: {},
+		sourceEndLineById: {},
 		nodesById: {},
 	};
 	normalizeEditorNode(node, normalized, null, []);
@@ -741,6 +776,7 @@ function normalizeEditorNode(node, normalized, parentId, path) {
 	const layerValue = layerValueForPath(path);
 	normalized.layerValueById[node.id] = layerValue;
 	if (node.sourceLine) normalized.sourceLineById[node.id] = node.sourceLine;
+	if (node.sourceEndLine) normalized.sourceEndLineById[node.id] = node.sourceEndLine;
 	normalized.nodesById[node.id] = {
 		id: node.id,
 		parentId,
@@ -750,6 +786,7 @@ function normalizeEditorNode(node, normalized, parentId, path) {
 		tag: node.tag || null,
 		label: node.label || node.tag || node.type,
 		sourceLine: node.sourceLine || null,
+		sourceEndLine: node.sourceEndLine || null,
 		props: node.props && Object.keys(node.props).length ? node.props : undefined,
 		repeat: node.repeat || undefined,
 	};
@@ -1021,20 +1058,17 @@ function onDragEnd() {
 	dropTargetId.value = '';
 }
 
-function markHoveredStageNode(event) {
-	const target = event.target instanceof Element
-		? event.target.closest('[data-template-node]')
-		: null;
-	const id = target?.getAttribute('data-template-node') || '';
-	setHoveredNode(id);
-}
-
 function clearHoveredStageNode() {
 	setHoveredNode('');
 }
 
-function setHoveredNode(id) {
+function setHoveredNode(id, options = {}) {
+	hoveredCodeLineOverride.value = options.codeLine || 0;
 	if (hoveredNodeId.value !== id) hoveredNodeId.value = id;
+}
+
+function focusStageViewport() {
+	nextTick(() => stageViewportEl.value?.focus());
 }
 
 function hoverNodeFromLayer(event) {
@@ -1048,7 +1082,8 @@ function clearNodeHoverFromLayer(event) {
 
 function hoverNodeFromCodeLine(line) {
 	const nodeId = nodeIdForSourceLine(line);
-	setHoveredNode(nodeId && findNode(tree.value, nodeId) ? nodeId : '');
+	const resolvedId = nodeId && findNode(tree.value, nodeId) ? nodeId : '';
+	setHoveredNode(resolvedId, { codeLine: resolvedId ? line : 0 });
 }
 
 function addToSelected(entry) {
@@ -1224,6 +1259,7 @@ function selectNode(id) {
 	selectedCodeLineOverride.value = 0;
 	selectedId.value = id;
 	revealNodeInLayers(id);
+	focusStageViewport();
 }
 
 /**
@@ -1888,7 +1924,7 @@ function renderNode(node, ctx) {
 
 	const stageClass = stageBaseClassForNode(node);
 
-	if (node.type === 'root') return h('div', { ...common, class: ['min-w-[760px]', stageClass, common.class].filter(Boolean).join(' ') }, children);
+	if (node.type === 'root') return h('div', { ...common, class: ['min-h-full w-full', stageClass, common.class].filter(Boolean).join(' ') }, children);
 	if (node.type === 'component') {
 		const slotChildren = slotContentForNode(node, children, scope);
 		if (elementsEntryForTag(node.tag)?.component && stageClass && !common.class) common.class = stageClass;
@@ -2235,18 +2271,27 @@ function isEmptyElement(node) {
 								<button type="button" class="h-8 rounded-md border border-border px-3 text-xs font-medium hover:bg-secondary" @click="toggleCodeDrawer">
 									{{ isCodeDrawerOpen ? 'Hide code' : 'Show code' }}
 								</button>
-								<button type="button" class="h-8 rounded-md border border-destructive/30 px-3 text-xs font-medium text-destructive hover:bg-destructive/10" @click="removeSelected">Delete</button>
+									<button
+										type="button"
+										class="h-8 rounded-md border border-destructive/30 px-3 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:pointer-events-none disabled:opacity-40"
+										:disabled="!canDeleteSelected"
+										@click="removeSelected"
+									>
+										Delete
+									</button>
 							</div>
 						</div>
 
-						<div
-							class="min-h-0 flex-1 overflow-auto bg-neutral-100 p-6"
-							:class="(draggingEntry || draggingNodeId) && 'bg-accent/30'"
-							@dragover.prevent
-							@dragleave="clearDropTarget"
-							@drop="addFromDrop(selectedId)"
-							@pointermove="markHoveredStageNode"
-							@pointerleave="clearHoveredStageNode"
+						<StageViewport
+							ref="stageViewportEl"
+							:selected-label="selectedStageLabel"
+							:can-delete="canDeleteSelected"
+							:dragging="Boolean(draggingEntry || draggingNodeId)"
+							@stage-drop="addFromDrop(selectedId)"
+							@clear-drop-target="clearDropTarget"
+							@hover-node="setHoveredNode"
+							@clear-hover="clearHoveredStageNode"
+							@delete-selected="removeSelected"
 						>
 							<TemplateNode
 								v-if="tree"
@@ -2261,7 +2306,7 @@ function isEmptyElement(node) {
 								@node-drag-start="startNodeDrag"
 								@node-drag-over="markDropTarget"
 							/>
-						</div>
+						</StageViewport>
 
 						<section
 							class="template-code-drawer grid shrink-0 grid-rows-[auto_auto_minmax(0,1fr)] border-t border-border bg-card text-card-foreground transition-[height]"

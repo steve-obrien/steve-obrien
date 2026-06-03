@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import { ElButton, ElForm, forms } from '../../../lib/vue';
+import { ElButton, ElForm, forms, zodSchemaToChildren } from '../../../lib/vue';
 
 const account = ref({
 	name: 'Ada Lovelace',
@@ -50,7 +50,7 @@ const accountSchema = {
 	},
 };
 
-const schemaOptions = {
+const adapterOptions = {
 	fields: {
 		plan: {
 			description: 'Enum values become a styled native select.',
@@ -73,6 +73,7 @@ const schemaOptions = {
 		},
 	},
 };
+const formChildren = zodSchemaToChildren(accountSchema, adapterOptions);
 
 const result = ref(null);
 
@@ -87,8 +88,7 @@ async function validate() {
 		<ElForm
 			name="schemaAccount"
 			v-model="account"
-			:zod-schema="accountSchema"
-			:schema-options="schemaOptions"
+			:children="formChildren"
 			class="space-y-4"
 		>
 			<div class="border-t border-border pt-4">

@@ -6,6 +6,11 @@ import {
 
 const leaveTimers = new WeakMap();
 const leaveDuration = 820;
+const transitionClasses = ['el-floating-transition', 'el-popover-transition'];
+
+function hasFloatingTransition(panel) {
+	return transitionClasses.some((className) => panel?.classList.contains(className));
+}
 
 /** Wire a panel for the native Popover API (top layer + light dismiss). */
 export function preparePopoverPanel(panel, trigger) {
@@ -72,7 +77,7 @@ export function closePopoverPanel(panel, { immediate = false } = {}) {
 	delete panel.dataset.entering;
 	const pendingClose = leaveTimers.get(panel);
 	if (pendingClose) clearTimeout(pendingClose);
-	if (immediate || !isPopoverOpen(panel) || !panel.classList.contains('el-popover-transition')) {
+	if (immediate || !isPopoverOpen(panel) || !hasFloatingTransition(panel)) {
 		finishClose(panel);
 		return;
 	}
@@ -115,7 +120,7 @@ export function bindPopoverToggle(panel, handler) {
 		if (
 			e.newState === 'closed'
 			&& panel.dataset.skipLeave !== 'true'
-			&& panel.classList.contains('el-popover-transition')
+			&& hasFloatingTransition(panel)
 			&& isPopoverOpen(panel)
 		) {
 			e.preventDefault();

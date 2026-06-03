@@ -73,9 +73,39 @@ export { default as ElJsonInput } from '../../forms/json-input/ElJsonInput.vue';
 export { fieldProps } from '../../forms/field/fieldProps.js';
 export { fieldLayoutProviderKey } from '../../forms/field/fieldLayout.js';
 export { fieldDisplayProviderKey, formFieldProviderKey, normalizeErrors, useField } from '../../forms/field/useField.js';
-export { createValidator, emailValidator, requiredValidator, urlValidator } from '../../forms/field/validators.js';
+export {
+	betweenValidator,
+	compileValidator,
+	compileValidators,
+	createValidator,
+	defineValidator,
+	emailValidator,
+	getValidator,
+	integerValidator,
+	lengthValidator,
+	listValidators,
+	maxLengthValidator,
+	maxValidator,
+	minLengthValidator,
+	minValidator,
+	normalizeValidatorResult,
+	numberValidator,
+	oneOfValidator,
+	patternValidator,
+	requiredValidator,
+	urlValidator,
+} from '../../forms/field/validators.js';
 export { createFormRegistry, forms, getPathValue, setPathValue } from '../../forms/form/formApi.js';
-export { zodSchemaToChildren } from '../../forms/form/schemaAdapter.js';
+export {
+	builtInSchemaAdapters,
+	isJsonSchema,
+	isZodLikeSchema,
+	jsonSchemaAdapter,
+	jsonSchemaToChildren,
+	schemaToChildren,
+	zodSchemaAdapter,
+	zodSchemaToChildren,
+} from '../../forms/form/schemaAdapter.js';
 
 // Rehydration
 export { default as ElRenderer } from '../../components/playground/ElRenderer.vue';

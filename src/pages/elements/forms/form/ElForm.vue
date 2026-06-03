@@ -5,6 +5,7 @@ import ElCalendar from '../calendar/ElCalendar.vue';
 import ElCheckbox from '../checkbox/ElCheckbox.vue';
 import ElCodeInput from '../code-input/ElCodeInput.vue';
 import ElCombobox from '../combobox/ElCombobox.vue';
+import ElDatePicker from '../date-picker/ElDatePicker.vue';
 import ElEmailInput from '../email-input/ElEmailInput.vue';
 import ElJsonInput from '../json-input/ElJsonInput.vue';
 import ElJsonListInput from '../json-list-input/ElJsonListInput.vue';
@@ -17,9 +18,9 @@ import ElTagCombobox from '../tag-combobox/ElTagCombobox.vue';
 import ElTextInput from '../text-input/ElTextInput.vue';
 import ElTextareaInput from '../textarea-input/ElTextareaInput.vue';
 import ElToggle from '../toggle/ElToggle.vue';
+import ElUrlInput from '../url-input/ElUrlInput.vue';
 import { formFieldProviderKey, normalizeErrors } from '../field/useField.js';
 import { deletePathValue, forms, getPathValue, setPathValue } from './formApi.js';
-import { zodSchemaToChildren } from './schemaAdapter.js';
 
 const formComponents = {
 	ElAutocomplete,
@@ -27,6 +28,7 @@ const formComponents = {
 	ElCheckbox,
 	ElCodeInput,
 	ElCombobox,
+	ElDatePicker,
 	ElEmailInput,
 	ElJsonInput,
 	ElJsonListInput,
@@ -39,6 +41,7 @@ const formComponents = {
 	ElTextInput,
 	ElTextareaInput,
 	ElToggle,
+	ElUrlInput,
 };
 let ElFormComponent;
 
@@ -201,22 +204,6 @@ ElFormComponent = defineComponent({
 				description: 'Server/studio-style field definitions to render when slot children are not supplied.',
 			},
 		},
-		zodSchema: {
-			type: Object,
-			default: null,
-			_edit: {
-				component: 'ElJsonInput',
-				description: 'Optional Zod or Zod-like object schema used to generate form children.',
-			},
-		},
-		schemaOptions: {
-			type: Object,
-			default: () => ({}),
-			_edit: {
-				component: 'ElJsonInput',
-				description: 'Per-field labels, component overrides, and props used when zodSchema generates children.',
-			},
-		},
 		validateOnSubmit: {
 			type: Boolean,
 			default: true,
@@ -315,15 +302,8 @@ ElFormComponent = defineComponent({
 			emitSchemaChange();
 		}
 
-		function generatedChildren() {
-			return [
-				...zodSchemaToChildren(props.zodSchema, props.schemaOptions),
-				...(props.children || []),
-			];
-		}
-
-		function syncGeneratedChildren() {
-			schemaChildren.splice(0, schemaChildren.length, ...snapshot(generatedChildren()));
+		function syncChildren() {
+			schemaChildren.splice(0, schemaChildren.length, ...snapshot(props.children || []));
 		}
 
 		function getChildren() {
@@ -603,9 +583,7 @@ ElFormComponent = defineComponent({
 			Object.assign(values, incoming);
 		}, { deep: true });
 
-		watch(() => props.children, syncGeneratedChildren, { deep: true, immediate: true });
-		watch(() => props.zodSchema, syncGeneratedChildren);
-		watch(() => props.schemaOptions, syncGeneratedChildren, { deep: true });
+		watch(() => props.children, syncChildren, { deep: true, immediate: true });
 
 		watch(() => props.name, (nextName, previousName) => {
 			if (previousName && forms[previousName] === provider) delete forms[previousName];

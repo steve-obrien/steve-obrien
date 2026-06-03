@@ -63,7 +63,22 @@ export const fieldProps = {
 	errors: fieldProp({
 		type: [Array, Object, String],
 		default: () => ({}),
-		_edit: { component: 'ElJsonInput', description: 'Validation errors for this field.' },
+		_edit: { 
+			component: 'ElJsonInput', 
+			description: 'Validation errors for this field.', 
+			schema: [
+				{
+					"key": "name",
+					"label": "Name",
+					"placeholder": "Validation name"
+				},
+				{
+					"key": "message",
+					"label": "Message",
+					"placeholder": "Error message"
+				},
+			]
+		}
 	}),
 	visible: fieldProp({
 		type: Boolean,
@@ -73,7 +88,10 @@ export const fieldProps = {
 	validators: fieldProp({
 		type: Array,
 		default: () => [],
-		_edit: { component: 'ElJsonInput', description: 'Validators attached to this field.' },
+		_edit: {
+			component: 'ElValidatorInput',
+			description: 'Validators attached to this field. Use functions in Vue code, or serializable records such as { name: "minLength", props: { min: 2 } } in generated schemas.',
+		},
 	}),
 	validateOnBlur: fieldProp({
 		type: Boolean,

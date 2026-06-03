@@ -18,6 +18,8 @@ import Rich from './examples/Rich.vue';
 import RichSrc from './examples/Rich.vue?raw';
 import Actions from './examples/Actions.vue';
 import ActionsSrc from './examples/Actions.vue?raw';
+import TreePanel from './examples/TreePanel.vue';
+import TreePanelSrc from './examples/TreePanel.vue?raw';
 
 const doc = ElDropdown.__doc;
 
@@ -67,6 +69,16 @@ const playgroundItems = [
 					description="Items with separator: true draw a divider. tone: 'danger' colours destructive rows red."
 				>
 					<Actions />
+				</Example>
+			</DocSection>
+
+			<DocSection eyebrow="Demo" title="Tree view panel">
+				<Example
+					:source="TreePanelSrc"
+					filename="TreePanel.vue"
+					description="The #panel slot can host composite controls, so the tree keeps its own focus and arrow-key behaviour inside a scroll-locking dropdown."
+				>
+					<TreePanel />
 				</Example>
 			</DocSection>
 

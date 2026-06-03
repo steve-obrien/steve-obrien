@@ -17,6 +17,8 @@ import DynamicInvitees from './examples/DynamicInvitees.vue';
 import DynamicInviteesSrc from './examples/DynamicInvitees.vue?raw';
 import FormMethods from './examples/FormMethods.vue';
 import FormMethodsSrc from './examples/FormMethods.vue?raw';
+import JsonSchemaForm from './examples/JsonSchemaForm.vue';
+import JsonSchemaFormSrc from './examples/JsonSchemaForm.vue?raw';
 import NestedForm from './examples/NestedForm.vue';
 import NestedFormSrc from './examples/NestedForm.vue?raw';
 import ProgrammaticForm from './examples/ProgrammaticForm.vue';
@@ -69,6 +71,7 @@ const { values } = storeToRefs(store);
 </ElForm>`;
 
 const zodCode = `import { z } from 'zod';
+import { zodSchemaToChildren } from '@/elements/lib/vue';
 
 const accountSchema = z.object({
 \tname: z.string().min(2).describe('Name'),
@@ -77,24 +80,92 @@ const accountSchema = z.object({
 \tplan: z.enum(['starter', 'team', 'enterprise']).describe('Plan'),
 });
 
+const children = zodSchemaToChildren(accountSchema, {
+\tfields: {
+\t\tplan: {
+\t\t\tprops: {
+\t\t\t\toptions: [
+\t\t\t\t\t{ label: 'Starter', value: 'starter' },
+\t\t\t\t\t{ label: 'Team', value: 'team' },
+\t\t\t\t\t{ label: 'Enterprise', value: 'enterprise' },
+\t\t\t\t],
+\t\t\t},
+\t\t},
+\t},
+});
+
 <ElForm
 \tname="account"
 \tv-model="account"
-\t:zod-schema="accountSchema"
-\t:schema-options="{
-\t\tfields: {
-\t\t\tplan: {
+\t:children="children"
+/>`;
+
+const jsonSchemaCode = `import { jsonSchemaToChildren } from '@/elements/lib/vue';
+
+const profileSchema = {
+\t$schema: 'https://json-schema.org/draft/2020-12/schema',
+\ttype: 'object',
+\trequired: ['name', 'email', 'role'],
+\tproperties: {
+\t\tname: { type: 'string', title: 'Full name', minLength: 2 },
+\t\temail: { type: 'string', format: 'email', title: 'Email address' },
+\t\tactive: {
+\t\t\ttype: 'boolean',
+\t\t\ttitle: 'Active account',
+\t\t\t'x-el': {
+\t\t\t\tcomponent: 'ElToggle',
+\t\t\t\tdescription: 'Rendered as a switch through the JSON Schema vendor extension.',
+\t\t\t},
+\t\t},
+\t\trole: {
+\t\t\ttype: 'string',
+\t\t\ttitle: 'Role',
+\t\t\tenum: ['viewer', 'editor', 'admin'],
+\t\t\t'x-el': {
+\t\t\t\tdescription: 'Enum values render as a native select.',
 \t\t\t\tprops: {
 \t\t\t\t\toptions: [
-\t\t\t\t\t\t{ label: 'Starter', value: 'starter' },
-\t\t\t\t\t\t{ label: 'Team', value: 'team' },
-\t\t\t\t\t\t{ label: 'Enterprise', value: 'enterprise' },
+\t\t\t\t\t\t{ label: 'Viewer', value: 'viewer' },
+\t\t\t\t\t\t{ label: 'Editor', value: 'editor' },
+\t\t\t\t\t\t{ label: 'Admin', value: 'admin' },
 \t\t\t\t\t],
 \t\t\t\t},
 \t\t\t},
 \t\t},
-\t}"
+\t},
+};
+
+const children = jsonSchemaToChildren(profileSchema, {
+\tfields: {
+\t\tname: {
+\t\t\tprops: { placeholder: 'Grace Hopper' },
+\t\t},
+\t},
+});
+
+<ElForm
+\tname="profile"
+\tv-model="profile"
+\t:children="children"
 />`;
+
+const customAdapterCode = `const cmsFieldAdapter = {
+\tname: 'cms-fields',
+\tmatches: (schema) => Array.isArray(schema?.fields),
+\ttoChildren: (schema) => schema.fields.map((field) => ({
+\t\tid: field.id,
+\t\tcomponent: field.component || 'ElTextInput',
+\t\tprops: {
+\t\t\tname: field.key,
+\t\t\tlabel: field.label,
+\t\t\trequired: field.required,
+\t\t},
+\t})),
+};
+
+const children = cmsFieldAdapter.toChildren(cmsSchema);
+
+<ElForm v-model="entry" :children="children" />`;
 
 const formMethods = [
 	{ name: 'getState()', returns: 'Form state snapshot', description: 'Returns aggregate form state, values, errors, fieldStates, and a complete fields object keyed by path.' },
@@ -171,10 +242,9 @@ const formMethods = [
 			<DocSection eyebrow="Schema" title="Generate fields from a Zod-like shape">
 				<div class="space-y-4">
 					<p class="text-sm leading-6 text-muted-foreground">
-						ElForm can compile a Zod schema, or a plain Zod-like object, into the
-						same children records used by the Studio renderer. The adapter reads the
-						data shape, chooses form controls, and keeps slots available for local
-						buttons or supporting UI.
+						The Zod adapter compiles a Zod schema, or a plain Zod-like object, into
+						the same children records used by the Studio renderer. ElForm only receives
+						those children, so schema-specific logic stays outside the provider.
 					</p>
 					<p class="text-sm leading-6 text-muted-foreground">
 						The exported
@@ -185,11 +255,49 @@ const formMethods = [
 					<Example
 						:source="ZodSchemaFormSrc"
 						filename="ZodSchemaForm.vue"
-						description="The schema defines the data shape. schemaOptions customises labels, components, options, and input props without changing the model."
+						description="The schema defines the data shape. Adapter options customise labels, components, options, and input props without changing the model."
 					>
 						<ZodSchemaForm />
 					</Example>
 					<CodeBlock lang="vue" :code="zodCode" />
+				</div>
+			</DocSection>
+
+			<DocSection eyebrow="Schema" title="Generate fields from JSON Schema">
+				<div class="space-y-4">
+					<p class="text-sm leading-6 text-muted-foreground">
+						The JSON Schema adapter reads JSON Schema objects and emits form children.
+						The JSON Schema controls the model shape and common constraints; form-only decoration can live in
+						a vendor extension such as <code class="font-mono text-foreground">x-el</code>
+						or in external adapter options.
+					</p>
+					<p class="text-sm leading-6 text-muted-foreground">
+						The exported
+						<code class="font-mono text-foreground">jsonSchemaToChildren(schema, options)</code>
+						helper returns renderable children records. The current inline convention is
+						<code class="font-mono text-foreground">x-el</code>, which follows JSON Schema's
+						vendor-extension pattern: unknown keywords are annotations and should be ignored
+						by validators that do not understand them.
+					</p>
+					<Example
+						:source="JsonSchemaFormSrc"
+						filename="JsonSchemaForm.vue"
+						description="JSON Schema properties become fields, required arrays mark fields as required, nested objects keep nested data paths, and x-el decorates form-only options."
+					>
+						<JsonSchemaForm />
+					</Example>
+					<CodeBlock lang="vue" :code="jsonSchemaCode" />
+				</div>
+			</DocSection>
+
+			<DocSection eyebrow="Adapters" title="Bring your own schema">
+				<div class="space-y-4">
+					<p class="text-sm leading-6 text-muted-foreground">
+						Adapters are just functions that return ElForm children. A custom adapter
+						can read CMS fields, database metadata, OpenAPI request bodies, or anything
+						else that can be mapped into component records.
+					</p>
+					<CodeBlock lang="vue" :code="customAdapterCode" />
 				</div>
 			</DocSection>
 

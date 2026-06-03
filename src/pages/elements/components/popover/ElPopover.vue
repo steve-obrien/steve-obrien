@@ -36,6 +36,16 @@ export const popoverProps = {
 		default: false,
 		_edit: { description: 'Lock browser scrolling while the popover is open.' },
 	},
+	trigger: {
+		type: String,
+		default: 'click',
+		_edit: { options: ['click', 'hover'], description: 'How the trigger opens the popover.' },
+	},
+	hoverCloseDelay: {
+		type: Number,
+		default: 140,
+		_edit: { description: 'Delay in milliseconds before a hover-triggered popover closes after pointer or focus leaves.' },
+	},
 	arrow: {
 		type: Boolean,
 		default: true,
@@ -78,6 +88,7 @@ defineOptions({
 		],
 		keyboard: [
 			{ keys: 'Click trigger', action: 'Toggles the popover.' },
+			{ keys: 'Focus trigger', action: 'Opens the popover when trigger is hover.' },
 			{ keys: 'Click outside', action: 'Light-dismiss via the native popover API.' },
 			{ keys: 'Esc', action: 'Closes the popover.' },
 		],
@@ -144,6 +155,8 @@ onMounted(async () => {
 		:floating-mode="floatingMode"
 		:flip="flip ? null : 'false'"
 		:lock-scroll="lockScroll ? '' : null"
+		:trigger="trigger"
+		:hover-close-delay="hoverCloseDelay"
 		:data-trigger-id="triggerId || null"
 		class="relative inline-block"
 	>
@@ -160,7 +173,7 @@ onMounted(async () => {
 		</button>
 		<div
 			slot="panel"
-			class="el-popover-panel el-popover-transition outline-none"
+			class="el-popover-panel el-floating-transition outline-none rounded-2xl"
 			:class="width"
 		>
 			<div
@@ -180,81 +193,6 @@ onMounted(async () => {
 </template>
 
 <style>
-.el-popover-transition {
-	--el-popover-enter-x: 0px;
-	--el-popover-enter-y: -10px;
-	--el-popover-arrow-x: 50%;
-	--el-popover-arrow-y: auto;
-	opacity: 0;
-	transform: translate3d(var(--el-popover-enter-x), var(--el-popover-enter-y), 0) scale(0.975);
-	transform-origin: var(--el-popover-origin, top center);
-	transition:
-		opacity 190ms cubic-bezier(0.16, 1, 0.3, 1),
-		transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
-	will-change: opacity, transform;
-}
-
-.el-popover-transition:popover-open {
-	opacity: 1;
-	transform: translate3d(0, 0, 0) scale(1);
-}
-
-.el-popover-transition[data-entering="from"]:popover-open {
-	opacity: 0;
-	transform: translate3d(var(--el-popover-enter-x), var(--el-popover-enter-y), 0) scale(0.975);
-}
-
-.el-popover-transition[data-entering="to"]:popover-open {
-	opacity: 1;
-	transform: translate3d(0, 0, 0) scale(1);
-}
-
-.el-popover-transition[data-leaving="from"]:popover-open {
-	opacity: 1;
-	transform: translate3d(0, 0, 0) scale(1);
-}
-
-.el-popover-transition[data-leaving="to"]:popover-open {
-	opacity: 0;
-	transform: translate3d(var(--el-popover-enter-x), var(--el-popover-enter-y), 0) scale(0.975);
-	transition:
-		opacity 190ms linear,
-		transform 260ms cubic-bezier(0.25, 0.1, 0.25, 1);
-}
-
-@starting-style {
-	.el-popover-transition:popover-open {
-		opacity: 0;
-		transform: translate3d(var(--el-popover-enter-x), var(--el-popover-enter-y), 0) scale(0.975);
-	}
-}
-
-.el-popover-transition:not([data-animate-placement]) {
-	transition-property: opacity;
-}
-
-.el-popover-transition[data-side="top"] {
-	--el-popover-enter-y: 10px;
-	--el-popover-origin: bottom center;
-}
-
-.el-popover-transition[data-side="bottom"] {
-	--el-popover-enter-y: -10px;
-	--el-popover-origin: top center;
-}
-
-.el-popover-transition[data-side="left"] {
-	--el-popover-enter-x: 10px;
-	--el-popover-enter-y: 0px;
-	--el-popover-origin: center right;
-}
-
-.el-popover-transition[data-side="right"] {
-	--el-popover-enter-x: -10px;
-	--el-popover-enter-y: 0px;
-	--el-popover-origin: center left;
-}
-
 .el-popover-arrow {
 	position: absolute;
 	z-index: 0;
@@ -282,24 +220,28 @@ onMounted(async () => {
 	stroke-linejoin: round;
 }
 
+.el-floating-transition[data-side="top"] .el-popover-arrow,
 .el-popover-transition[data-side="top"] .el-popover-arrow {
 	bottom: -7px;
 	left: var(--el-popover-arrow-x);
 	transform: translateX(-50%) rotate(180deg);
 }
 
+.el-floating-transition[data-side="bottom"] .el-popover-arrow,
 .el-popover-transition[data-side="bottom"] .el-popover-arrow {
 	top: -7px;
 	left: var(--el-popover-arrow-x);
 	transform: translateX(-50%);
 }
 
+.el-floating-transition[data-side="left"] .el-popover-arrow,
 .el-popover-transition[data-side="left"] .el-popover-arrow {
 	right: -12px;
 	top: var(--el-popover-arrow-y);
 	transform: translateY(-50%) rotate(90deg);
 }
 
+.el-floating-transition[data-side="right"] .el-popover-arrow,
 .el-popover-transition[data-side="right"] .el-popover-arrow {
 	left: -12px;
 	top: var(--el-popover-arrow-y);

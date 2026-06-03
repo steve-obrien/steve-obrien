@@ -50,8 +50,9 @@ async function loadMonaco() {
 	cachedMonacoPromise = Promise.all([
 		import('monaco-editor/min/vs/editor/editor.main.css'),
 		import('monaco-editor/esm/vs/editor/editor.api'),
+		import('monaco-editor/esm/vs/editor/contrib/folding/browser/folding'),
 		import('monaco-editor/esm/vs/editor/editor.worker?worker'),
-	]).then(([, monaco, editorWorker]) => {
+	]).then(([, monaco, , editorWorker]) => {
 		configureMonacoWorkers({
 			editorWorker: editorWorker.default,
 		});
@@ -141,69 +142,125 @@ function defineThemes(monaco) {
 
 function registerTemplateVueLanguage(monaco) {
 	const languageId = 'template-vue';
-	if (monaco.languages.getLanguages().some((language) => language.id === languageId)) return;
+	const languageExists = monaco.languages.getLanguages().some((language) => language.id === languageId);
 
-	monaco.languages.register({
-		id: languageId,
-		aliases: ['Vue template', 'vue'],
-		extensions: ['.vue'],
-	});
-	monaco.languages.setLanguageConfiguration(languageId, {
-		comments: {
-			blockComment: ['<!--', '-->'],
+	if (!languageExists) {
+		monaco.languages.register({
+			id: languageId,
+			aliases: ['Vue template', 'vue'],
+			extensions: ['.vue'],
+		});
+		monaco.languages.setLanguageConfiguration(languageId, {
+			comments: {
+				blockComment: ['<!--', '-->'],
+			},
+			brackets: [
+				['<', '>'],
+				['{', '}'],
+				['[', ']'],
+				['(', ')'],
+			],
+			autoClosingPairs: [
+				{ open: '<', close: '>' },
+				{ open: '"', close: '"' },
+				{ open: "'", close: "'" },
+				{ open: '{', close: '}' },
+				{ open: '[', close: ']' },
+				{ open: '(', close: ')' },
+			],
+		});
+		monaco.languages.setMonarchTokensProvider(languageId, {
+			defaultToken: '',
+			tokenizer: {
+				root: [
+					[/<!--/, 'comment', '@comment'],
+					[/<\/?[\w:-]+/, 'tag', '@tag'],
+					[/{{/, 'delimiter.bracket', '@mustache'],
+					[/\b(const|let|var|import|from|defineProps|return|if|else|for|in|of|true|false|null|undefined)\b/, 'keyword'],
+					[/"[^"]*"/, 'string'],
+					[/'[^']*'/, 'string'],
+					[/\b\d+(?:\.\d+)?\b/, 'number'],
+				],
+				tag: [
+					[/\s+/, ''],
+					[/\/?>/, 'delimiter.html', '@pop'],
+					[/[\w:@.#-]+(?=\=)/, 'attribute.name'],
+					[/[\w:@.#-]+/, 'attribute.name'],
+					[/=/, 'delimiter'],
+					[/"[^"]*"/, 'attribute.value'],
+					[/'[^']*'/, 'attribute.value'],
+					[/{{/, 'delimiter.bracket', '@mustache'],
+				],
+				mustache: [
+					[/}}/, 'delimiter.bracket', '@pop'],
+					[/\b(const|let|var|return|if|else|for|in|of|true|false|null|undefined)\b/, 'keyword'],
+					[/[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*/, 'variable'],
+					[/"[^"]*"/, 'string'],
+					[/'[^']*'/, 'string'],
+					[/\b\d+(?:\.\d+)?\b/, 'number'],
+				],
+				comment: [
+					[/-->/, 'comment', '@pop'],
+					[/[^-]+/, 'comment'],
+					[/./, 'comment'],
+				],
+			},
+		});
+	}
+	registerTemplateVueFolding(monaco, languageId);
+}
+
+function registerTemplateVueFolding(monaco, languageId) {
+	const providerKey = '__templateEditorFoldingProvider';
+	if (typeof window !== 'undefined' && window[providerKey]) return;
+	const provider = monaco.languages.registerFoldingRangeProvider(languageId, {
+		provideFoldingRanges(model) {
+			return foldingRangesForSource(model.getValue());
 		},
-		brackets: [
-			['<', '>'],
-			['{', '}'],
-			['[', ']'],
-			['(', ')'],
-		],
-		autoClosingPairs: [
-			{ open: '<', close: '>' },
-			{ open: '"', close: '"' },
-			{ open: "'", close: "'" },
-			{ open: '{', close: '}' },
-			{ open: '[', close: ']' },
-			{ open: '(', close: ')' },
-		],
 	});
-	monaco.languages.setMonarchTokensProvider(languageId, {
-		defaultToken: '',
-		tokenizer: {
-			root: [
-				[/<!--/, 'comment', '@comment'],
-				[/<\/?[\w:-]+/, 'tag', '@tag'],
-				[/{{/, 'delimiter.bracket', '@mustache'],
-				[/\b(const|let|var|import|from|defineProps|return|if|else|for|in|of|true|false|null|undefined)\b/, 'keyword'],
-				[/"[^"]*"/, 'string'],
-				[/'[^']*'/, 'string'],
-				[/\b\d+(?:\.\d+)?\b/, 'number'],
-			],
-			tag: [
-				[/\s+/, ''],
-				[/\/?>/, 'delimiter.html', '@pop'],
-				[/[\w:@.#-]+(?=\=)/, 'attribute.name'],
-				[/[\w:@.#-]+/, 'attribute.name'],
-				[/=/, 'delimiter'],
-				[/"[^"]*"/, 'attribute.value'],
-				[/'[^']*'/, 'attribute.value'],
-				[/{{/, 'delimiter.bracket', '@mustache'],
-			],
-			mustache: [
-				[/}}/, 'delimiter.bracket', '@pop'],
-				[/\b(const|let|var|return|if|else|for|in|of|true|false|null|undefined)\b/, 'keyword'],
-				[/[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*/, 'variable'],
-				[/"[^"]*"/, 'string'],
-				[/'[^']*'/, 'string'],
-				[/\b\d+(?:\.\d+)?\b/, 'number'],
-			],
-			comment: [
-				[/-->/, 'comment', '@pop'],
-				[/[^-]+/, 'comment'],
-				[/./, 'comment'],
-			],
-		},
+	if (typeof window !== 'undefined') {
+		window[providerKey] = provider;
+	}
+}
+
+function foldingRangesForSource(value) {
+	const voidTags = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
+	const ranges = [];
+	const stack = [];
+	const lines = String(value || '').split('\n');
+
+	lines.forEach((line, lineIndex) => {
+		const lineNumber = lineIndex + 1;
+		const tagPattern = /<\/?([A-Za-z][\w:-]*)(?:\s[^<>]*)?>/g;
+		for (let match = tagPattern.exec(line); match; match = tagPattern.exec(line)) {
+			const tag = match[1];
+			const raw = match[0];
+			const isClosing = raw.startsWith('</');
+			const isSelfClosing = /\/>$/.test(raw) || voidTags.has(tag.toLowerCase());
+
+			if (!isClosing && !isSelfClosing) {
+				stack.push({ tag, line: lineNumber });
+				continue;
+			}
+			if (!isClosing) continue;
+
+			const startIndex = findOpenTagIndex(stack, tag);
+			if (startIndex < 0) continue;
+			const [open] = stack.splice(startIndex, 1);
+			if (lineNumber > open.line) {
+				ranges.push({ start: open.line, end: lineNumber });
+			}
+		}
 	});
+
+	return ranges;
+}
+
+function findOpenTagIndex(stack, tag) {
+	for (let index = stack.length - 1; index >= 0; index -= 1) {
+		if (stack[index].tag === tag) return index;
+	}
+	return -1;
 }
 
 async function mountEditor() {
@@ -217,6 +274,9 @@ async function mountEditor() {
 			automaticLayout: true,
 			contextmenu: true,
 			detectIndentation: false,
+			folding: true,
+			foldingHighlight: true,
+			foldingStrategy: 'auto',
 			fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
 			fontLigatures: true,
 			fontSize: 12.5,
@@ -228,6 +288,7 @@ async function mountEditor() {
 			readOnly: props.readOnly,
 			renderLineHighlight: 'all',
 			scrollBeyondLastLine: false,
+			showFoldingControls: 'always',
 			stickyScroll: { enabled: false },
 			tabSize: 4,
 			theme: themeName(),

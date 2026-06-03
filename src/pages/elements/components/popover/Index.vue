@@ -12,6 +12,8 @@ import { ElPopover, ElToggle } from '../../lib/vue';
 
 import Quick from './examples/Quick.vue';
 import QuickSrc from './examples/Quick.vue?raw';
+import HoverCard from './examples/HoverCard.vue';
+import HoverCardSrc from './examples/HoverCard.vue?raw';
 import Settings from './examples/Settings.vue';
 import SettingsSrc from './examples/Settings.vue?raw';
 import Actions from './examples/Actions.vue';
@@ -59,6 +61,16 @@ const slotApiExample = `<ElPopover :trigger-id="triggerId(row)" v-slot="{ close 
 				>
 					<Quick />
 				</Example>	
+			</DocSection>
+
+			<DocSection eyebrow="Demo" title="Open on hover">
+				<Example
+					:source="HoverCardSrc"
+					filename="HoverCard.vue"
+					description="Set trigger=&quot;hover&quot; for richer tooltip-like panels that open on pointer enter or focus."
+				>
+					<HoverCard />
+				</Example>
 			</DocSection>
 
 			<DocSection eyebrow="Demo" title="Settings panel">

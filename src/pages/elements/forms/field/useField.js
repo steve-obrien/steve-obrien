@@ -1,5 +1,5 @@
 import { computed, inject, onBeforeUnmount, ref, unref, useId, watch } from 'vue';
-import { normalizeValidatorResult, requiredValidator } from './validators.js';
+import { compileValidators, normalizeValidatorResult, requiredValidator } from './validators.js';
 
 export const formFieldProviderKey = Symbol('elements.formFieldProvider');
 export const fieldDisplayProviderKey = Symbol('elements.fieldDisplayProvider');
@@ -255,10 +255,10 @@ export function useField(props, emit, options = {}) {
 	async function validate(extraContext = {}) {
 		const currentRun = ++validationRun;
 		const nextErrors = [];
-		const validators = [
+		const validators = compileValidators([
 			...(props.required ? [requiredValidator] : []),
 			...(props.validators || []),
-		];
+		]);
 		validating.value = true;
 		setFieldState({ validation: 'validating', validating: true });
 		for (const validator of validators) {

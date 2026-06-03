@@ -100,11 +100,16 @@ const validatorRecordCode = `[
 \t{ name: 'required' },
 \t{ name: 'email' },
 \t{
-\t\tname: 'text',
+\t\tname: 'minLength',
 \t\tprops: {
 \t\t\tmin: 3,
+\t\t},
+\t\tmessage: 'Use at least 3 characters.',
+\t},
+\t{
+\t\tname: 'maxLength',
+\t\tprops: {
 \t\t\tmax: 32,
-\t\t\ttooShort: 'Use at least 3 characters.',
 \t\t},
 \t},
 \t{
@@ -141,7 +146,7 @@ const activeFieldCode = `{
 \ttransformers: ['trim', 'emptyStringToNull', 'currencyToDecimal'],
 \tvalidators: [
 \t\t{ name: 'required' },
-\t\t{ name: 'min', props: { value: 0 } },
+\t\t{ name: 'min', props: { min: 0 } },
 \t],
 }`;
 
@@ -224,8 +229,8 @@ const formResponsibilities = [
 ];
 
 const validatorPhases = [
-	'Add a validator registry with defineValidator, getValidator, listValidators, and compileValidators.',
-	'Move built-in validators into registry definitions while preserving existing function validators.',
+	'Use the validator registry helpers: defineValidator, getValidator, listValidators, and compileValidators.',
+	'Keep built-in validators in registry definitions while preserving existing function validators.',
 	'Add ElValidatorInput so Studio can edit validator records with form controls.',
 	'Use string rules only as sugar that compiles into the same serializable records.',
 	'Add async/server validation with stale-result protection, debouncing, and a standard request payload.',
@@ -291,7 +296,6 @@ const implementedCoverage = [
 ];
 
 const openQuestions = [
-	'Should validators become serializable Studio records, app functions, or both?',
 	'Should server validators be represented as validators, transformers, or separate field actions?',
 	'Should field visibility remove data from the form result, or only hide the input?',
 	'Should active-field data types live in component docs, Studio metadata, field props, or a future server schema?',

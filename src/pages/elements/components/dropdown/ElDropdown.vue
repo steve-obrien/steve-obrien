@@ -5,10 +5,11 @@ defineOptions({
 	__doc: {
 		name: 'Dropdown',
 		tag: '<ElDropdown>',
-		description: 'A menu that opens from a button — fully keyboard accessible, with focus return and outside-click handling.',
+		description: 'A menu that opens from a button — fully keyboard accessible, with focus return, optional scroll lock, and outside-click handling.',
 		slots: [
 			{ name: 'trigger', description: 'Replaces the inner content of the trigger button.' },
 			{ name: 'item', payload: '{ item, index }', description: 'Replaces the rendering of each menu item.' },
+			{ name: 'panel', payload: '{ close, open, toggle }', description: 'Replaces menu items with custom dropdown content, such as a tree view or form.' },
 		],
 		events: [
 			{ name: 'select', payload: '(value: string)', description: 'Fired when a menu item is chosen.' },
@@ -28,7 +29,7 @@ const menuId = `el-dropdown-${useId()}`;
 const props = defineProps({
 	items: {
 		type: Array,
-		required: true,
+		default: () => [],
 		_edit: {
 			component: 'ElJsonListInput',
 			description: 'Menu items shown when the dropdown opens.',
@@ -73,10 +74,23 @@ const props = defineProps({
 		default: 'viewport',
 		_edit: { options: ['viewport', 'anchor'], description: 'viewport keeps the menu inside the browser; anchor keeps it attached while scrolling.' },
 	},
+	lockScroll: {
+		type: Boolean,
+		default: false,
+		_edit: { description: 'Lock browser scrolling while the dropdown is open.' },
+	},
 	width: {
 		type: String,
 		default: 'min-w-[12rem]',
 		_edit: { description: 'Tailwind width utility for the menu (e.g. min-w-[16rem]).' },
+	},
+	panelType: {
+		type: String,
+		default: 'menu',
+		_edit: {
+			options: ['menu', 'tree', 'dialog', 'listbox', 'grid'],
+			description: 'Accessible popup type. Use tree/dialog/etc when rendering the #panel slot.',
+		},
 	},
 });
 const emit = defineEmits(['select']);
@@ -92,6 +106,24 @@ onMounted(async () => {
 
 const labelOf = (item) => (item && typeof item === 'object' ? (item.label ?? item.value) : item);
 const valueOf = (item) => (item && typeof item === 'object' ? (item.value ?? item.label) : item);
+
+function open() {
+	if (root.value) root.value.open = true;
+}
+
+function close() {
+	if (root.value) root.value.open = false;
+}
+
+function toggle() {
+	root.value?.toggle?.();
+}
+
+defineExpose({
+	open,
+	close,
+	toggle,
+});
 </script>
 
 <template>
@@ -103,6 +135,7 @@ const valueOf = (item) => (item && typeof item === 'object' ? (item.value ?? ite
 		:placement="placement"
 		:collision-padding="collisionPadding"
 		:floating-mode="floatingMode"
+		:lock-scroll="lockScroll ? '' : null"
 		class="relative inline-block"
 	>
 		<button
@@ -118,19 +151,24 @@ const valueOf = (item) => (item && typeof item === 'object' ? (item.value ?? ite
 		<Teleport to="body" :disabled="!isMounted">
 			<div
 				:id="menuId"
-				class="el-dropdown-menu el-glass-surface rounded-2xl p-1"
+				class="el-dropdown-menu el-floating-transition el-glass-surface rounded-2xl p-1"
 				:class="width"
+				:data-composite-panel="$slots.panel ? 'true' : null"
+				:data-haspopup="$slots.panel ? panelType : null"
 			>
-				<template v-for="(item, i) in items" :key="valueOf(item) ?? i">
-					<hr v-if="item && item.separator" class="my-1 border-t border-border" />
-					<button
-						v-else
-						role="menuitem"
-						:data-value="valueOf(item)"
-						class="block w-full rounded-xl px-3 py-2 text-left text-sm outline-none transition hover:bg-accent focus:bg-accent"
-					>
-						<slot name="item" :item="item" :index="i">{{ labelOf(item) }}</slot>
-					</button>
+				<slot v-if="$slots.panel" name="panel" :close="close" :open="open" :toggle="toggle" />
+				<template v-else>
+					<template v-for="(item, i) in items" :key="valueOf(item) ?? i">
+						<hr v-if="item && item.separator" class="my-1 border-t border-border" />
+						<button
+							v-else
+							role="menuitem"
+							:data-value="valueOf(item)"
+							class="block w-full rounded-xl px-3 py-2 text-left text-sm outline-none transition hover:bg-accent focus:bg-accent"
+						>
+							<slot name="item" :item="item" :index="i">{{ labelOf(item) }}</slot>
+						</button>
+					</template>
 				</template>
 			</div>
 		</Teleport>
