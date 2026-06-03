@@ -1,14 +1,15 @@
 import { ElementBase, defineElement } from './base.js';
 import {
-	attachPopoverReflow,
 	bindPopoverToggle,
+	bindFloatingReflow,
 	closePopoverPanel,
 	isPopoverOpen,
-	lockDocumentScroll,
 	openPopoverPanel,
 	positionPopoverPanel,
 	preparePopoverPanel,
-	unlockDocumentScroll,
+	readFloatingPositionOptions,
+	syncFloatingScrollLock,
+	unbindFloatingReflow,
 } from './popover-panel.js';
 
 const TRIGGER_SELECTOR = [
@@ -97,24 +98,15 @@ export class ElementPopover extends ElementBase {
 	}
 
 	_positionOpts() {
-		return {
-			align: this.getAttribute('align') || 'left',
-			offset: Number(this.getAttribute('offset') || 8),
-			placement: this.getAttribute('placement') || 'bottom',
-			padding: Number(this.getAttribute('collision-padding') || 8),
-			mode: this.getAttribute('floating-mode') || 'viewport',
-			flip: this.getAttribute('flip') !== 'false',
-		};
+		return readFloatingPositionOptions(this, { offset: 8, flip: true });
 	}
 
 	_bindReflow() {
-		this._reflowOff?.();
-		this._reflowOff = attachPopoverReflow(this._panel, this._trigger, this._positionOpts());
+		bindFloatingReflow(this, this._panel, this._trigger, this._positionOpts());
 	}
 
 	_unbindReflow() {
-		this._reflowOff?.();
-		this._reflowOff = null;
+		unbindFloatingReflow(this);
 	}
 
 	_bindDismiss() {
@@ -200,13 +192,7 @@ export class ElementPopover extends ElementBase {
 	}
 
 	_syncScrollLock(next) {
-		if (next && this.hasAttribute('lock-scroll') && !this._scrollLocked) {
-			lockDocumentScroll(this._panel);
-			this._scrollLocked = true;
-		} else if ((!next || !this.hasAttribute('lock-scroll')) && this._scrollLocked) {
-			unlockDocumentScroll(this._panel);
-			this._scrollLocked = false;
-		}
+		syncFloatingScrollLock(this, this._panel, next);
 	}
 
 	connectedCallback() {

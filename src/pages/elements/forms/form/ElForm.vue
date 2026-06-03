@@ -21,6 +21,7 @@ import ElToggle from '../toggle/ElToggle.vue';
 import ElUrlInput from '../url-input/ElUrlInput.vue';
 import { formFieldProviderKey, normalizeErrors } from '../field/useField.js';
 import { deletePathValue, forms, getPathValue, setPathValue } from './formApi.js';
+import { normalizeFormChildren, normalizeFormNode } from './formDefinition.js';
 
 const formComponents = {
 	ElAutocomplete,
@@ -197,11 +198,11 @@ ElFormComponent = defineComponent({
 			_edit: { description: 'Root forms use name as the global registry key. Nested forms use name as their local path segment.' },
 		},
 		children: {
-			type: Array,
+			type: [Array, Object],
 			default: () => [],
 			_edit: {
 				component: 'ElJsonInput',
-				description: 'Server/studio-style field definitions to render when slot children are not supplied.',
+				description: 'Server/studio-style field definitions to render when slot children are not supplied. Accepts an array or keyed object.',
 			},
 		},
 		validateOnSubmit: {
@@ -298,12 +299,12 @@ ElFormComponent = defineComponent({
 		}
 
 		function setChildren(nextChildren = []) {
-			schemaChildren.splice(0, schemaChildren.length, ...snapshot(nextChildren));
+			schemaChildren.splice(0, schemaChildren.length, ...snapshot(normalizeFormChildren(nextChildren)));
 			emitSchemaChange();
 		}
 
 		function syncChildren() {
-			schemaChildren.splice(0, schemaChildren.length, ...snapshot(props.children || []));
+			schemaChildren.splice(0, schemaChildren.length, ...snapshot(normalizeFormChildren(props.children || [])));
 		}
 
 		function getChildren() {
@@ -312,7 +313,7 @@ ElFormComponent = defineComponent({
 
 		function addChild(child, index = schemaChildren.length) {
 			const at = Math.max(0, Math.min(index, schemaChildren.length));
-			schemaChildren.splice(at, 0, snapshot(child));
+			schemaChildren.splice(at, 0, snapshot(normalizeFormNode(child)));
 			emitSchemaChange();
 			return schemaChildren[at];
 		}
@@ -336,7 +337,7 @@ ElFormComponent = defineComponent({
 		function replaceChild(match, child) {
 			const index = childIndex(match);
 			if (index < 0) return addChild(child);
-			schemaChildren.splice(index, 1, snapshot(child));
+			schemaChildren.splice(index, 1, snapshot(normalizeFormNode(child)));
 			emitSchemaChange();
 			return schemaChildren[index];
 		}

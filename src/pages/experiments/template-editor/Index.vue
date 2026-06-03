@@ -16,6 +16,7 @@ import {
 	parseRepeatSource,
 	parseSource as parseEditorSource,
 	replacedPreviewTags,
+	scopeForRepeatItem,
 	stampEditorNode,
 	voidTags,
 } from './lib/editorModel.js';
@@ -333,6 +334,7 @@ const saveTarget = ref('Disk');
 const draggingEntry = ref(null);
 const draggingNodeId = ref('');
 const dropTargetId = ref('');
+const dropTargetPosition = ref('');
 const newProp = ref({ name: '', type: 'String' });
 const newAttr = ref({ name: '', value: '' });
 const isCreateMenuOpen = ref(false);
@@ -351,15 +353,33 @@ const selectedCodeLineOverride = ref(0);
 const hoveredCodeLineOverride = ref(0);
 const hoveredNodeId = ref('');
 const inactiveClassesForSelection = ref([]);
+const forcedStatesByNodeId = ref({});
+const visualUndoStack = ref([]);
+const visualRedoStack = ref([]);
 const componentPreviewCache = new Map();
 let tailwindRefreshTimer = null;
 let codeDrawerDrag = null;
 let suppressLayerRevealOnce = false;
+let suppressCodeRevealOnce = false;
+let restoringVisualHistory = false;
+let lastVisualHistorySnapshot = null;
+let syncingLayerOpenFromCode = false;
+let dropTargetHoverId = '';
 const componentApiEndpoint = '/experiments/template-editor/components';
 const minCodeDrawerHeight = 220;
 const maxCodeDrawerHeight = 560;
+const maxVisualHistoryEntries = 80;
 const paletteDragType = 'application/x-template-component';
 const templateNodeDragType = 'application/x-template-node';
+const codeDropType = 'application/x-template-code';
+const statePreviewOptions = [
+	{ id: 'hover', label: 'Hover', attr: 'data-template-force-hover' },
+	{ id: 'active', label: 'Active', attr: 'data-template-force-active' },
+	{ id: 'focus', label: 'Focus', attr: 'data-template-force-focus' },
+	{ id: 'focus-visible', label: 'Focus visible', attr: 'data-template-force-focus-visible' },
+	{ id: 'disabled', label: 'Disabled', attr: 'data-template-force-disabled' },
+];
+const statePreviewVariantOrder = statePreviewOptions.map((option) => option.id);
 
 const activeComponent = computed(() => componentStore.value.find((component) => component.name === activeComponentName.value));
 const sourceFile = computed(() => activeComponent.value?.file || 'experiment://components/Unknown.vue');
@@ -380,15 +400,23 @@ const sourceFileTitle = computed(() => `${sourceFile.value}:${selectedSourceLine
 const selectedBaseClass = computed(() => selectedNode.value ? stageBaseClassForNode(selectedNode.value) : '');
 const selectedStageLabel = computed(() => selectedNode.value ? nodeDisplayLabel(selectedNode.value) : '');
 const canDeleteSelected = computed(() => Boolean(tree.value && selectedId.value && selectedId.value !== tree.value.id));
+const isRootSelected = computed(() => Boolean(tree.value && selectedNode.value?.id === tree.value.id));
+const canPreviewSelectedStates = computed(() => Boolean(selectedNode.value && !isRootSelected.value));
+const selectedPreviewStateIds = computed(() => selectedId.value ? forcedStatesByNodeId.value[selectedId.value] || [] : []);
+const selectedPreviewStateSet = computed(() => new Set(selectedPreviewStateIds.value));
+const selectedPreviewStateClasses = computed(() => selectedNode.value ? statePreviewClassForNode(selectedNode.value) : '');
 const selectedInspectorFields = computed(() => inspectorFieldsForNode(selectedNode.value));
 const selectedInspectorAttrKeys = computed(() => new Set(selectedInspectorFields.value.flatMap((field) => propAttributeKeys(field.key))));
 const selectedAttrs = computed(() => Object.entries(selectedNode.value?.props || {})
 	.filter(([key]) => key !== 'class' && !selectedInspectorAttrKeys.value.has(key)));
+const canUndoVisual = computed(() => visualUndoStack.value.length > 0);
+const canRedoVisual = computed(() => visualRedoStack.value.length > 0);
 const layerOpenValues = ref(['root']);
 const layerTreeItems = computed(() => tree.value ? [layerItemFromNode(tree.value)] : []);
 const selectedLayerValue = computed(() => selectedId.value ? layerValueForNodeId(tree.value, selectedId.value) : '');
 const layerDragSourceValue = computed(() => draggingNodeId.value ? layerValueForNodeId(tree.value, draggingNodeId.value) : '');
 const hoveredLayerValue = computed(() => hoveredNodeId.value ? layerValueForNodeId(tree.value, hoveredNodeId.value) : '');
+const dropTargetLayerValue = computed(() => dropTargetId.value ? layerValueForNodeId(tree.value, dropTargetId.value) : '');
 const hoveredSourceLine = computed(() => {
 	if (!hoveredNodeId.value) return 0;
 	if (hoveredCodeLineOverride.value && nodeIdForSourceLine(hoveredCodeLineOverride.value) === hoveredNodeId.value) {
@@ -403,6 +431,11 @@ const developerNodeSnapshot = computed(() => ({
 	selectedId: selectedId.value,
 	hoveredNodeId: hoveredNodeId.value,
 	nodeCount: flatNodes.value.length,
+	visualHistory: {
+		undo: visualUndoStack.value.length,
+		redo: visualRedoStack.value.length,
+	},
+	forcedStatesById: forcedStatesByNodeId.value,
 	scriptData: activeScriptData.value,
 	tree: tree.value ? serializeEditorNode(tree.value) : null,
 	normalizedTree: normalizedEditorTree.value,
@@ -457,6 +490,7 @@ const TemplateNode = defineComponent({
 		selectedId: { type: String, required: true },
 		hoveredId: { type: String, default: '' },
 		dropTargetId: { type: String, default: '' },
+		dropTargetPosition: { type: String, default: '' },
 		dataScope: { type: Object, default: () => ({}) },
 	},
 	emits: ['select', 'open-component', 'drop-on-node', 'node-drag-start', 'node-drag-over'],
@@ -474,20 +508,27 @@ const TemplateNode = defineComponent({
 		function drop(event) {
 			event.preventDefault();
 			event.stopPropagation();
-			emit('drop-on-node', props.node.id);
+			emit('drop-on-node', {
+				id: props.node.id,
+				position: stageDropPositionFromEvent(event, props.node),
+			});
 		}
 
 		function dragOver(event) {
 			event.preventDefault();
 			event.stopPropagation();
-			emit('node-drag-over', props.node.id);
+			emit('node-drag-over', {
+				id: props.node.id,
+				position: stageDropPositionFromEvent(event, props.node),
+			});
 		}
 
 		function dragNode(event) {
 			if (props.node.type === 'root') return;
 			event.stopPropagation();
-			event.dataTransfer.effectAllowed = 'move';
+			event.dataTransfer.effectAllowed = 'copyMove';
 			event.dataTransfer.setData(templateNodeDragType, props.node.id);
+			event.dataTransfer.setData(codeDropType, sourceSnippetForNode(props.node));
 			event.dataTransfer.setData('text/plain', props.node.label || props.node.tag || props.node.id);
 			emit('node-drag-start', props.node.id);
 		}
@@ -496,6 +537,7 @@ const TemplateNode = defineComponent({
 			selectedId: props.selectedId,
 			hoveredId: props.hoveredId,
 			dropTargetId: props.dropTargetId,
+			dropTargetPosition: props.dropTargetPosition,
 			scope: props.dataScope,
 			select,
 			open,
@@ -509,10 +551,6 @@ const TemplateNode = defineComponent({
 
 watch(activeComponentName, loadActiveComponent);
 
-watch([selectedSourceLine, codeText], () => {
-	nextTick(applyCodeLineHighlight);
-});
-
 watch(selectedId, (id) => {
 	inactiveClassesForSelection.value = [];
 	if (suppressLayerRevealOnce) {
@@ -520,12 +558,20 @@ watch(selectedId, (id) => {
 	} else {
 		revealNodeInLayers(id);
 	}
-	nextTick(applyCodeLineHighlight);
+	if (suppressCodeRevealOnce) {
+		suppressCodeRevealOnce = false;
+	} else {
+		nextTick(applyCodeLineHighlight);
+	}
 });
 
 watch(codeText, () => {
 	queueExperimentTailwindRefresh();
 });
+
+watch(forcedStatesByNodeId, () => {
+	queueExperimentTailwindRefresh();
+}, { deep: true });
 
 watch([isCodeDrawerOpen, codeDrawerHeight], () => {
 	nextTick(() => {
@@ -535,6 +581,7 @@ watch([isCodeDrawerOpen, codeDrawerHeight], () => {
 });
 
 onMounted(async () => {
+	window.addEventListener('keydown', onTemplateEditorKeydown);
 	await loadSavedComponents();
 	loadActiveComponent();
 	nextTick(applyCodeLineHighlight);
@@ -542,6 +589,7 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
+	if (typeof window !== 'undefined') window.removeEventListener('keydown', onTemplateEditorKeydown);
 	endCodeDrawerResize();
 });
 
@@ -562,10 +610,22 @@ function selectFromCodeLine(line) {
 	if (!line) return;
 	const nodeId = nodeIdForSourceLine(line);
 	if (!nodeId || !findNode(tree.value, nodeId)) return;
+	const selectedNodeChanged = selectedId.value !== nodeId;
+	suppressCodeRevealOnce = selectedNodeChanged;
 	selectedCodeLineOverride.value = line;
 	selectedId.value = nodeId;
 	revealNodeInLayers(nodeId);
-	nextTick(applyCodeLineHighlight);
+	if (!selectedNodeChanged) {
+		nextTick(() => {
+			suppressCodeRevealOnce = false;
+		});
+	}
+}
+
+function selectFromCodeDrop(event) {
+	const line = Number(event?.lineNumber) || 0;
+	if (!line) return;
+	nextTick(() => selectFromCodeLine(line));
 }
 
 function nodeIdForSourceLine(line) {
@@ -611,10 +671,16 @@ function queueExperimentTailwindRefresh() {
 async function refreshExperimentTailwind() {
 	if (typeof window === 'undefined') return;
 	try {
-		const content = [
+		const sources = [
 			codeText.value,
 			sourceText.value,
 			...componentStore.value.map((component) => sourceForComponent(component)),
+		];
+		const sourceContent = sources.join('\n');
+		const content = [
+			sourceContent,
+			statePreviewClassContentForText(sourceContent),
+			...flatNodes.value.map(({ node }) => statePreviewClassForNode(node)),
 		].join('\n');
 		const response = await fetch('/experiments/template-editor/tailwind.css', {
 			method: 'POST',
@@ -629,7 +695,7 @@ async function refreshExperimentTailwind() {
 			style.id = 'template-editor-tailwind-runtime';
 			document.head.appendChild(style);
 		}
-		style.textContent = css;
+		style.textContent = `${css}\n${forcedStateCssForTailwind(css, sourceContent)}`;
 	} catch {
 		// The endpoint only exists in the local experiment dev server.
 	}
@@ -644,7 +710,136 @@ function loadActiveComponent() {
 	if (!component) return;
 	const nextSource = component.source;
 	codeText.value = nextSource;
-	applyCode(nextSource, { keepDirty: false, keepSelection: false });
+	applyCode(nextSource, { keepDirty: false, keepSelection: false, syncHistory: false });
+	resetVisualHistory();
+}
+
+function resetVisualHistory() {
+	lastVisualHistorySnapshot = captureVisualHistorySnapshot();
+	visualUndoStack.value = [];
+	visualRedoStack.value = [];
+}
+
+function syncVisualHistoryBaseline(options = {}) {
+	lastVisualHistorySnapshot = captureVisualHistorySnapshot();
+	if (options.clearStacks) {
+		visualUndoStack.value = [];
+		visualRedoStack.value = [];
+	}
+}
+
+function captureVisualHistorySnapshot() {
+	return cloneData({
+		componentName: activeComponentName.value,
+		tree: tree.value,
+		componentProps: activeComponent.value?.props || [],
+		rootData: rootData.value,
+		rootDataText: rootDataText.value,
+		forcedStatesByNodeId: forcedStatesByNodeId.value,
+		selectedId: selectedId.value,
+		layerOpenValues: layerOpenValues.value,
+	});
+}
+
+function commitVisualHistory(afterSnapshot) {
+	if (!afterSnapshot) return;
+	if (!lastVisualHistorySnapshot) {
+		lastVisualHistorySnapshot = cloneData(afterSnapshot);
+		return;
+	}
+	if (historySnapshotsEqual(lastVisualHistorySnapshot, afterSnapshot)) {
+		lastVisualHistorySnapshot = cloneData(afterSnapshot);
+		return;
+	}
+
+	visualUndoStack.value = [
+		...visualUndoStack.value,
+		cloneData(lastVisualHistorySnapshot),
+	].slice(-maxVisualHistoryEntries);
+	visualRedoStack.value = [];
+	lastVisualHistorySnapshot = cloneData(afterSnapshot);
+}
+
+function undoVisualEdit() {
+	if (!visualUndoStack.value.length) return false;
+	const current = captureVisualHistorySnapshot();
+	const previous = visualUndoStack.value.at(-1);
+	visualUndoStack.value = visualUndoStack.value.slice(0, -1);
+	visualRedoStack.value = [
+		cloneData(current),
+		...visualRedoStack.value,
+	].slice(0, maxVisualHistoryEntries);
+	if (!restoreVisualHistorySnapshot(previous)) return false;
+	lastVisualHistorySnapshot = cloneData(previous);
+	return true;
+}
+
+function redoVisualEdit() {
+	if (!visualRedoStack.value.length) return false;
+	const current = captureVisualHistorySnapshot();
+	const next = visualRedoStack.value[0];
+	visualRedoStack.value = visualRedoStack.value.slice(1);
+	visualUndoStack.value = [
+		...visualUndoStack.value,
+		cloneData(current),
+	].slice(-maxVisualHistoryEntries);
+	if (!restoreVisualHistorySnapshot(next)) return false;
+	lastVisualHistorySnapshot = cloneData(next);
+	return true;
+}
+
+function restoreVisualHistorySnapshot(snapshot) {
+	if (!snapshot || snapshot.componentName !== activeComponentName.value) return false;
+	restoringVisualHistory = true;
+	try {
+		tree.value = cloneData(snapshot.tree);
+		if (activeComponent.value) activeComponent.value.props = cloneData(snapshot.componentProps || []);
+		rootData.value = cloneData(snapshot.rootData || {});
+		rootDataText.value = snapshot.rootDataText || JSON.stringify(rootData.value, null, '\t');
+		forcedStatesByNodeId.value = cloneData(snapshot.forcedStatesByNodeId || {});
+		layerOpenValues.value = Array.isArray(snapshot.layerOpenValues) ? [...snapshot.layerOpenValues] : ['root'];
+		selectedCodeLineOverride.value = 0;
+		selectedId.value = findNode(tree.value, snapshot.selectedId)
+			? snapshot.selectedId
+			: tree.value?.id || '';
+		pruneForcedStates();
+		codeDirty.value = false;
+		codeError.value = '';
+		savedAt.value = '';
+		componentPreviewCache.clear();
+		codeText.value = sourceText.value;
+		restoreVisualEditFocus(selectedId.value);
+		return true;
+	} finally {
+		restoringVisualHistory = false;
+	}
+}
+
+function historySnapshotsEqual(left, right) {
+	return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function cloneData(value) {
+	if (value === undefined || value === null) return value;
+	return JSON.parse(JSON.stringify(value));
+}
+
+function onTemplateEditorKeydown(event) {
+	if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
+	const key = event.key.toLowerCase();
+	if (key !== 'z' && key !== 'y') return;
+	if (isEditableShortcutTarget(event.target)) return;
+
+	const handled = key === 'z' && !event.shiftKey
+		? undoVisualEdit()
+		: redoVisualEdit();
+	if (!handled) return;
+	event.preventDefault();
+}
+
+function isEditableShortcutTarget(target) {
+	if (!(target instanceof Element)) return false;
+	return Boolean(target.closest('input, textarea, select, [contenteditable="true"], .monaco-editor'));
 }
 
 /**
@@ -766,6 +961,7 @@ function normalizeEditorTree(node) {
 		layerValueById: {},
 		sourceLineById: {},
 		sourceEndLineById: {},
+		previewStatesById: {},
 		nodesById: {},
 	};
 	normalizeEditorNode(node, normalized, null, []);
@@ -777,6 +973,7 @@ function normalizeEditorNode(node, normalized, parentId, path) {
 	normalized.layerValueById[node.id] = layerValue;
 	if (node.sourceLine) normalized.sourceLineById[node.id] = node.sourceLine;
 	if (node.sourceEndLine) normalized.sourceEndLineById[node.id] = node.sourceEndLine;
+	if (forcedStatesByNodeId.value[node.id]?.length) normalized.previewStatesById[node.id] = forcedStatesByNodeId.value[node.id];
 	normalized.nodesById[node.id] = {
 		id: node.id,
 		parentId,
@@ -787,6 +984,7 @@ function normalizeEditorNode(node, normalized, parentId, path) {
 		label: node.label || node.tag || node.type,
 		sourceLine: node.sourceLine || null,
 		sourceEndLine: node.sourceEndLine || null,
+		previewStates: forcedStatesByNodeId.value[node.id]?.length ? forcedStatesByNodeId.value[node.id] : undefined,
 		props: node.props && Object.keys(node.props).length ? node.props : undefined,
 		repeat: node.repeat || undefined,
 	};
@@ -811,6 +1009,65 @@ function revealNodeInLayers(id) {
 	const openValues = new Set(layerOpenValues.value.map(String));
 	ancestorIds.forEach((value) => openValues.add(String(value)));
 	layerOpenValues.value = [...openValues];
+}
+
+function onLayerOpenValuesUpdate(values) {
+	layerOpenValues.value = values;
+}
+
+function onLayerToggle(event) {
+	if (syncingLayerOpenFromCode) return;
+	const nodeId = event?.item?.nodeId;
+	const node = findNode(tree.value, nodeId);
+	const line = codeFoldLineForNode(node, nodeId);
+	if (!line) return;
+	if (event.open) codeEditorEl.value?.unfoldLine(line, { descendants: true });
+	else codeEditorEl.value?.foldLine(line);
+}
+
+function onCodeFoldingChange(ranges) {
+	const nextOpenValues = layerOpenValuesForCollapsedCodeRanges(ranges);
+	syncingLayerOpenFromCode = true;
+	layerOpenValues.value = nextOpenValues;
+	nextTick(() => {
+		syncingLayerOpenFromCode = false;
+	});
+}
+
+function layerOpenValuesForCollapsedCodeRanges(ranges) {
+	const collapsedNodeIds = nodeIdsForCollapsedCodeRanges(ranges);
+	return flatNodes.value
+		.filter(({ node }) => node.children?.length)
+		.filter(({ node }) => !collapsedNodeIds.has(node.id))
+		.map(({ node }) => layerValueForNodeId(tree.value, node.id))
+		.filter(Boolean);
+}
+
+function nodeIdsForCollapsedCodeRanges(ranges) {
+	const ids = new Set();
+	for (const range of normalizeCollapsedCodeRanges(ranges)) {
+		const id = range.startLine === 1 && tree.value
+			? tree.value.id
+			: nodeIdForSourceLine(range.startLine);
+		if (id && findNode(tree.value, id)) ids.add(id);
+	}
+	return ids;
+}
+
+function normalizeCollapsedCodeRanges(ranges) {
+	return (Array.isArray(ranges) ? ranges : [])
+		.map((range) => ({
+			startLine: Number(range.startLine || range.startLineNumber || range.start || 0),
+			endLine: Number(range.endLine || range.endLineNumber || range.end || 0),
+		}))
+		.filter((range) => range.startLine > 0 && range.endLine >= range.startLine);
+}
+
+function codeFoldLineForNode(node, id) {
+	if (!node) return 0;
+	if (node.type === 'root') return 1;
+	if (!codeLineMode.value) return source.value.lineMap[id] || node.sourceLine || 0;
+	return node.sourceLine || source.value.lineMap[id] || 0;
 }
 
 function layerValueForPath(path) {
@@ -1044,18 +1301,37 @@ function defaultPropsFor(component) {
 	return Object.fromEntries((component.props || []).map((prop) => [prop.name, '']));
 }
 
+function sourceSnippetForEntry(entry) {
+	if (!entry?.create) return '';
+	return sourceSnippetForNode(entry.create());
+}
+
+function sourceSnippetForNode(node) {
+	if (!node) return '';
+	const cleanNode = clearIds(cloneData(node));
+	const rows = buildSource({ type: 'root', label: 'Snippet', children: [cleanNode] }, { props: [] })
+		.rows
+		.map((row) => row.text)
+		.slice(1, -1);
+	return rows
+		.map((line) => line.startsWith('\t') ? line.slice(1) : line)
+		.join('\n')
+		.trimEnd();
+}
+
 function onDragStart(entry, event) {
 	draggingEntry.value = entry;
-	dropTargetId.value = '';
+	clearDropTarget();
 	event.dataTransfer.effectAllowed = 'copy';
 	event.dataTransfer.setData(paletteDragType, entry.id);
+	event.dataTransfer.setData(codeDropType, sourceSnippetForEntry(entry));
 	event.dataTransfer.setData('text/plain', entry.label || entry.id);
 }
 
 function onDragEnd() {
 	draggingEntry.value = null;
 	draggingNodeId.value = '';
-	dropTargetId.value = '';
+	clearDropTarget();
 }
 
 function clearHoveredStageNode() {
@@ -1090,22 +1366,24 @@ function addToSelected(entry) {
 	insertEntry(entry, selectedId.value);
 }
 
-function addFromDrop(targetId) {
+function addFromDrop(target) {
+	const { id: targetId, position } = dropDetailsFromTarget(target, selectedId.value);
+	if (!targetId) return;
 	if (draggingNodeId.value) {
-		moveNodeTo(draggingNodeId.value, targetId, 'after');
+		moveNodeTo(draggingNodeId.value, targetId, position);
 		draggingNodeId.value = '';
-		dropTargetId.value = '';
+		clearDropTarget();
 		return;
 	}
 	if (!draggingEntry.value) return;
-	insertEntry(draggingEntry.value, targetId);
+	insertEntryAt(draggingEntry.value, targetId, position);
 	draggingEntry.value = null;
-	dropTargetId.value = '';
+	clearDropTarget();
 }
 
 function startNodeDrag(id) {
 	draggingNodeId.value = id;
-	dropTargetId.value = '';
+	clearDropTarget();
 	selectedCodeLineOverride.value = 0;
 	selectedId.value = id;
 	revealNodeInLayers(id);
@@ -1116,13 +1394,60 @@ function toggleDeveloperMenu() {
 	if (isDeveloperMenuOpen.value) isCreateMenuOpen.value = false;
 }
 
-function markDropTarget(id) {
+function markDropTarget(target) {
 	if (!draggingEntry.value && !draggingNodeId.value) return;
+	const { id, position } = dropDetailsFromTarget(target);
+	if (!canDropOnStageTarget(id, position)) {
+		clearDropTarget();
+		return;
+	}
+	if (dropTargetId.value !== id) revealNodeInLayers(id);
 	dropTargetId.value = id;
+	dropTargetPosition.value = position;
+	previewHoveredDropTarget(id);
 }
 
 function clearDropTarget() {
 	dropTargetId.value = '';
+	dropTargetPosition.value = '';
+	clearDropTargetHover();
+}
+
+function dropDetailsFromTarget(target, fallbackId = '') {
+	if (target && typeof target === 'object') {
+		return {
+			id: target.id || target.nodeId || target.item?.nodeId || '',
+			position: normalizeDropPosition(target.position, dropTargetPosition.value || 'inside'),
+		};
+	}
+
+	return {
+		id: target || fallbackId,
+		position: normalizeDropPosition(dropTargetPosition.value, 'inside'),
+	};
+}
+
+function normalizeDropPosition(position, fallback = 'inside') {
+	return ['before', 'inside', 'after'].includes(position) ? position : fallback;
+}
+
+function canDropOnStageTarget(id, position) {
+	if (!id) return false;
+	if (draggingNodeId.value) return canMoveNodeTo(draggingNodeId.value, id, position);
+	if (draggingEntry.value) return canInsertAtLayer(id, position);
+	return false;
+}
+
+function previewHoveredDropTarget(id) {
+	const node = findNode(tree.value, id);
+	if (!node) return;
+	dropTargetHoverId = id;
+	setHoveredNode(id, { codeLine: sourceLineForNode(node, id) });
+}
+
+function clearDropTargetHover() {
+	if (dropTargetHoverId && hoveredNodeId.value === dropTargetHoverId) setHoveredNode('');
+	dropTargetHoverId = '';
 }
 
 function canDropLayerItem({ source, target, position }) {
@@ -1139,7 +1464,7 @@ function onLayerReorder(event) {
 	const targetId = event.target?.nodeId || nodeIdForLayerValue(tree.value, event.targetValue);
 	if (!moveNodeTo(sourceId, targetId, event.position)) return;
 	draggingNodeId.value = '';
-	dropTargetId.value = '';
+	clearDropTarget();
 }
 
 function onLayerExternalDrop(event) {
@@ -1147,7 +1472,20 @@ function onLayerExternalDrop(event) {
 	if (!entry || !canInsertAtLayer(event.item?.nodeId, event.position)) return;
 	insertEntryAt(entry, event.item.nodeId, event.position);
 	draggingEntry.value = null;
-	dropTargetId.value = '';
+	clearDropTarget();
+}
+
+function onLayerDragPreview(event) {
+	const targetId = event.item?.nodeId || nodeIdForLayerValue(tree.value, event.value);
+	if (!targetId) return;
+	if (dropTargetId.value !== targetId) revealNodeInLayers(targetId);
+	dropTargetId.value = targetId;
+	dropTargetPosition.value = normalizeDropPosition(event.position, 'inside');
+	previewHoveredDropTarget(targetId);
+}
+
+function clearLayerDragPreview() {
+	clearDropTarget();
 }
 
 function paletteEntryForId(id) {
@@ -1245,6 +1583,21 @@ function canMoveNodeTo(draggedId, targetId, position) {
 function isDescendant(node, id) {
 	if (!node?.children?.length) return false;
 	return node.children.some((child) => child.id === id || isDescendant(child, id));
+}
+
+function stageDropPositionFromEvent(event, node) {
+	if (!node || node.type === 'root') return 'inside';
+	const rect = event.currentTarget?.getBoundingClientRect?.();
+	if (!rect?.height) return canContain(node) ? 'inside' : 'after';
+	const y = event.clientY - rect.top;
+
+	if (canContain(node)) {
+		if (y < rect.height * 0.25) return 'before';
+		if (y > rect.height * 0.75) return 'after';
+		return 'inside';
+	}
+
+	return y < rect.height / 2 ? 'before' : 'after';
 }
 
 /**
@@ -1438,6 +1791,7 @@ function updateRootData(value) {
 		if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Root data must be a JSON object.');
 		rootData.value = parsed;
 		rootDataError.value = '';
+		syncVisualHistoryBaseline({ clearStacks: true });
 	} catch (error) {
 		rootDataError.value = error instanceof Error ? error.message : 'Invalid JSON.';
 	}
@@ -1452,6 +1806,14 @@ function toggleSidebarPanel(panel) {
 
 function toggleCodeDrawer() {
 	isCodeDrawerOpen.value = !isCodeDrawerOpen.value;
+}
+
+function foldCode() {
+	codeEditorEl.value?.foldAll();
+}
+
+function unfoldCode() {
+	codeEditorEl.value?.unfoldAll();
 }
 
 function beginCodeDrawerResize(event) {
@@ -1558,15 +1920,71 @@ function updateSelectedInactiveClasses(values) {
 	inactiveClassesForSelection.value = values;
 }
 
+function isSelectedPreviewStateEnabled(id) {
+	return selectedPreviewStateSet.value.has(id);
+}
+
+function toggleSelectedPreviewState(id) {
+	if (!canPreviewSelectedStates.value || !statePreviewOptions.some((option) => option.id === id)) return;
+	const current = new Set(selectedPreviewStateIds.value);
+	if (current.has(id)) current.delete(id);
+	else current.add(id);
+
+	const next = { ...forcedStatesByNodeId.value };
+	if (current.size) next[selectedId.value] = statePreviewVariantOrder.filter((stateId) => current.has(stateId));
+	else delete next[selectedId.value];
+	forcedStatesByNodeId.value = next;
+	commitVisualHistory(captureVisualHistorySnapshot());
+	restoreVisualEditFocus(selectedId.value);
+}
+
+function pruneForcedStates() {
+	if (!tree.value) {
+		forcedStatesByNodeId.value = {};
+		return;
+	}
+
+	const allowedStates = new Set(statePreviewVariantOrder);
+	const allowedNodeIds = new Set(flatNodes.value.map(({ node }) => node.id).filter(Boolean));
+	const next = {};
+	let changed = false;
+
+	for (const [id, states] of Object.entries(forcedStatesByNodeId.value)) {
+		const cleanStates = Array.isArray(states) ? states.filter((state) => allowedStates.has(state)) : [];
+		if (!allowedNodeIds.has(id) || id === tree.value.id || !cleanStates.length) {
+			changed = true;
+			continue;
+		}
+		next[id] = cleanStates;
+		if (cleanStates.length !== states.length) changed = true;
+	}
+
+	if (changed) forcedStatesByNodeId.value = next;
+}
+
 /**
  * Visual edits make the editor tree authoritative, so the code pane is
  * regenerated immediately. Direct code edits go through `applyCode` instead.
  */
 function visualChanged() {
+	const preservedSelectedId = selectedId.value;
 	selectedCodeLineOverride.value = 0;
 	codeDirty.value = false;
+	pruneForcedStates();
+	if (!restoringVisualHistory) commitVisualHistory(captureVisualHistorySnapshot());
 	codeText.value = sourceText.value;
 	savedAt.value = '';
+	restoreVisualEditFocus(preservedSelectedId);
+}
+
+function restoreVisualEditFocus(id) {
+	if (!id) return;
+	nextTick(() => {
+		if (!findNode(tree.value, id)) return;
+		if (selectedId.value !== id) selectedId.value = id;
+		revealNodeInLayers(id);
+		applyCodeLineHighlight();
+	});
 }
 
 function addProp() {
@@ -1604,7 +2022,8 @@ function applyCode(value, options = {}) {
 		const parsed = parseSource(value);
 		tree.value = parsed.tree;
 		activeScriptData.value = parsed.scriptData || {};
-		if (parsed.props.length) activeComponent.value.props = parsed.props;
+		if (activeComponent.value) activeComponent.value.props = parsed.props;
+		pruneForcedStates();
 		const preservedSelection = previousLayerValue ? nodeIdForLayerValue(tree.value, previousLayerValue) : '';
 		if (options.keepSelection && preservedSelection) {
 			if (selectedId.value !== preservedSelection) {
@@ -1619,6 +2038,7 @@ function applyCode(value, options = {}) {
 			selectedCodeLineOverride.value = 0;
 			codeDirty.value = false;
 		}
+		if (options.syncHistory !== false) syncVisualHistoryBaseline({ clearStacks: options.clearHistory !== false });
 	} catch (error) {
 		codeError.value = error.message;
 	}
@@ -1630,13 +2050,13 @@ function applyCode(value, options = {}) {
  * in-memory editor working without persistence.
  */
 async function saveActiveComponent() {
-	applyCode(codeText.value, { keepDirty: true, keepSelection: true });
+	applyCode(codeText.value, { keepDirty: true, keepSelection: true, clearHistory: false });
 	if (codeError.value || !activeComponent.value) return;
 
 	const nextSource = codeForSave(codeText.value);
 	codeText.value = nextSource;
 	activeComponent.value.source = nextSource;
-	applyCode(nextSource, { keepDirty: false, keepSelection: true });
+	applyCode(nextSource, { keepDirty: false, keepSelection: true, clearHistory: false });
 	componentPreviewCache.clear();
 	const saved = await saveComponentToDisk(activeComponent.value, nextSource);
 	if (!saved) return;
@@ -1763,6 +2183,200 @@ function isImageNode(node) {
 	return node.type === 'element' && node.tag === 'img';
 }
 
+function forcedStateIdsForNode(node) {
+	if (!node?.id) return [];
+	return forcedStatesByNodeId.value[node.id] || [];
+}
+
+function forcedStateAttrsForNode(node) {
+	const states = forcedStateIdsForNode(node);
+	const attrs = {};
+	for (const option of statePreviewOptions) {
+		if (states.includes(option.id)) attrs[option.attr] = 'true';
+	}
+	if (states.length) attrs['data-template-preview-states'] = states.join(' ');
+	if (states.includes('disabled')) {
+		attrs['aria-disabled'] = 'true';
+		if (supportsDisabledState(node)) attrs.disabled = true;
+	}
+	return attrs;
+}
+
+function supportsDisabledState(node) {
+	if (!node) return false;
+	if (node.type === 'component') return true;
+	return node.type === 'element' && ['button', 'fieldset', 'input', 'optgroup', 'option', 'select', 'textarea'].includes(node.tag);
+}
+
+function forcedStateIdsFromAttrs(attrs) {
+	return statePreviewOptions
+		.filter((option) => attrs?.[option.attr] === 'true')
+		.map((option) => option.id);
+}
+
+function classTokens(value) {
+	if (!value) return [];
+	if (Array.isArray(value)) return value.flatMap(classTokens);
+	if (typeof value === 'object') {
+		return Object.entries(value)
+			.filter(([, enabled]) => enabled)
+			.flatMap(([name]) => classTokens(name));
+	}
+	return String(value).split(/\s+/).map((token) => token.trim()).filter(Boolean);
+}
+
+function mergeClassValues(...values) {
+	const seen = new Set();
+	const tokens = [];
+	for (const token of values.flatMap(classTokens)) {
+		if (seen.has(token)) continue;
+		seen.add(token);
+		tokens.push(token);
+	}
+	return tokens.join(' ');
+}
+
+function classWithPreviewStates(attrs, ...values) {
+	const classValue = mergeClassValues(...values);
+	if (!classValue) return '';
+	return mergeClassValues(classValue, statePreviewClassForClassValue(classValue, forcedStateIdsFromAttrs(attrs)));
+}
+
+function statePreviewClassForNode(node) {
+	if (!node) return '';
+	return statePreviewClassForClassValue(
+		mergeClassValues(node.props?.class, basePreviewClassForNode(node)),
+		forcedStateIdsForNode(node),
+	);
+}
+
+function statePreviewClassForClassValue(value, stateIds) {
+	if (!stateIds.length) return '';
+	return mergeClassValues(classTokens(value).flatMap((token) => statePreviewClassesForToken(token, stateIds)));
+}
+
+function statePreviewClassContentForText(value) {
+	const tokens = String(value || '').match(/[^\s"'`<>]+:[^\s"'`<>]+/g) || [];
+	return mergeClassValues(tokens.flatMap((token) => statePreviewClassesForToken(token, statePreviewVariantOrder)));
+}
+
+function forcedStateCssForTailwind(css, content) {
+	if (typeof CSS === 'undefined' || typeof CSS.escape !== 'function') return '';
+	const rules = new Set();
+	for (const token of statePreviewVariantTokensForText(content)) {
+		const rule = forcedStateCssForToken(css, token);
+		if (rule) rules.add(rule);
+	}
+	return [...rules].join('\n');
+}
+
+function statePreviewVariantTokensForText(value) {
+	const tokens = new Set();
+	const attrPattern = /(?:^|\s)(?::?class|className)\s*=\s*(["'`])([\s\S]*?)\1/g;
+	let match;
+
+	while ((match = attrPattern.exec(String(value || '')))) {
+		for (const token of match[2].split(/\s+/)) {
+			const candidate = cleanClassCandidate(token);
+			if (candidate && statePreviewOptionForToken(candidate)) tokens.add(candidate);
+		}
+	}
+
+	return [...tokens];
+}
+
+function cleanClassCandidate(token) {
+	return String(token || '')
+		.trim()
+		.replace(/^['"`{([]+/, '')
+		.replace(/['"`}:,;)\]]+$/, '');
+}
+
+function forcedStateCssForToken(css, token) {
+	const option = statePreviewOptionForToken(token);
+	if (!option) return '';
+
+	const selector = `.${CSS.escape(token)}`;
+	const body = cssRuleBodyForSelector(css, selector);
+	if (!body) return '';
+
+	const pseudo = pseudoClassForState(option.id);
+	const forcedBody = body.replaceAll(`&:${pseudo}`, '&');
+	if (forcedBody === body) return '';
+	return `[${option.attr}="true"]${selector} {${forcedBody}}\n`;
+}
+
+function statePreviewOptionForToken(token) {
+	const parts = splitClassVariantToken(token);
+	if (parts.length < 2) return null;
+	const variants = parts.slice(0, -1);
+	return statePreviewOptions.find((option) => variants.includes(option.id)) || null;
+}
+
+function pseudoClassForState(stateId) {
+	return stateId;
+}
+
+function cssRuleBodyForSelector(css, selector) {
+	let index = 0;
+	while ((index = css.indexOf(selector, index)) >= 0) {
+		const open = css.indexOf('{', index + selector.length);
+		if (open < 0) return '';
+		const selectorText = css.slice(index, open).trim();
+		if (selectorText === selector) {
+			const close = matchingBraceIndex(css, open);
+			return close > open ? css.slice(open + 1, close) : '';
+		}
+		index += selector.length;
+	}
+	return '';
+}
+
+function matchingBraceIndex(value, openIndex) {
+	let depth = 0;
+	for (let index = openIndex; index < value.length; index += 1) {
+		if (value[index] === '{') depth += 1;
+		if (value[index] === '}') {
+			depth -= 1;
+			if (depth === 0) return index;
+		}
+	}
+	return -1;
+}
+
+function statePreviewClassesForToken(token, stateIds) {
+	const value = String(token || '').trim();
+	if (!value || !value.includes(':')) return [];
+	const parts = splitClassVariantToken(value);
+	if (parts.length < 2) return [];
+	const variants = parts.slice(0, -1);
+	const className = parts.at(-1);
+	return statePreviewVariantOrder.flatMap((stateId) => {
+		if (!stateIds.includes(stateId)) return [];
+		return variants.includes(stateId) && className ? [className] : [];
+	});
+}
+
+function splitClassVariantToken(value) {
+	const parts = [];
+	let current = '';
+	let bracketDepth = 0;
+
+	for (const character of value) {
+		if (character === '[') bracketDepth += 1;
+		if (character === ']') bracketDepth = Math.max(bracketDepth - 1, 0);
+		if (character === ':' && bracketDepth === 0) {
+			parts.push(current);
+			current = '';
+			continue;
+		}
+		current += character;
+	}
+
+	parts.push(current);
+	return parts.filter(Boolean);
+}
+
 /**
  * Converts saved-template attrs into render attrs. Dynamic attrs are resolved
  * against the component scope so `:value="modelValue"` and `{{ task.title }}`
@@ -1788,11 +2402,12 @@ function previewAttrsForNode(node, scope, rootCommon = null) {
 		const savedClass = attrs.class;
 		const inheritedClass = rootCommon.class;
 		Object.assign(attrs, rootCommon);
-		const mergedClass = [inheritedClass, savedClass].filter(Boolean).join(' ');
+		const mergedClass = mergeClassValues(inheritedClass, savedClass);
 		if (mergedClass) attrs.class = mergedClass;
 		else delete attrs.class;
 	}
 
+	if (attrs.class) attrs.class = classWithPreviewStates(attrs, attrs.class);
 	if (isImageNode(node)) prepareImagePreviewAttrs(attrs);
 	return attrs;
 }
@@ -1878,11 +2493,7 @@ function renderPreviewRepeatNode(node, ctx, ownerNode, scope, slotChildren, root
 	const items = resolveExpression(node.repeat.list, scope);
 	const rows = Array.isArray(items) && items.length ? items : [{ title: 'Example row' }];
 	const repeatedRows = rows.flatMap((item, index) => {
-		const rowScope = {
-			...scope,
-			[node.repeat.item]: item,
-			...(node.repeat.index ? { [node.repeat.index]: index } : {}),
-		};
+		const rowScope = scopeForRepeatItem(node.repeat, item, index, scope);
 		const repeatedNode = { ...node, repeat: null };
 		return toArray(renderPreviewNode(repeatedNode, ctx, ownerNode, rowScope, slotChildren, null, depth + 1));
 	});
@@ -1902,11 +2513,14 @@ function renderNode(node, ctx) {
 	const hovered = ctx.hoveredId === node.id;
 	const scope = ctx.scope || {};
 	const dropTarget = ctx.dropTargetId === node.id && node.type !== 'root';
+	const dropPosition = dropTarget ? normalizeDropPosition(ctx.dropTargetPosition, 'inside') : '';
 	const common = previewAttrsForNode(node, scope, {
 		'data-template-node': node.id,
 		'data-template-hovered': hovered ? 'true' : null,
 		'data-template-selected': selected ? 'true' : null,
 		'data-template-drop-target': dropTarget ? 'true' : null,
+		'data-template-drop-position': dropPosition || null,
+		...forcedStateAttrsForNode(node),
 		draggable: node.type !== 'root',
 		onClick: ctx.select,
 		onDblclick: ctx.open,
@@ -1924,18 +2538,18 @@ function renderNode(node, ctx) {
 
 	const stageClass = stageBaseClassForNode(node);
 
-	if (node.type === 'root') return h('div', { ...common, class: ['min-h-full w-full', stageClass, common.class].filter(Boolean).join(' ') }, children);
+	if (node.type === 'root') return h('div', { ...common, class: classWithPreviewStates(common, 'min-h-full w-full', stageClass, common.class) }, children);
 	if (node.type === 'component') {
 		const slotChildren = slotContentForNode(node, children, scope);
-		if (elementsEntryForTag(node.tag)?.component && stageClass && !common.class) common.class = stageClass;
+		if (elementsEntryForTag(node.tag)?.component && stageClass && !common.class) common.class = classWithPreviewStates(common, stageClass);
 		const elementsPreview = renderElementsComponent(node, common, slotChildren);
 		if (elementsPreview) return elementsPreview;
 		const preview = renderComponentPreview(node, ctx, common, scope, slotChildren);
 		if (preview) return preview;
-		if (stageClass && !common.class) common.class = stageClass;
+		if (stageClass && !common.class) common.class = classWithPreviewStates(common, stageClass);
 	}
 
-	if (stageClass && !common.class) common.class = stageClass;
+	if (stageClass && !common.class) common.class = classWithPreviewStates(common, stageClass);
 
 	if (node.type === 'headline') return h('h1', common, renderInlineValue(node, 'Heading', scope));
 	if (node.type === 'text') return h('p', common, renderInlineValue(node, 'Text', scope));
@@ -1976,12 +2590,13 @@ function renderChildren(node, ctx, scope) {
 		selectedId: ctx.selectedId,
 		hoveredId: ctx.hoveredId,
 		dropTargetId: ctx.dropTargetId,
+		dropTargetPosition: ctx.dropTargetPosition,
 		dataScope: scope,
 		onSelect: (id) => ctx.emit('select', id),
 		onOpenComponent: (target) => ctx.emit('open-component', target),
-		onDropOnNode: (id) => ctx.emit('drop-on-node', id),
+		onDropOnNode: (target) => ctx.emit('drop-on-node', target),
 		onNodeDragStart: (id) => ctx.emit('node-drag-start', id),
-		onNodeDragOver: (id) => ctx.emit('node-drag-over', id),
+		onNodeDragOver: (target) => ctx.emit('node-drag-over', target),
 	}));
 }
 
@@ -2022,11 +2637,7 @@ function renderRepeatNode(node, ctx, common, scope) {
 	const items = resolveExpression(node.repeat.list, scope);
 	const rows = Array.isArray(items) && items.length ? items : [{ title: 'Example row' }];
 	return rows.flatMap((item, index) => {
-		const repeatScope = {
-			...scope,
-			[node.repeat.item]: item,
-			...(node.repeat.index ? { [node.repeat.index]: index } : {}),
-		};
+		const repeatScope = scopeForRepeatItem(node.repeat, item, index, scope);
 		return toArray(renderNode({ ...node, repeat: null }, { ...ctx, scope: repeatScope }))
 			.map((row) => withRepeatKey(row, node.id, index));
 	});
@@ -2202,6 +2813,8 @@ function isEmptyElement(node) {
 									:open-values="layerOpenValues"
 									:hovered-value="hoveredLayerValue"
 									:external-drag-value="layerDragSourceValue"
+									:external-drop-target-value="dropTargetLayerValue"
+									:external-drop-position="dropTargetPosition"
 									:external-drop-types="[paletteDragType]"
 									:can-drop-item="canDropLayerItem"
 									:can-drop-external="canDropExternalLayer"
@@ -2213,9 +2826,12 @@ function isEmptyElement(node) {
 									@select="selectNode($event.item.nodeId)"
 									@hover="hoverNodeFromLayer"
 									@hover-end="clearNodeHoverFromLayer"
+									@drag-preview="onLayerDragPreview"
+									@drag-preview-end="clearLayerDragPreview"
 									@reorder="onLayerReorder"
 									@external-drop="onLayerExternalDrop"
-									@update:open-values="layerOpenValues = $event"
+									@toggle="onLayerToggle"
+									@update:open-values="onLayerOpenValuesUpdate"
 								/>
 							</div>
 						</section>
@@ -2267,6 +2883,22 @@ function isEmptyElement(node) {
 										<pre class="min-h-0 flex-1 overflow-auto bg-background p-3 font-mono text-[11px] leading-5 text-foreground">{{ developerNodeSnapshotText }}</pre>
 									</div>
 								</div>
+								<button
+									type="button"
+									class="h-8 rounded-md border border-border px-3 text-xs font-medium hover:bg-secondary disabled:pointer-events-none disabled:opacity-40"
+									:disabled="!canUndoVisual"
+									@click="undoVisualEdit"
+								>
+									Undo
+								</button>
+								<button
+									type="button"
+									class="h-8 rounded-md border border-border px-3 text-xs font-medium hover:bg-secondary disabled:pointer-events-none disabled:opacity-40"
+									:disabled="!canRedoVisual"
+									@click="redoVisualEdit"
+								>
+									Redo
+								</button>
 								<button type="button" class="h-8 rounded-md border border-border px-3 text-xs font-medium hover:bg-secondary" @click="duplicateSelected">Duplicate</button>
 								<button type="button" class="h-8 rounded-md border border-border px-3 text-xs font-medium hover:bg-secondary" @click="toggleCodeDrawer">
 									{{ isCodeDrawerOpen ? 'Hide code' : 'Show code' }}
@@ -2286,8 +2918,8 @@ function isEmptyElement(node) {
 							ref="stageViewportEl"
 							:selected-label="selectedStageLabel"
 							:can-delete="canDeleteSelected"
-							:dragging="Boolean(draggingEntry || draggingNodeId)"
-							@stage-drop="addFromDrop(selectedId)"
+							:dragging="Boolean(draggingEntry || draggingNodeId || dropTargetId)"
+							@stage-drop="addFromDrop(dropTargetId || selectedId)"
 							@clear-drop-target="clearDropTarget"
 							@hover-node="setHoveredNode"
 							@clear-hover="clearHoveredStageNode"
@@ -2299,6 +2931,7 @@ function isEmptyElement(node) {
 								:selected-id="selectedId"
 								:hovered-id="hoveredNodeId"
 								:drop-target-id="dropTargetId"
+								:drop-target-position="dropTargetPosition"
 								:data-scope="stageRootScope"
 								@select="selectNode"
 								@open-component="openComponent"
@@ -2338,10 +2971,12 @@ function isEmptyElement(node) {
 										<code class="block truncate text-[11px] text-muted-foreground" :title="sourceFileTitle">{{ sourceFileLabel }}</code>
 									</span>
 								</button>
-								<div class="flex shrink-0 items-center gap-2">
+								<div class="flex shrink-0 flex-wrap items-center justify-end gap-2">
 									<p class="text-[11px]" :class="codeError ? 'text-destructive' : 'text-muted-foreground'">
 										{{ codeError || (codeDirty ? 'Unsaved' : savedAt ? `${saveTarget} saved ${savedAt}` : 'Synced') }}
 									</p>
+									<button type="button" class="h-7 rounded-md border border-border px-2 text-[11px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground" @click="foldCode">Fold all</button>
+									<button type="button" class="h-7 rounded-md border border-border px-2 text-[11px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground" @click="unfoldCode">Unfold</button>
 									<button type="button" class="h-7 rounded-md border border-border px-2 text-[11px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground" @click="resetActiveComponent">Reset</button>
 									<button type="button" class="h-7 rounded-md bg-primary px-2 text-[11px] font-semibold text-primary-foreground hover:bg-primary/90" @click="saveActiveComponent">Save</button>
 								</div>
@@ -2352,9 +2987,12 @@ function isEmptyElement(node) {
 									:model-value="codeText"
 									:selected-line="selectedSourceLine"
 									:hovered-line="hoveredSourceLine"
+									:external-drop-types="[codeDropType]"
 									:path="sourceFile"
 									lang="vue"
 									@cursor-line-change="selectFromCodeLine"
+									@drop-insert="selectFromCodeDrop"
+									@folding-change="onCodeFoldingChange"
 									@hover-line-change="hoverNodeFromCodeLine"
 									@ready="applyCodeLineHighlight"
 									@update:model-value="onCodeInput"
@@ -2413,6 +3051,29 @@ function isEmptyElement(node) {
 									/>
 								</div>
 							</div>
+							<div v-if="canPreviewSelectedStates" class="grid gap-2 rounded-md border border-border bg-background p-3">
+								<div class="flex items-center justify-between gap-3">
+									<span class="text-xs font-medium text-muted-foreground">States</span>
+									<span class="text-[11px] text-muted-foreground">{{ selectedPreviewStateIds.length ? selectedPreviewStateIds.join(', ') : 'Default' }}</span>
+								</div>
+								<div class="flex flex-wrap gap-1.5">
+									<button
+										v-for="state in statePreviewOptions"
+										:key="state.id"
+										type="button"
+										class="h-8 rounded-md border px-2.5 text-xs font-medium transition"
+										:class="isSelectedPreviewStateEnabled(state.id) ? 'border-ring bg-primary text-primary-foreground' : 'border-border bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground'"
+										:aria-pressed="isSelectedPreviewStateEnabled(state.id)"
+										@click="toggleSelectedPreviewState(state.id)"
+									>
+										{{ state.label }}
+									</button>
+								</div>
+								<label v-if="selectedPreviewStateClasses" class="grid gap-1">
+									<span class="text-[11px] text-muted-foreground">Expanded classes</span>
+									<textarea class="min-h-14 resize-none rounded-md border border-input bg-background px-3 py-2 font-mono text-[11px] text-muted-foreground outline-none" readonly :value="selectedPreviewStateClasses"></textarea>
+								</label>
+							</div>
 							<div v-if="selectedNode && selectedNode.type !== 'root'" class="grid gap-2">
 								<div class="flex items-center justify-between">
 									<span class="text-xs text-muted-foreground">HTML attributes</span>
@@ -2460,7 +3121,7 @@ function isEmptyElement(node) {
 								</p>
 							</div>
 
-						<div class="mt-4 rounded-md border border-border bg-background p-3">
+						<div v-if="isRootSelected" class="mt-4 rounded-md border border-border bg-background p-3">
 							<div class="mb-2 flex items-center justify-between">
 								<p class="text-xs font-medium text-muted-foreground">Component props</p>
 								<span class="text-[11px] text-muted-foreground">{{ activeComponent?.props?.length || 0 }}</span>
@@ -2487,7 +3148,7 @@ function isEmptyElement(node) {
 							</div>
 						</div>
 
-						<div class="mt-4 rounded-md border border-border bg-background p-3">
+						<div v-if="isRootSelected" class="mt-4 rounded-md border border-border bg-background p-3">
 							<div class="mb-2 flex items-center justify-between">
 								<p class="text-xs font-medium text-muted-foreground">Page root data</p>
 								<span class="text-[11px]" :class="rootDataError ? 'text-destructive' : 'text-muted-foreground'">{{ rootDataError || 'Live' }}</span>
@@ -2578,13 +3239,67 @@ function isEmptyElement(node) {
 	outline: 2px solid color-mix(in oklch, var(--ring) 65%, transparent);
 }
 
+:deep([data-template-preview-states]) {
+	box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--primary) 35%, transparent);
+}
+
 :deep([data-template-selected="true"]) {
 	outline: 2px solid var(--ring);
 	box-shadow: 0 0 0 4px color-mix(in oklch, var(--ring) 18%, transparent);
 }
 
+:deep([data-template-selected="true"][data-template-preview-states]) {
+	box-shadow: 0 0 0 4px color-mix(in oklch, var(--ring) 18%, transparent), inset 0 0 0 1px color-mix(in oklch, var(--primary) 45%, transparent);
+}
+
+:deep([data-template-force-disabled="true"]) {
+	cursor: not-allowed;
+}
+
 :deep([data-template-drop-target="true"]) {
 	outline: 3px dashed var(--ring);
 	box-shadow: 0 0 0 4px color-mix(in oklch, var(--ring) 18%, transparent), 0 8px 18px color-mix(in oklch, var(--ring) 22%, transparent);
+}
+
+:deep([data-template-drop-position]) {
+	position: relative;
+}
+
+:deep([data-template-drop-position]::before),
+:deep([data-template-drop-position]::after) {
+	position: absolute;
+	left: 0.75rem;
+	right: 0.75rem;
+	z-index: 30;
+	height: 3px;
+	border-radius: 999px;
+	background: var(--ring);
+	opacity: 0;
+	box-shadow:
+		0 0 0 2px var(--background),
+		0 5px 12px color-mix(in oklch, var(--ring) 32%, transparent);
+	content: "";
+	pointer-events: none;
+}
+
+:deep([data-template-drop-position]::before) {
+	top: 0.125rem;
+}
+
+:deep([data-template-drop-position]::after) {
+	bottom: 0.125rem;
+}
+
+:deep([data-template-drop-position="before"]::before) {
+	opacity: 1;
+}
+
+:deep([data-template-drop-position="after"]::after) {
+	opacity: 1;
+}
+
+:deep([data-template-drop-position="inside"]::after) {
+	bottom: 0.5rem;
+	opacity: 1;
 }
 </style>

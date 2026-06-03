@@ -333,16 +333,53 @@ export function parseScriptSetupData(value) {
 
 export function parseRepeatSource(source) {
 	const normalized = source.trim();
-	const match = normalized.match(/^(?:\(([^)]+)\)|([A-Za-z_$][\w$]*))\s+(?:in|of)\s+(.+)$/);
+	const match = normalized.match(/^(?:\(([^)]+)\)|(\[[^\]]+\])|(\{[^}]+\})|([A-Za-z_$][\w$]*))\s+(?:in|of)\s+(.+)$/);
 	if (!match) return { source: normalized, item: 'item', index: '', list: normalized };
 
-	const aliases = (match[1] || match[2] || 'item').split(',').map((part) => part.trim());
-	return {
+	const aliasSource = match[1] || match[2] || match[3] || match[4] || 'item';
+	const destructure = match[2] ? 'array' : match[3] ? 'object' : '';
+	const aliases = aliasSource
+		.replace(/^\[|\]$/g, '')
+		.replace(/^\{|\}$/g, '')
+		.split(',')
+		.map((part) => part.trim())
+		.map((part) => part.split(':').at(-1).trim())
+		.filter(Boolean);
+	const repeat = {
 		source: normalized,
 		item: aliases[0] || 'item',
-		index: aliases[1] || '',
-		list: match[3].trim(),
+		index: destructure ? '' : aliases[1] || '',
+		list: match[5].trim(),
 	};
+	if (destructure) {
+		repeat.aliases = aliases;
+		repeat.destructure = destructure;
+	}
+	return repeat;
+}
+
+export function scopeForRepeatItem(repeat, item, index, scope = {}) {
+	const nextScope = { ...scope };
+	if (repeat?.destructure === 'array') {
+		(repeat.aliases || []).forEach((alias, aliasIndex) => {
+			if (isSafeScopeAlias(alias)) nextScope[alias] = item?.[aliasIndex];
+		});
+		return nextScope;
+	}
+	if (repeat?.destructure === 'object') {
+		(repeat.aliases || []).forEach((alias) => {
+			if (isSafeScopeAlias(alias)) nextScope[alias] = item?.[alias];
+		});
+		return nextScope;
+	}
+
+	if (isSafeScopeAlias(repeat?.item)) nextScope[repeat.item] = item;
+	if (isSafeScopeAlias(repeat?.index)) nextScope[repeat.index] = index;
+	return nextScope;
+}
+
+function isSafeScopeAlias(value) {
+	return /^[A-Za-z_$][\w$]*$/.test(String(value || ''));
 }
 
 export function evaluatePreviewExpression(expression, scope = {}) {

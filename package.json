@@ -6,6 +6,7 @@
 	"scripts": {
 		"dev": "vite",
 		"build": "vite-ssg build && node scripts/generate-seo-files.mjs",
+		"check:form-definition": "node scripts/check-form-definition.mjs",
 		"check:template-editor": "node scripts/check-template-editor-model.mjs",
 		"preview": "vite preview"
 	},

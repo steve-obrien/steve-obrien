@@ -3,6 +3,7 @@ import ElementsLayout from '../../_layout/ElementsLayout.vue';
 import DocPage from '../../_layout/DocPage.vue';
 import DocSection from '../../_layout/DocSection.vue';
 import Example from '../../_layout/docs/Example.vue';
+import TemplateExampleEditor from '../../_layout/docs/TemplateExampleEditor.vue';
 import LoginPanel from './examples/LoginPanel.vue';
 import LoginPanelSrc from './examples/LoginPanel.vue?raw';
 </script>
@@ -24,6 +25,12 @@ import LoginPanelSrc from './examples/LoginPanel.vue?raw';
 				>
 					<LoginPanel />
 				</Example>
+				<TemplateExampleEditor
+					:source="LoginPanelSrc"
+					filename="LoginPanel.vue"
+					title="Editable login template"
+					description="A compact template editor for documentation examples: rendered preview, Monaco source, and selected-node properties."
+				/>
 			</DocSection>
 		</DocPage>
 	</ElementsLayout>

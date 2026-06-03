@@ -29,6 +29,8 @@ defineOptions({
 			{ name: 'action', payload: '({ action, item, value, node })', description: 'Fired when a right-side item action is clicked.' },
 			{ name: 'toggle', payload: '({ item, value, open })', description: 'Fired when a branch is opened or closed.' },
 			{ name: 'load-children', payload: '({ item, value })', description: 'Fired when a lazy node is opened and needs children.' },
+			{ name: 'drag-preview', payload: '({ item, value, node, position, kind })', description: 'Fired while a valid drag target is being previewed.' },
+			{ name: 'drag-preview-end', payload: '({ value, position, kind })', description: 'Fired when the current drag preview is cleared.' },
 			{ name: 'reorder', payload: '({ items, item, sourceValue, sourceNode, target, targetValue, targetNode, position })', description: 'Fired after drag/drop with a reordered items array.' },
 			{ name: 'external-drop', payload: '({ event, dataTransfer, types, getData, item, value, node, position })', description: 'Fired when accepted data from outside the tree is dropped onto a row.' },
 			{ name: 'update:items', payload: '(items)', description: 'Emitted with the reordered tree so callers can sync v-model:items.' },
@@ -91,6 +93,16 @@ const props = defineProps({
 		default: '',
 		_edit: { description: 'Tree item value currently being dragged from another surface, such as a stage canvas.' },
 	},
+	externalDropTargetValue: {
+		type: [String, Number],
+		default: '',
+		_edit: { description: 'Tree item value currently being previewed as a drop target from another surface.' },
+	},
+	externalDropPosition: {
+		type: String,
+		default: '',
+		_edit: { options: ['before', 'inside', 'after'], description: 'Preview position for externalDropTargetValue.' },
+	},
 	externalDropTypes: {
 		type: Array,
 		default: () => [],
@@ -148,7 +160,7 @@ const props = defineProps({
 	},
 });
 
-const emit = defineEmits(['update:modelValue', 'update:items', 'update:openValues', 'select', 'hover', 'hover-end', 'action', 'toggle', 'load-children', 'reorder', 'external-drop']);
+const emit = defineEmits(['update:modelValue', 'update:items', 'update:openValues', 'select', 'hover', 'hover-end', 'action', 'toggle', 'load-children', 'drag-preview', 'drag-preview-end', 'reorder', 'external-drop']);
 const activeValue = ref(props.modelValue);
 const openSet = ref(new Set(seedTreeOpenValues(props.items, props.openValues)));
 const dropTarget = ref(null);
@@ -172,7 +184,7 @@ watch(() => props.items, (items) => {
 }, { deep: true });
 
 watch(() => props.openValues, (values) => {
-	if (values?.length) openSet.value = new Set(values.map(String));
+	if (Array.isArray(values)) openSet.value = new Set(values.map(String));
 }, { deep: true });
 
 watch(() => props.modelValue, (value) => {
@@ -349,7 +361,7 @@ function onDragStart(event, node) {
 	event.dataTransfer.setData(treeItemDragType, String(node.value));
 	event.dataTransfer.setData('text/plain', String(node.value));
 	draggedValue.value = String(node.value);
-	dropTarget.value = null;
+	clearDropPreview();
 }
 
 function onDragOver(event, node) {
@@ -360,32 +372,31 @@ function onDragOver(event, node) {
 	if (sourceValue && canDropTreeItem(sourceValue, node, position)) {
 		event.preventDefault();
 		event.dataTransfer.dropEffect = 'move';
-		dropTarget.value = { value: node.value, position, kind: 'tree' };
+		updateDropPreview({ value: node.value, position, kind: 'tree' }, node);
 		scheduleDragExpand(node);
 		return;
 	}
 
 	if (!canDropExternalDrag(event, node, position)) {
+		clearDropPreviewForNode(node);
 		cancelDragExpand(node.value);
 		return;
 	}
 	event.preventDefault();
 	event.dataTransfer.dropEffect = props.externalDropEffect;
-	dropTarget.value = { value: node.value, position, kind: 'external' };
+	updateDropPreview({ value: node.value, position, kind: 'external' }, node);
 	scheduleDragExpand(node);
 }
 
 function onDragLeave(event, node) {
 	if (!event.currentTarget.contains(event.relatedTarget) && String(dropTarget.value?.value) === String(node.value)) {
-		dropTarget.value = null;
-		cancelDragExpand(node.value);
+		clearDropPreviewForNode(node);
 	}
 }
 
 function onDrop(event, node) {
 	const target = dropTarget.value;
-	dropTarget.value = null;
-	cancelDragExpand();
+	clearDropPreview();
 	const sourceValue = treeDragSourceValue(event);
 	draggedValue.value = null;
 	if (!target || String(target.value) !== String(node.value)) return;
@@ -410,6 +421,53 @@ function onDrop(event, node) {
 		targetNode: node,
 		position: target.position,
 	});
+}
+
+function onDragEnd() {
+	draggedValue.value = null;
+	clearDropPreview();
+}
+
+function updateDropPreview(target, node) {
+	const current = dropTarget.value;
+	if (
+		current
+		&& String(current.value) === String(target.value)
+		&& current.position === target.position
+		&& current.kind === target.kind
+	) {
+		return;
+	}
+	dropTarget.value = target;
+	emit('drag-preview', dragPreviewPayload(node, target));
+}
+
+function clearDropPreviewForNode(node) {
+	if (String(dropTarget.value?.value) !== String(node.value)) return;
+	clearDropPreview(node.value);
+}
+
+function clearDropPreview(value = null) {
+	if (value != null && String(dropTarget.value?.value) !== String(value)) return;
+	const target = dropTarget.value;
+	dropTarget.value = null;
+	cancelDragExpand(value);
+	if (!target) return;
+	emit('drag-preview-end', {
+		value: target.value,
+		position: target.position,
+		kind: target.kind,
+	});
+}
+
+function dragPreviewPayload(node, target) {
+	return {
+		item: node.item,
+		value: node.value,
+		node,
+		position: target.position,
+		kind: target.kind,
+	};
 }
 
 function dropPositionFromEvent(event, node) {
@@ -521,12 +579,35 @@ function cancelDragExpand(value = null) {
 	dragExpandValue = '';
 }
 
+function dropStateForNode(node) {
+	if (String(dropTarget.value?.value) === String(node.value)) return dropTarget.value;
+	if (
+		props.externalDropTargetValue !== ''
+		&& props.externalDropTargetValue != null
+		&& String(props.externalDropTargetValue) === String(node.value)
+	) {
+		return {
+			value: node.value,
+			position: normalizeDropPosition(props.externalDropPosition, 'inside'),
+			kind: 'external-preview',
+		};
+	}
+	return null;
+}
+
+function isDropPosition(node, position) {
+	return dropStateForNode(node)?.position === position;
+}
+
 function dropClass(node, position) {
-	if (String(dropTarget.value?.value) !== String(node.value)) return '';
-	if (dropTarget.value.position !== position) return '';
+	if (!isDropPosition(node, position)) return '';
 	return position === 'inside'
 		? 'bg-accent ring-1 ring-ring/40'
-		: 'after:opacity-100';
+		: '';
+}
+
+function normalizeDropPosition(position, fallback = 'inside') {
+	return ['before', 'inside', 'after'].includes(position) ? position : fallback;
 }
 
 defineExpose({
@@ -574,8 +655,8 @@ onBeforeUnmount(cancelDragExpand);
 					density === 'comfortable' ? 'min-h-4' : 'min-h-6',
 					variant === 'finder' ? 'hover:bg-foreground/80 hover:text-background aria-selected:bg-accent aria-selected:text-accent-foreground' : 'hover:bg-secondary',
 					dropClass(node, 'inside'),
-					dropTarget?.value === node.value && dropTarget.position === 'before' ? 'before:opacity-100' : '',
-					dropTarget?.value === node.value && dropTarget.position === 'after' ? 'after:opacity-100' : '',
+					isDropPosition(node, 'before') ? 'before:opacity-100' : '',
+					isDropPosition(node, 'after') ? 'after:opacity-100' : '',
 					String(hoveredValue) === String(node.value) && String(selectedValue) !== String(node.value) ? 'bg-secondary text-foreground' : '',
 					'before:pointer-events-none before:absolute before:inset-x-2 before:top-0 before:h-0.5 before:rounded-full before:bg-ring before:opacity-0 after:pointer-events-none after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-full after:bg-ring after:opacity-0',
 				]"
@@ -588,7 +669,7 @@ onBeforeUnmount(cancelDragExpand);
 				@dragover="onDragOver($event, node)"
 				@dragleave="onDragLeave($event, node)"
 				@drop="onDrop($event, node)"
-				@dragend="draggedValue = null; dropTarget = null; cancelDragExpand()"
+				@dragend="onDragEnd"
 				@focus="activeValue = node.value"
 			>
 				<slot

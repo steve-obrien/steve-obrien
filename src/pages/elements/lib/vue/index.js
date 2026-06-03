@@ -97,6 +97,17 @@ export {
 } from '../../forms/field/validators.js';
 export { createFormRegistry, forms, getPathValue, setPathValue } from '../../forms/form/formApi.js';
 export {
+	FORM_NODE_RESERVED_KEYS,
+	defaultComponentByType,
+	formDefinitionToJsonSchema,
+	formNodeToJsonSchema,
+	getFormType,
+	normalizeFormChildren,
+	normalizeFormNode,
+	registerFormType,
+	typeByComponent,
+} from '../../forms/form/formDefinition.js';
+export {
 	builtInSchemaAdapters,
 	isJsonSchema,
 	isZodLikeSchema,

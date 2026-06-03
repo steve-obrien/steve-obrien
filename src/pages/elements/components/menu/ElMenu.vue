@@ -2,6 +2,14 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { provideMenuContext, useParentMenuContext } from './menuContext.js';
 import { positionSubmenuPanel } from './menuPlacement.js';
+import {
+	createSubmenuCloseTimer,
+	focusFirstMenuItem,
+	isLeavingSubmenu,
+	isSubmenuCloseKey,
+	isSubmenuOpenKey,
+	submenuOptions,
+} from './submenu.js';
 
 defineOptions({
 	__doc: {
@@ -47,8 +55,7 @@ const parentMenu = useParentMenuContext();
 const hasItemPropRows = computed(() => Array.isArray(props.items) && props.items.length > 0);
 let parentPopover = null;
 let parentPopoverToggleOff = null;
-let closeTimer = null;
-const submenuCloseDelay = 650;
+const closeTimer = createSubmenuCloseTimer((value, focusBack = false) => closeSubmenu(value, focusBack));
 
 provideMenuContext({
 	select(event) {
@@ -127,17 +134,6 @@ function activeChildItems() {
 	return props.items?.find?.((item) => valueOf(item) === openPath.value)?.children || [];
 }
 
-function submenuOptions() {
-	return {
-		placement: 'right',
-		align: 'start',
-		offset: 4,
-		padding: 8,
-		mode: 'viewport',
-		flip: true,
-	};
-}
-
 function placeSubmenu() {
 	if (!submenuPanel.value || !submenuTrigger.value) return;
 	positionSubmenuPanel(submenuPanel.value, submenuTrigger.value, submenuOptions());
@@ -152,12 +148,12 @@ function openSubmenu(value, trigger = null, focusFirst = false) {
 			submenuTrigger.value = root.value?.querySelector(`[data-value="${CSS.escape(value)}"]`);
 		}
 		placeSubmenu();
-		if (focusFirst) submenuPanel.value?.querySelector('[role="menuitem"]')?.focus();
+		if (focusFirst) focusFirstMenuItem(submenuPanel.value);
 	});
 }
 
 function closeSubmenu(value, focusBack = true) {
-	cancelSubmenuClose();
+	closeTimer.cancel();
 	if (openPath.value === value) openPath.value = '';
 	if (focusBack) root.value?.querySelector(`[data-value="${CSS.escape(value)}"]`)?.focus();
 }
@@ -168,43 +164,35 @@ function closeActiveSubmenu(focusBack = true) {
 }
 
 function cancelSubmenuClose() {
-	if (!closeTimer) return;
-	clearTimeout(closeTimer);
-	closeTimer = null;
+	closeTimer.cancel();
 }
 
 function scheduleCloseSubmenu(value, focusBack = false) {
-	cancelSubmenuClose();
-	closeTimer = setTimeout(() => closeSubmenu(value, focusBack), submenuCloseDelay);
-}
-
-function isSubmenuSafeTarget(target) {
-	if (!(target instanceof Element)) return false;
-	return Boolean(target.closest('[data-el-menu-submenu-panel]'));
+	closeTimer.schedule(value, focusBack);
 }
 
 function maybeCloseSubmenu(event, value) {
-	if (submenuPanel.value?.contains(event.relatedTarget) || isSubmenuSafeTarget(event.relatedTarget)) return;
+	if (!isLeavingSubmenu(event, null, submenuPanel.value)) return;
 	scheduleCloseSubmenu(value, false);
 }
 
 function maybeCloseSubmenuPanel(event) {
 	if (!openPath.value) return;
-	if (submenuTrigger.value?.contains(event.relatedTarget) || isSubmenuSafeTarget(event.relatedTarget)) return;
+	if (!isLeavingSubmenu(event, submenuTrigger.value, null)) return;
 	scheduleCloseSubmenu(openPath.value, false);
 }
 
 function onItemKeydown(event, item) {
 	if (!hasChildren(item)) return;
 	const value = valueOf(item);
-	if (event.key === 'ArrowRight' || event.key === 'Enter' || event.key === ' ') {
+	if (isSubmenuOpenKey(event)) {
 		event.preventDefault();
 		openSubmenu(value, event.currentTarget, true);
 	}
 }
 
 function onSubmenuKeydown(event, item) {
-	if (event.key !== 'ArrowLeft' && event.key !== 'Escape') return;
+	if (!isSubmenuCloseKey(event)) return;
 	event.preventDefault();
 	closeSubmenu(valueOf(item));
 }
@@ -233,7 +221,7 @@ function focusableAttrs(item) {
 }
 
 onBeforeUnmount(() => {
-	cancelSubmenuClose();
+	closeTimer.cancel();
 	parentPopover?.removeEventListener('toggle', parentPopoverToggleOff);
 	closeActiveSubmenu(false);
 });

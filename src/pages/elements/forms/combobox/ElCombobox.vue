@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, useId, watch } from 'vue';
 import ElFieldLoadingSpinner from '../_shared/ElFieldLoadingSpinner.vue';
+import { booleanProp, normalizeOption } from '../_shared/options.js';
 import ElField from '../field/ElField.vue';
 import { fieldProps } from '../field/fieldProps.js';
 import { useField } from '../field/useField.js';
@@ -92,8 +93,7 @@ const inputPaddingClass = computed(() => {
 });
 const loadingPositionClass = computed(() => (isClearable.value && hasSelection.value ? 'right-[4.25rem]' : 'right-9'));
 
-const normalised = (option) => (typeof option === 'string' ? { value: option, label: option } : option);
-const optionList = computed(() => props.options.map(normalised));
+const optionList = computed(() => props.options.map((option) => normalizeOption(option)).filter(Boolean));
 
 function displayForValue(value) {
 	const selected = optionList.value.find((option) => String(option.value ?? option.label) === String(value));
@@ -142,12 +142,6 @@ function clearSelection() {
 	emit('select', { item: null, value: '', label: '', option: null });
 }
 
-function booleanProp(value, defaultValue = false) {
-	if (value === undefined || value === null) return defaultValue;
-	if (value === '' || value === true) return true;
-	if (value === false) return false;
-	return !['false', '0', 'no', 'off'].includes(String(value).toLowerCase());
-}
 </script>
 
 <template>

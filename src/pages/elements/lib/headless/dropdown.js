@@ -1,14 +1,15 @@
 import { ElementBase, defineElement, uid, createRoving } from './base.js';
 import {
-	attachPopoverReflow,
 	bindPopoverToggle,
+	bindFloatingReflow,
 	closePopoverPanel,
 	isPopoverOpen,
-	lockDocumentScroll,
 	openPopoverPanel,
 	positionPopoverPanel,
 	preparePopoverPanel,
-	unlockDocumentScroll,
+	readFloatingPositionOptions,
+	syncFloatingScrollLock,
+	unbindFloatingReflow,
 } from './popover-panel.js';
 
 // Popover API for the menu layer (same as element-popover); dropdown adds
@@ -84,33 +85,19 @@ export class ElementDropdown extends ElementBase {
 	}
 
 	_positionOpts() {
-		return {
-			align: this.getAttribute('align') || 'left',
-			offset: Number(this.getAttribute('offset') || 4),
-			placement: this.getAttribute('placement') || 'bottom',
-			padding: Number(this.getAttribute('collision-padding') || 8),
-			mode: this.getAttribute('floating-mode') || 'viewport',
-		};
+		return readFloatingPositionOptions(this, { offset: 4 });
 	}
 
 	_bindReflow() {
-		this._reflowOff?.();
-		this._reflowOff = attachPopoverReflow(this._menu, this._trigger, this._positionOpts());
+		bindFloatingReflow(this, this._menu, this._trigger, this._positionOpts());
 	}
 
 	_unbindReflow() {
-		this._reflowOff?.();
-		this._reflowOff = null;
+		unbindFloatingReflow(this);
 	}
 
 	_syncScrollLock(next) {
-		if (next && this.hasAttribute('lock-scroll') && !this._scrollLocked) {
-			lockDocumentScroll(this._menu);
-			this._scrollLocked = true;
-		} else if ((!next || !this.hasAttribute('lock-scroll')) && this._scrollLocked) {
-			unlockDocumentScroll(this._menu);
-			this._scrollLocked = false;
-		}
+		syncFloatingScrollLock(this, this._menu, next);
 	}
 
 	connectedCallback() {

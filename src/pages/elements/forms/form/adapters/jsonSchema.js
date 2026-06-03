@@ -8,6 +8,7 @@ import {
 	optionObjects,
 	raw,
 } from './shared.js';
+import { childrenForFieldShape } from './fieldBuilder.js';
 
 function jsonSchemaType(schema) {
 	const plain = raw(schema) || {};
@@ -209,35 +210,32 @@ function jsonSchemaFieldPropsFor(schema, path, required, options) {
 	return props;
 }
 
-function childrenForJsonSchemaObject(schema, scope, options) {
+function jsonSchemaObjectAdapter(schema) {
 	const plain = raw(schema) || {};
 	const required = new Set(Array.isArray(plain.required) ? plain.required : []);
 
-	return Object.entries(plain.properties || {}).map(([key, childSchema]) => {
-		const child = raw(childSchema) || {};
-		const path = scope ? `${scope}.${key}` : key;
-		const nestedObject = jsonSchemaType(child) === 'object' && child.properties;
+	return {
+		idPrefix: 'json-schema',
+		nestedShape(childSchema) {
+			const child = raw(childSchema) || {};
+			return jsonSchemaType(child) === 'object' && child.properties
+				? { shape: child.properties, adapter: jsonSchemaObjectAdapter(child) }
+				: null;
+		},
+		fieldForNested(childSchema, path, key, adapterOptions) {
+			return fieldOptions(adapterOptions, path, key, childSchema);
+		},
+		componentFor: jsonSchemaComponentFor,
+		fieldPropsFor(childSchema, path, key, adapterOptions) {
+			return jsonSchemaFieldPropsFor(childSchema, path, required.has(key), adapterOptions);
+		},
+	};
+}
 
-		if (nestedObject) {
-			const field = fieldOptions(options, path, key, childSchema);
-			return {
-				id: `json-schema-${path.replace(/\W+/g, '-')}`,
-				component: 'ElForm',
-				props: {
-					name: key,
-					class: field.class || 'space-y-3 rounded-xl border border-border bg-secondary/25 p-4',
-					...(field.props || {}),
-				},
-				children: childrenForJsonSchemaObject(child, path, options),
-			};
-		}
+function childrenForJsonSchemaObject(schema, scope, options) {
+	const plain = raw(schema) || {};
 
-		return {
-			id: `json-schema-${path.replace(/\W+/g, '-')}`,
-			component: jsonSchemaComponentFor(childSchema, path, options),
-			props: jsonSchemaFieldPropsFor(childSchema, path, required.has(key), options),
-		};
-	});
+	return childrenForFieldShape(plain.properties || {}, scope, options, jsonSchemaObjectAdapter(plain));
 }
 
 export function jsonSchemaToChildren(schema, options = {}) {

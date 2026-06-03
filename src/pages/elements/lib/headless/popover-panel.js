@@ -114,6 +114,46 @@ export function attachPopoverReflow(panel, trigger, options = {}) {
 	return autoUpdateFloating(trigger, panel, update);
 }
 
+export function readFloatingPositionOptions(host, defaults = {}) {
+	const {
+		align = 'left',
+		offset = 8,
+		placement = 'bottom',
+		padding = 8,
+		mode = 'viewport',
+		flip,
+	} = defaults;
+	const options = {
+		align: host.getAttribute('align') || align,
+		offset: Number(host.getAttribute('offset') || offset),
+		placement: host.getAttribute('placement') || placement,
+		padding: Number(host.getAttribute('collision-padding') || padding),
+		mode: host.getAttribute('floating-mode') || mode,
+	};
+	if (flip !== undefined) options.flip = host.getAttribute('flip') !== 'false';
+	return options;
+}
+
+export function bindFloatingReflow(host, panel, trigger, options = {}) {
+	host._reflowOff?.();
+	host._reflowOff = attachPopoverReflow(panel, trigger, options);
+}
+
+export function unbindFloatingReflow(host) {
+	host._reflowOff?.();
+	host._reflowOff = null;
+}
+
+export function syncFloatingScrollLock(host, panel, next, stateKey = '_scrollLocked') {
+	if (next && host.hasAttribute('lock-scroll') && !host[stateKey]) {
+		lockDocumentScroll(panel);
+		host[stateKey] = true;
+	} else if ((!next || !host.hasAttribute('lock-scroll')) && host[stateKey]) {
+		unlockDocumentScroll(panel);
+		host[stateKey] = false;
+	}
+}
+
 /** Sync host state when the browser opens/closes the popover. Returns an unbind fn. */
 export function bindPopoverToggle(panel, handler) {
 	const onBeforeToggle = (e) => {

@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, useId, watch } from 'vue';
 import ElFieldLoadingSpinner from '../_shared/ElFieldLoadingSpinner.vue';
+import { booleanProp, normalizeOption } from '../_shared/options.js';
 import ElField from '../field/ElField.vue';
 import { fieldProps } from '../field/fieldProps.js';
 import { useField } from '../field/useField.js';
@@ -76,8 +77,7 @@ const currentText = ref('');
 const field = useField(props, emit, { idPrefix: 'el-autocomplete' });
 const isLoading = computed(() => booleanProp(props.loading, false));
 
-const normalised = (option) => (typeof option === 'string' ? { value: option, label: option } : option);
-const items = computed(() => props.options.map(normalised));
+const items = computed(() => props.options.map((option) => normalizeOption(option)).filter(Boolean));
 
 function syncInputFromModel() {
 	currentText.value = field.value.value ?? '';
@@ -113,12 +113,6 @@ onMounted(async () => {
 
 watch(field.value, syncInputFromModel);
 
-function booleanProp(value, defaultValue = false) {
-	if (value === undefined || value === null) return defaultValue;
-	if (value === '' || value === true) return true;
-	if (value === false) return false;
-	return !['false', '0', 'no', 'off'].includes(String(value).toLowerCase());
-}
 </script>
 
 <template>

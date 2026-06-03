@@ -9,6 +9,7 @@ import {
 	parseSource,
 	stampEditorNode,
 } from '../src/pages/experiments/template-editor/lib/editorModel.js';
+import { foldingRangesForTemplateSource } from '../src/pages/experiments/template-editor/lib/templateFolding.js';
 
 let id = 0;
 const stamp = (node) => stampEditorNode(node, () => `test-node-${++id}`);
@@ -117,5 +118,30 @@ assert.deepEqual(literalExpressionValue('["a","b"]'), {
 	matched: true,
 	value: ['a', 'b'],
 });
+
+const foldingSource = `<template>
+	<section
+		class="space-y-3"
+		:data-title="score > 3 ? 'High > low' : 'Low'"
+	>
+		<!-- nested
+		comment -->
+		<img
+			src="/icon.png"
+			alt="Icon > arrow"
+		>
+		<script setup>
+		if (score < 3) console.log(score);
+		</script>
+	</section>
+</template>`;
+const foldingRanges = foldingRangesForTemplateSource(foldingSource);
+const hasFold = (start, end) => foldingRanges.some((range) => range.start === start && range.end === end);
+
+assert.equal(hasFold(1, 16), true);
+assert.equal(hasFold(2, 15), true);
+assert.equal(hasFold(6, 7), true);
+assert.equal(hasFold(8, 11), true);
+assert.equal(hasFold(12, 14), true);
 
 console.log('template editor model checks passed');

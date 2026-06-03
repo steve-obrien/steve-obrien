@@ -64,7 +64,7 @@ export const fieldProps = {
 		type: [Array, Object, String],
 		default: () => ({}),
 		_edit: { 
-			component: 'ElJsonInput', 
+			component: 'ElJsonListInput', 
 			description: 'Validation errors for this field.', 
 			schema: [
 				{

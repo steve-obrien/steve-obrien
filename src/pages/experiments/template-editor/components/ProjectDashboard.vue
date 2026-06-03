@@ -238,53 +238,53 @@
 
 <script setup>
 const nav = [
-  { label: 'Hero', href: '#hero' },
-  { label: 'Builder', href: '#builder' },
-  { label: 'Components', href: '#components' },
-  { label: 'Pricing', href: '#pricing' }
+	{ label: 'Hero', href: '#hero' },
+	{ label: 'Builder', href: '#builder' },
+	{ label: 'Components', href: '#components' },
+	{ label: 'Pricing', href: '#pricing' }
 ];
 
 const structure = [
-  { name: 'Header / Nav', children: 18, depth: 5, score: 62 },
-  { name: 'Hero / Aside', children: 34, depth: 8, score: 82 },
-  { name: 'Builder Form', children: 46, depth: 10, score: 91 },
-  { name: 'Pricing Cards', children: 27, depth: 7, score: 74 }
+	{ name: 'Header / Nav', children: 18, depth: 5, score: 62 },
+	{ name: 'Hero / Aside', children: 34, depth: 8, score: 82 },
+	{ name: 'Builder Form', children: 46, depth: 10, score: 91 },
+	{ name: 'Pricing Cards', children: 27, depth: 7, score: 74 }
 ];
 
 const stats = [
-  { value: '140+', label: 'DOM nodes' },
-  { value: '70+', label: 'Tailwind classes' },
-  { value: '9', label: 'Repeated blocks' },
-  { value: '4', label: 'Deep sections' }
+	{ value: '140+', label: 'DOM nodes' },
+	{ value: '70+', label: 'Tailwind classes' },
+	{ value: '9', label: 'Repeated blocks' },
+	{ value: '4', label: 'Deep sections' }
 ];
 
 const options = [
-  { id: 1, label: 'Show responsive wrappers', description: 'Useful for testing nested layout class editing.', checked: true },
-  { id: 2, label: 'Enable dark surface blocks', description: 'Checks whether theme classes are easy to inspect.', checked: true },
-  { id: 3, label: 'Expose repeated children', description: 'Good for testing batch selection and duplicated structures.', checked: false }
+	{ id: 1, label: 'Show responsive wrappers', description: 'Useful for testing nested layout class editing.', checked: true },
+	{ id: 2, label: 'Enable dark surface blocks', description: 'Checks whether theme classes are easy to inspect.', checked: true },
+	{ id: 3, label: 'Expose repeated children', description: 'Good for testing batch selection and duplicated structures.', checked: false }
 ];
 
 const cards = [
-  { icon: '◫', kicker: 'Layout', title: 'Nested responsive grid', text: 'A card inside an article inside a section inside a main layout container.', tags: ['grid', 'article', 'responsive'] },
-  { icon: '✎', kicker: 'Editing', title: 'Inline text and utility classes', text: 'Change headings, paragraphs, badges, buttons, and class-heavy wrappers.', tags: ['text', 'classes', 'badges'] },
-  { icon: '⚙', kicker: 'Dynamic', title: 'Vue-rendered repeated content', text: 'Lists, tables, pricing cards, and accordions are generated from Vue data.', tags: ['vue', 'v-for', 'state'] }
+	{ icon: '◫', kicker: 'Layout', title: 'Nested responsive grid', text: 'A card inside an article inside a section inside a main layout container.', tags: ['grid', 'article', 'responsive'] },
+	{ icon: '✎', kicker: 'Editing', title: 'Inline text and utility classes', text: 'Change headings, paragraphs, badges, buttons, and class-heavy wrappers.', tags: ['text', 'classes', 'badges'] },
+	{ icon: '⚙', kicker: 'Dynamic', title: 'Vue-rendered repeated content', text: 'Lists, tables, pricing cards, and accordions are generated from Vue data.', tags: ['vue', 'v-for', 'state'] }
 ];
 
 const projects = [
-  { initial: 'A', name: 'Architecture Canvas', type: 'Workshop tool', owner: 'Steve', status: 'Live', badge: 'bg-emerald-300/15 text-emerald-200' },
-  { initial: 'B', name: 'Brief Generator', type: 'AI workflow', owner: 'Product', status: 'Draft', badge: 'bg-amber-300/15 text-amber-200' },
-  { initial: 'C', name: 'Component Inspector', type: 'Editor test', owner: 'Design', status: 'Testing', badge: 'bg-cyan-300/15 text-cyan-200' }
+	{ initial: 'A', name: 'Architecture Canvas', type: 'Workshop tool', owner: 'Steve', status: 'Live', badge: 'bg-emerald-300/15 text-emerald-200' },
+	{ initial: 'B', name: 'Brief Generator', type: 'AI workflow', owner: 'Product', status: 'Draft', badge: 'bg-amber-300/15 text-amber-200' },
+	{ initial: 'C', name: 'Component Inspector', type: 'Editor test', owner: 'Design', status: 'Testing', badge: 'bg-cyan-300/15 text-cyan-200' }
 ];
 
 const faqs = [
-  { q: 'Can I edit deeply nested text?', a: 'Yes. This template deliberately repeats labels, descriptions, buttons, and headings across several nested structures.', open: true },
-  { q: 'Can I test utility class changes?', a: 'Yes. Most elements include multiple Tailwind classes across spacing, colour, typography, layout, borders, and states.', open: false },
-  { q: 'Does this include dynamic content?', a: 'Yes. Vue renders several arrays using v-for, including cards, stats, table rows, FAQs, and pricing plans.', open: false }
+	{ q: 'Can I edit deeply nested text?', a: 'Yes. This template deliberately repeats labels, descriptions, buttons, and headings across several nested structures.', open: true },
+	{ q: 'Can I test utility class changes?', a: 'Yes. Most elements include multiple Tailwind classes across spacing, colour, typography, layout, borders, and states.', open: false },
+	{ q: 'Does this include dynamic content?', a: 'Yes. Vue renders several arrays using v-for, including cards, stats, table rows, FAQs, and pricing plans.', open: false }
 ];
 
 const plans = [
-  { name: 'Starter', description: 'For basic editor tests.', price: '£19', highlight: false, features: ['Static HTML sections', 'Responsive card layout', 'Editable buttons'] },
-  { name: 'Studio', description: 'For serious nested editing.', price: '£49', highlight: true, features: ['Vue-rendered lists', 'Nested forms', 'Complex tables', 'Reusable cards'] },
-  { name: 'Scale', description: 'For large page workflows.', price: '£99', highlight: false, features: ['Multiple layout regions', 'Deep component trees', 'Batch text editing'] }
+	{ name: 'Starter', description: 'For basic editor tests.', price: '£19', highlight: false, features: ['Static HTML sections', 'Responsive card layout', 'Editable buttons'] },
+	{ name: 'Studio', description: 'For serious nested editing.', price: '£49', highlight: true, features: ['Vue-rendered lists', 'Nested forms', 'Complex tables', 'Reusable cards'] },
+	{ name: 'Scale', description: 'For large page workflows.', price: '£99', highlight: false, features: ['Multiple layout regions', 'Deep component trees', 'Batch text editing'] }
 ];
 </script>

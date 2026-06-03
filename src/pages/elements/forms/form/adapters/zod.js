@@ -5,6 +5,7 @@ import {
 	optionObjects,
 	raw,
 } from './shared.js';
+import { childrenForFieldShape } from './fieldBuilder.js';
 
 function defOf(schema) {
 	return raw(schema)?._def || raw(schema)?.def || raw(schema)?._zod?.def || {};
@@ -199,28 +200,16 @@ function fieldPropsFor(schema, path, options) {
 }
 
 function childrenForShape(shape, scope, options) {
-	return Object.entries(shape || {}).map(([key, childSchema]) => {
-		const path = scope ? `${scope}.${key}` : key;
-		const nestedShape = objectShape(childSchema);
-		if (nestedShape) {
-			const field = fieldOptions(options, path, key, childSchema);
-			return {
-				id: `schema-${path.replace(/\W+/g, '-')}`,
-				component: 'ElForm',
-				props: {
-					name: key,
-					class: field.class || 'space-y-3 rounded-xl border border-border bg-secondary/25 p-4',
-					...(field.props || {}),
-				},
-				children: childrenForShape(nestedShape, path, options),
-			};
-		}
-
-		return {
-			id: `schema-${path.replace(/\W+/g, '-')}`,
-			component: componentFor(childSchema, path, options),
-			props: fieldPropsFor(childSchema, path, options),
-		};
+	return childrenForFieldShape(shape, scope, options, {
+		idPrefix: 'schema',
+		nestedShape: objectShape,
+		fieldForNested(childSchema, path, key, adapterOptions) {
+			return fieldOptions(adapterOptions, path, key, childSchema);
+		},
+		componentFor,
+		fieldPropsFor(childSchema, path, _key, adapterOptions) {
+			return fieldPropsFor(childSchema, path, adapterOptions);
+		},
 	});
 }
 

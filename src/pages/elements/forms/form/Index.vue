@@ -186,12 +186,12 @@ const formMethods = [
 	{ name: 'validate()', returns: 'Promise<boolean>', description: 'Runs validators for all fields in this form scope.' },
 	{ name: 'reset(nextValues)', returns: 'void', description: 'Resets values, errors, and field state for this form scope.' },
 	{ name: 'getSubform(name)', returns: 'ElForm API', description: 'Returns a nested subform by local name or path.' },
-	{ name: 'getChildren()', returns: 'Array', description: 'Returns the current dynamic children schema.' },
-	{ name: 'setChildren(children)', returns: 'void', description: 'Replaces the dynamic children schema and emits update:children and schema-change.' },
+	{ name: 'getChildren()', returns: 'Array', description: 'Returns the current normalized children definition.' },
+	{ name: 'setChildren(children)', returns: 'void', description: 'Replaces the dynamic children definition and emits update:children and schema-change.' },
 	{ name: 'addChild(child, index)', returns: 'object', description: 'Inserts a schema node into the dynamic children list.' },
 	{ name: 'removeChild(match)', returns: 'object | null', description: 'Removes a schema node by index, id, or name.' },
 	{ name: 'replaceChild(match, child)', returns: 'object', description: 'Replaces a schema node, or appends it when no match is found.' },
-	{ name: 'addSubform(path, children, options)', returns: 'object', description: 'Adds a nested ElForm schema node and optionally seeds its matching data path.' },
+	{ name: 'addSubform(path, children, options)', returns: 'object', description: 'Adds a nested ElForm definition node and optionally seeds its matching data path.' },
 ];
 </script>
 
@@ -233,7 +233,7 @@ const formMethods = [
 				<Example
 					:source="ServerDefinedFormSrc"
 					filename="ServerDefinedForm.vue"
-					description="The children prop accepts a Studio-style component tree. Slot content renders after those programmatic children, so submit buttons and local actions can still be authored normally."
+					description="The children prop accepts normalized component records or terse typed definitions. Slot content renders after those programmatic children, so submit buttons and local actions can still be authored normally."
 				>
 					<ServerDefinedForm />
 				</Example>
@@ -303,7 +303,7 @@ const formMethods = [
 
 			<DocSection eyebrow="Architecture" title="Schema and form data">
 				<p class="text-sm leading-6 text-muted-foreground">
-					The form schema describes components, validation, and future storage metadata.
+					The form definition describes data types, components, validation, and future storage metadata.
 					The form model stores only the values users enter. Keeping those separate makes
 					it possible to generate forms from database tables, or generate database metadata
 					from a form builder.
@@ -381,7 +381,7 @@ const formMethods = [
 				<Example
 					:source="DynamicInviteesSrc"
 					filename="DynamicInvitees.vue"
-					description="The form schema can change at runtime. This example keeps top-level invitation settings beside a nested invitees array, then adds slot-provided actions after the generated fields."
+					description="The form definition can change at runtime. This example keeps top-level invitation settings beside a nested invitees array, then adds slot-provided actions after the generated fields."
 				>
 					<DynamicInvitees />
 				</Example>

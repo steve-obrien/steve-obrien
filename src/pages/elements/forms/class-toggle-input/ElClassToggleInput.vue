@@ -1,5 +1,7 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue';
+import { booleanProp, normalizeOption, optionKey, searchableText, splitTokens as splitOptionTokens, uniqueValues as uniqueOptionValues } from '../_shared/options.js';
+import { useOptionMenu } from '../_shared/useOptionMenu.js';
 import ElField from '../field/ElField.vue';
 import { fieldProps } from '../field/fieldProps.js';
 import { useField } from '../field/useField.js';
@@ -81,14 +83,13 @@ const emit = defineEmits(['update:modelValue', 'update:inactiveValues', 'query',
 
 const inputEl = ref(null);
 const query = ref('');
-const isOpen = ref(false);
-const activeIndex = ref(0);
 const knownValues = ref([]);
 const field = useField(props, emit, { idPrefix: 'el-class-toggle-input' });
+const classKey = optionKey;
 
 const enabledClasses = computed(() => splitClassNames(field.value.value));
 const inactiveClasses = computed(() => uniqueValues(props.inactiveValues));
-const normalizedOptions = computed(() => props.options.map(normalizeOption).filter(Boolean));
+const normalizedOptions = computed(() => props.options.map((option) => normalizeOption(option, { stringifyValue: true })).filter(Boolean));
 const enabledSet = computed(() => new Set(enabledClasses.value.map(classKey)));
 const inactiveSet = computed(() => new Set(inactiveClasses.value.map(classKey)));
 const knownItems = computed(() => {
@@ -127,6 +128,11 @@ const menuItems = computed(() => {
 	if (canCreateQuery.value) items.push({ value: trimmedQuery.value, label: trimmedQuery.value, description: 'Add custom class', custom: true });
 	return items;
 });
+const optionMenu = useOptionMenu(menuItems, {
+	query,
+	emitQuery: (value) => emit('query', value),
+});
+const { activeIndex, isOpen } = optionMenu;
 const showMenu = computed(() => isOpen.value && !field.disabled.value && !field.readOnly.value && (menuItems.value.length || trimmedQuery.value));
 const hasEmptyState = computed(() => showMenu.value && !menuItems.value.length);
 const inputAttrs = computed(() => {
@@ -138,58 +144,19 @@ watch([enabledClasses, inactiveClasses], ([enabled, inactive]) => {
 	rememberValues([...enabled, ...inactive]);
 }, { immediate: true });
 
-watch(query, (value) => {
-	emit('query', value);
-	activeIndex.value = 0;
-	if (value) isOpen.value = true;
-});
-
-watch(menuItems, () => {
-	if (activeIndex.value >= menuItems.value.length) {
-		activeIndex.value = Math.max(0, menuItems.value.length - 1);
-	}
-});
-
-function normalizeOption(option) {
-	if (option == null) return null;
-	if (typeof option === 'string' || typeof option === 'number') {
-		return { value: String(option), label: String(option) };
-	}
-	const value = option.value ?? option.label;
-	if (value == null || value === '') return null;
-	return {
-		...option,
-		value: String(value),
-		label: option.label ?? String(value),
-	};
-}
-
 function splitClassNames(value) {
-	return uniqueValues(String(value || '').split(/\s+/).map((item) => item.trim()).filter(Boolean));
+	return uniqueValues(splitOptionTokens(value, [' ']));
 }
 
 function joinClassNames(values) {
 	return uniqueValues(values).join(' ');
 }
 
-function classKey(value) {
-	return String(value || '').toLowerCase();
-}
-
 function uniqueValues(values) {
-	const seen = new Set();
-	const out = [];
-	for (const value of values || []) {
-		const className = String(value || '').trim();
-		if (!className || seen.has(classKey(className))) continue;
-		seen.add(classKey(className));
-		out.push(className);
-	}
-	return out;
-}
-
-function searchableText(option) {
-	return [option.label, option.value, option.description, option.group].filter(Boolean).join(' ').toLowerCase();
+	return uniqueOptionValues(values, {
+		transform: (value) => String(value || '').trim(),
+		key: classKey,
+	});
 }
 
 function rememberValues(values) {
@@ -237,9 +204,7 @@ function commitClasses(nextEnabled, nextInactive) {
 }
 
 function resetQuery() {
-	query.value = '';
-	isOpen.value = false;
-	activeIndex.value = 0;
+	optionMenu.reset();
 }
 
 function onFocus(event) {
@@ -248,23 +213,19 @@ function onFocus(event) {
 }
 
 function onBlur(event) {
-	window.setTimeout(() => {
-		isOpen.value = false;
-	}, 120);
+	optionMenu.closeSoon();
 	field.onBlur(event);
 }
 
 function onKeydown(event) {
 	if (event.key === 'ArrowDown') {
 		event.preventDefault();
-		isOpen.value = true;
-		activeIndex.value = wrapIndex(activeIndex.value + 1);
+		optionMenu.move(1);
 		return;
 	}
 	if (event.key === 'ArrowUp') {
 		event.preventDefault();
-		isOpen.value = true;
-		activeIndex.value = wrapIndex(activeIndex.value - 1);
+		optionMenu.move(-1);
 		return;
 	}
 	if (event.key === 'Enter') {
@@ -287,17 +248,6 @@ function onPaste(event) {
 	for (const value of values) addClass(value);
 }
 
-function wrapIndex(index) {
-	if (!menuItems.value.length) return 0;
-	return (index + menuItems.value.length) % menuItems.value.length;
-}
-
-function booleanProp(value, defaultValue = false) {
-	if (value === undefined || value === null) return defaultValue;
-	if (value === '' || value === true) return true;
-	if (value === false) return false;
-	return !['false', '0', 'no', 'off'].includes(String(value).toLowerCase());
-}
 </script>
 
 <template>

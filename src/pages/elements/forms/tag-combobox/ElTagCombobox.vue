@@ -1,6 +1,8 @@
 <script setup>
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import ElFieldLoadingSpinner from '../_shared/ElFieldLoadingSpinner.vue';
+import { booleanProp, normalizeOption, optionKey, searchableText, splitTokens as splitOptionTokens } from '../_shared/options.js';
+import { useOptionMenu } from '../_shared/useOptionMenu.js';
 import ElField from '../field/ElField.vue';
 import { fieldProps } from '../field/fieldProps.js';
 import { useField } from '../field/useField.js';
@@ -99,14 +101,12 @@ const emit = defineEmits(['update:modelValue', 'query', 'add', 'remove', 'select
 
 const inputEl = ref(null);
 const query = ref('');
-const isOpen = ref(false);
-const activeIndex = ref(0);
 const field = useField(props, emit, { idPrefix: 'el-tag-combobox' });
 
 const selectedValues = computed(() => Array.isArray(field.value.value) ? field.value.value : []);
-const normalizedOptions = computed(() => props.options.map(normalizeOption).filter(Boolean));
+const normalizedOptions = computed(() => props.options.map((option) => normalizeOption(option)).filter(Boolean));
 const selectedItems = computed(() => selectedValues.value.map((value) => optionForValue(value) || customOption(value)));
-const selectedValueKeys = computed(() => new Set(selectedValues.value.map(valueKey)));
+const selectedValueKeys = computed(() => new Set(selectedValues.value.map(optionKey)));
 const isClearable = computed(() => booleanProp(props.clearable, false));
 const isCustomAllowed = computed(() => booleanProp(props.allowCustom, false));
 const isFilteringOptions = computed(() => booleanProp(props.filterOptions, true));
@@ -116,17 +116,17 @@ const controlInputAttrs = computed(() => {
 	return attrs;
 });
 const trimmedQuery = computed(() => query.value.trim());
-const exactQueryOption = computed(() => normalizedOptions.value.find((option) => valueKey(option.value) === valueKey(trimmedQuery.value)));
+const exactQueryOption = computed(() => normalizedOptions.value.find((option) => optionKey(option.value) === optionKey(trimmedQuery.value)));
 const canCreateQuery = computed(() => {
 	if (!isCustomAllowed.value || !trimmedQuery.value) return false;
-	if (selectedValueKeys.value.has(valueKey(trimmedQuery.value))) return false;
+	if (selectedValueKeys.value.has(optionKey(trimmedQuery.value))) return false;
 	return !exactQueryOption.value;
 });
 const matchingOptions = computed(() => {
 	const needle = trimmedQuery.value.toLowerCase();
 	return normalizedOptions.value
 		.filter((option) => !option.disabled)
-		.filter((option) => !selectedValueKeys.value.has(valueKey(option.value)))
+		.filter((option) => !selectedValueKeys.value.has(optionKey(option.value)))
 		.filter((option) => {
 			if (!needle || !isFilteringOptions.value) return true;
 			return searchableText(option).includes(needle);
@@ -145,53 +145,21 @@ const menuItems = computed(() => {
 	}
 	return items;
 });
+const optionMenu = useOptionMenu(menuItems, {
+	query,
+	emitQuery: (value) => emit('query', value),
+});
+const { activeIndex, isOpen } = optionMenu;
 const hasEmptyState = computed(() => !isLoading.value && !menuItems.value.length && trimmedQuery.value && !isCustomAllowed.value);
 const showMenu = computed(() => isOpen.value && (menuItems.value.length > 0 || hasEmptyState.value) && !field.disabled.value && !field.readOnly.value);
 const hasTags = computed(() => selectedValues.value.length > 0);
-
-watch(query, (value) => {
-	emit('query', value);
-	if (value) isOpen.value = true;
-	activeIndex.value = 0;
-});
-
-watch(menuItems, () => {
-	if (activeIndex.value >= menuItems.value.length) activeIndex.value = Math.max(0, menuItems.value.length - 1);
-});
-
-function normalizeOption(option) {
-	if (option == null) return null;
-	if (typeof option === 'string' || typeof option === 'number') {
-		return { value: option, label: String(option) };
-	}
-	const value = option.value ?? option.label;
-	if (value == null || value === '') return null;
-	return {
-		...option,
-		value,
-		label: option.label ?? String(value),
-	};
-}
 
 function customOption(value) {
 	return { value, label: String(value), custom: true };
 }
 
-function valueKey(value) {
-	return String(value ?? '').toLowerCase();
-}
-
-function searchableText(option) {
-	return [
-		option.label,
-		option.value,
-		option.description,
-		option.group,
-	].filter(Boolean).join(' ').toLowerCase();
-}
-
 function optionForValue(value) {
-	return normalizedOptions.value.find((option) => valueKey(option.value) === valueKey(value));
+	return normalizedOptions.value.find((option) => optionKey(option.value) === optionKey(value));
 }
 
 function commitItem(entry) {
@@ -202,7 +170,7 @@ function commitItem(entry) {
 function commitValue(value, item = null, custom = false) {
 	if (field.disabled.value || field.readOnly.value) return;
 	if (value == null || value === '') return;
-	if (selectedValueKeys.value.has(valueKey(value))) {
+	if (selectedValueKeys.value.has(optionKey(value))) {
 		resetQuery();
 		return;
 	}
@@ -220,7 +188,7 @@ function commitValue(value, item = null, custom = false) {
 function removeValue(value) {
 	if (field.disabled.value || field.readOnly.value) return;
 	const item = optionForValue(value) || customOption(value);
-	const nextValue = selectedValues.value.filter((candidate) => valueKey(candidate) !== valueKey(value));
+	const nextValue = selectedValues.value.filter((candidate) => optionKey(candidate) !== optionKey(value));
 	field.setValue(nextValue);
 	emit('remove', { item, value, label: item.label });
 	emit('change', nextValue);
@@ -235,9 +203,7 @@ function clearAll() {
 }
 
 function resetQuery() {
-	query.value = '';
-	isOpen.value = false;
-	activeIndex.value = 0;
+	optionMenu.reset();
 }
 
 function onFocus(event) {
@@ -246,23 +212,19 @@ function onFocus(event) {
 }
 
 function onBlur(event) {
-	window.setTimeout(() => {
-		isOpen.value = false;
-	}, 120);
+	optionMenu.closeSoon();
 	field.onBlur(event);
 }
 
 function onKeydown(event) {
 	if (event.key === 'ArrowDown') {
 		event.preventDefault();
-		isOpen.value = true;
-		activeIndex.value = wrapIndex(activeIndex.value + 1);
+		optionMenu.move(1);
 		return;
 	}
 	if (event.key === 'ArrowUp') {
 		event.preventDefault();
-		isOpen.value = true;
-		activeIndex.value = wrapIndex(activeIndex.value - 1);
+		optionMenu.move(-1);
 		return;
 	}
 	if (event.key === 'Enter') {
@@ -294,24 +256,7 @@ function onPaste(event) {
 }
 
 function splitTokens(value) {
-	const separators = props.tokenSeparators.length ? props.tokenSeparators : [' ', ','];
-	const escaped = separators.map((separator) => separator.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('');
-	return value
-		.split(new RegExp(`[${escaped}\\n\\r\\t]+`))
-		.map((token) => token.trim())
-		.filter(Boolean);
-}
-
-function wrapIndex(index) {
-	if (!menuItems.value.length) return 0;
-	return (index + menuItems.value.length) % menuItems.value.length;
-}
-
-function booleanProp(value, defaultValue = false) {
-	if (value === undefined || value === null) return defaultValue;
-	if (value === '' || value === true) return true;
-	if (value === false) return false;
-	return !['false', '0', 'no', 'off'].includes(String(value).toLowerCase());
+	return splitOptionTokens(value, props.tokenSeparators);
 }
 </script>
 
@@ -325,7 +270,7 @@ function booleanProp(value, defaultValue = false) {
 			>
 				<span
 					v-for="entry in selectedItems"
-					:key="valueKey(entry.value)"
+					:key="optionKey(entry.value)"
 					class="inline-flex max-w-full items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground ring-1 ring-border"
 				>
 					<slot name="tag" :item="entry" :value="entry.value" :label="entry.label" :remove="() => removeValue(entry.value)">
@@ -386,7 +331,7 @@ function booleanProp(value, defaultValue = false) {
 					</li>
 				<li
 					v-for="(entry, index) in menuItems"
-					:key="`${entry.custom ? 'custom' : 'option'}-${valueKey(entry.value)}`"
+					:key="`${entry.custom ? 'custom' : 'option'}-${optionKey(entry.value)}`"
 					role="option"
 					:aria-selected="activeIndex === index"
 					class="cursor-pointer rounded-xl px-3 py-2 text-sm transition"

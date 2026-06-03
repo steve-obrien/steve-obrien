@@ -87,6 +87,11 @@ function handleKeydown(event) {
 	handleDelete(event);
 }
 
+function handleDragLeave(event) {
+	if (event.currentTarget.contains(event.relatedTarget)) return;
+	emit('clear-drop-target');
+}
+
 function isEditableTarget(target) {
 	if (!(target instanceof HTMLElement)) return false;
 	return target.closest('input, textarea, select, [contenteditable="true"]');
@@ -141,7 +146,7 @@ defineExpose({ focus });
 			class="min-h-0 flex-1 overflow-auto bg-muted/35 p-6 outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
 			:class="dragging && 'bg-accent/30'"
 			@dragover.prevent
-			@dragleave="emit('clear-drop-target')"
+			@dragleave="handleDragLeave"
 			@drop.prevent="emit('stage-drop')"
 			@keydown="handleKeydown"
 			@pointerdown="handlePointerDown"

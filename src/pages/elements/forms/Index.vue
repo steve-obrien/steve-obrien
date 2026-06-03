@@ -1,8 +1,10 @@
 <script setup>
+import { computed, ref } from 'vue';
 import ElementsLayout from '../_layout/ElementsLayout.vue';
 import CodeBlock from '../_layout/CodeBlock.vue';
 import DocPage from '../_layout/DocPage.vue';
 import DocSection from '../_layout/DocSection.vue';
+import { ElForm, formDefinitionToJsonSchema, normalizeFormNode } from '../lib/vue';
 
 const customInputCode = `<script setup>
 import { ElField, fieldProps, useField } from '@elements/vue';
@@ -139,10 +141,14 @@ const serverValidationCode = `{
 
 const activeFieldCode = `{
 \tname: 'price',
-\tlabel: 'Price',
+\ttype: 'decimal',
 \tcomponent: 'ElMoneyInput',
-\tdataType: 'decimal',
-\tstorageType: 'decimal(10,2)',
+\tlabel: 'Price',
+\tstorage: {
+\t\ttype: 'decimal',
+\t\tprecision: 10,
+\t\tscale: 2,
+\t},
 \ttransformers: ['trim', 'emptyStringToNull', 'currencyToDecimal'],
 \tvalidators: [
 \t\t{ name: 'required' },
@@ -158,6 +164,159 @@ const conditionalFieldCode = `{
 \t\tequals: 'company',
 \t},
 }`;
+
+const definitionShapeCode = `{
+\ttype: 'ElForm',
+\tproperties: {
+\t\tname: {
+\t\t\ttype: 'string',
+\t\t\tlabel: 'Full name',
+\t\t\trequired: true,
+\t\t},
+\t\temail: {
+\t\t\ttype: 'email',
+\t\t\tlabel: 'Email',
+\t\t},
+\t\trole: {
+\t\t\ttype: 'string',
+\t\t\tcomponent: 'ElSelectInput',
+\t\t\tlabel: 'Role',
+\t\t\toptions: ['viewer', 'editor', 'admin'],
+\t\t},
+\t},
+}`;
+
+const equivalentChildrenCode = `{
+\tcomponent: 'ElForm',
+\tchildren: [
+\t\t{
+\t\t\tcomponent: 'ElTextInput',
+\t\t\tprops: {
+\t\t\t\tname: 'name',
+\t\t\t\tlabel: 'Full name',
+\t\t\t\trequired: true,
+\t\t\t},
+\t\t},
+\t\t{
+\t\t\tcomponent: 'ElEmailInput',
+\t\t\tprops: {
+\t\t\t\tname: 'email',
+\t\t\t\tlabel: 'Email',
+\t\t\t},
+\t\t},
+\t\t{
+\t\t\tcomponent: 'ElSelectInput',
+\t\t\tprops: {
+\t\t\t\tname: 'role',
+\t\t\t\tlabel: 'Role',
+\t\t\t\toptions: ['viewer', 'editor', 'admin'],
+\t\t\t},
+\t\t},
+\t],
+}`;
+
+const defaultDefinition = {
+	type: 'ElForm',
+	properties: {
+		teamName: {
+			type: 'string',
+			label: 'Team name',
+			required: true,
+			placeholder: 'Platform team',
+		},
+		ownerEmail: {
+			type: 'email',
+			label: 'Owner email',
+			required: true,
+		},
+		defaultRole: {
+			type: 'string',
+			component: 'ElSelectInput',
+			label: 'Default role',
+			options: [
+				{ label: 'Admin', value: 'admin' },
+				{ label: 'Member', value: 'member' },
+				{ label: 'Viewer', value: 'viewer' },
+			],
+		},
+		active: {
+			type: 'boolean',
+			label: 'Active team',
+		},
+		billing: {
+			type: 'ElForm',
+			label: 'Billing contact',
+			properties: {
+				name: {
+					type: 'string',
+					label: 'Contact name',
+				},
+				email: {
+					type: 'email',
+					label: 'Contact email',
+				},
+			},
+		},
+		invites: {
+			type: 'array',
+			label: 'Invites',
+			items: {
+				type: 'ElForm',
+				properties: {
+					email: {
+						type: 'email',
+						label: 'Invitee email',
+						required: true,
+					},
+					role: {
+						type: 'string',
+						component: 'ElSelectInput',
+						label: 'Role',
+						options: ['admin', 'member', 'viewer'],
+					},
+				},
+			},
+		},
+	},
+};
+
+const definitionSource = ref(JSON.stringify(defaultDefinition, null, '\t'));
+const definitionValue = ref({
+	teamName: 'Elements',
+	ownerEmail: 'lead@example.com',
+	defaultRole: 'member',
+	active: true,
+	billing: {
+		name: 'Ada Lovelace',
+		email: 'ada@example.com',
+	},
+	invites: [
+		{ email: 'grace@example.com', role: 'admin' },
+	],
+});
+
+const parsedDefinition = computed(() => {
+	try {
+		return {
+			value: JSON.parse(definitionSource.value),
+			error: '',
+		};
+	} catch (error) {
+		return {
+			value: null,
+			error: error?.message || 'Invalid JSON',
+		};
+	}
+});
+const normalizedDefinition = computed(() => (
+	parsedDefinition.value.value ? normalizeFormNode(parsedDefinition.value.value) : null
+));
+const normalizedDefinitionCode = computed(() => (
+	normalizedDefinition.value ? JSON.stringify(normalizedDefinition.value, null, '\t') : ''
+));
+const jsonSchemaCodeOutput = computed(() => (
+	normalizedDefinition.value ? JSON.stringify(formDefinitionToJsonSchema(normalizedDefinition.value), null, '\t') : ''
+));
 
 const principles = [
 	{
@@ -177,19 +336,19 @@ const principles = [
 		description: 'ElForm owns values, field state, errors, validation, nested path scopes, and programmatic form methods, not presentation.',
 	},
 	{
-		name: 'Schema stays separate from data',
-		description: 'Children, Zod-like schema, and future storage metadata describe the form. v-model stores only submitted values.',
+		name: 'Definitions stay separate from data',
+		description: 'Terse definitions, normalized children, JSON Schema, and future storage metadata describe the form. v-model stores only submitted values.',
 	},
 ];
 
 const statuses = [
 	{
 		name: 'Implemented',
-		description: 'Shared field props, useField, ElField-owned field layouts, ElForm provider state, nested fieldset forms, dynamic children, Zod-like schema generation, and the named forms registry.',
+		description: 'Shared field props, useField, ElField-owned field layouts, ElForm provider state, nested fieldset forms, dynamic children, terse form normalization, JSON Schema/Zod adapters, and the named forms registry.',
 	},
 	{
 		name: 'Direction',
-		description: 'An active-field framework where fields can describe UI state, validation, value transforms, backend data type, and the journey from user input to storage and display.',
+		description: 'An active-field framework where types resolve to renderers, fields describe validation and value transforms, and schemas can travel from UI to storage and back.',
 	},
 	{
 		name: 'Future work',
@@ -298,7 +457,7 @@ const implementedCoverage = [
 const openQuestions = [
 	'Should server validators be represented as validators, transformers, or separate field actions?',
 	'Should field visibility remove data from the form result, or only hide the input?',
-	'Should active-field data types live in component docs, Studio metadata, field props, or a future server schema?',
+	'How much component metadata should live in the type registry, and how much should stay beside props through _edit?',
 	'How should conditional field expressions work across Studio, AI-generated schemas, and server-provided forms?',
 	'Should native form submission serialize hidden JSON/list fields as strings, or remain a secondary fallback?',
 ];
@@ -319,7 +478,7 @@ const componentLinks = [
 	{
 		to: '/elements/forms/schema',
 		title: 'Form schema',
-		body: 'How rendered definitions relate to values, storage metadata, and generation.',
+		body: 'How typed definitions relate to JSON Schema, values, storage metadata, and generation.',
 		tag: 'Schema + data',
 	},
 ];
@@ -380,6 +539,96 @@ const componentLinks = [
 							</tr>
 						</tbody>
 					</table>
+				</div>
+			</DocSection>
+
+			<DocSection eyebrow="Definitions" title="Author forms as typed data shapes">
+				<div class="space-y-6">
+					<div class="space-y-4 text-sm leading-6 text-muted-foreground">
+						<p>
+							A form definition can be authored like a data schema. The root
+							<code class="font-mono text-foreground">type</code>
+							can be a data type such as
+							<code class="font-mono text-foreground">object</code>
+							or a component type such as
+							<code class="font-mono text-foreground">ElForm</code>.
+							Keyed
+							<code class="font-mono text-foreground">properties</code>
+							or
+							<code class="font-mono text-foreground">children</code>
+							become child fields, and each key becomes the field name unless the
+							field explicitly sets another name.
+						</p>
+						<p>
+							The normalizer turns that authoring shape into the canonical render shape:
+							every node has a semantic
+							<code class="font-mono text-foreground">type</code>,
+							a renderer
+							<code class="font-mono text-foreground">component</code>,
+							and component props. Top-level non-structural keys are passed as props;
+							explicit
+							<code class="font-mono text-foreground">props</code>
+							win when both are present.
+						</p>
+					</div>
+
+					<div class="grid gap-4 lg:grid-cols-2">
+						<div class="space-y-3">
+							<p class="text-sm font-medium text-foreground">Terse authoring shape</p>
+							<CodeBlock lang="js" :code="definitionShapeCode" />
+						</div>
+						<div class="space-y-3">
+							<p class="text-sm font-medium text-foreground">Equivalent render shape</p>
+							<CodeBlock lang="js" :code="equivalentChildrenCode" />
+						</div>
+					</div>
+
+					<div class="grid gap-4 xl:grid-cols-2">
+						<div class="space-y-3">
+							<div>
+								<p class="text-sm font-medium text-foreground">Editable definition</p>
+								<p class="mt-1 text-sm leading-6 text-muted-foreground">
+									Edit the terse JSON and compare the normalized render definition with the JSON Schema projection.
+								</p>
+							</div>
+							<textarea
+								v-model="definitionSource"
+								spellcheck="false"
+								class="min-h-96 w-full resize-y rounded-xl border border-input bg-background p-4 font-mono text-xs leading-5 text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
+							/>
+							<p v-if="parsedDefinition.error" class="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+								{{ parsedDefinition.error }}
+							</p>
+						</div>
+
+						<div class="space-y-4">
+							<div>
+								<p class="text-sm font-medium text-foreground">Live form</p>
+								<p class="mt-1 text-sm leading-6 text-muted-foreground">
+									The renderer receives normalized children, while the model remains plain form data.
+								</p>
+							</div>
+							<div class="rounded-xl border border-border bg-secondary/20 p-4">
+								<ElForm
+									v-if="normalizedDefinition"
+									v-model="definitionValue"
+									name="definitionDemo"
+									:children="normalizedDefinition.children || []"
+									class="space-y-4"
+								/>
+							</div>
+						</div>
+
+						<div class="space-y-3">
+							<p class="text-sm font-medium text-foreground">Normalized form definition</p>
+							<CodeBlock lang="json" :code="normalizedDefinitionCode" />
+						</div>
+
+						<div class="space-y-3">
+							<p class="text-sm font-medium text-foreground">JSON Schema projection</p>
+							<CodeBlock lang="json" :code="jsonSchemaCodeOutput" />
+						</div>
+					</div>
 				</div>
 			</DocSection>
 

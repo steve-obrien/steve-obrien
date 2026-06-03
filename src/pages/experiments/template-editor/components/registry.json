@@ -2,20 +2,7 @@
 	"ProjectDashboard": {
 		"role": "page",
 		"insertable": false,
-		"props": [
-			{
-				"name": "project",
-				"type": "Object"
-			},
-			{
-				"name": "metrics",
-				"type": "Array"
-			},
-			{
-				"name": "tasks",
-				"type": "Array"
-			}
-		]
+		"props": []
 	},
 	"Cta1": {
 		"role": "component",
@@ -36,5 +23,35 @@
 		"role": "page",
 		"insertable": false,
 		"props": []
+	},
+	"Pricing": {
+		"role": "component",
+		"insertable": true,
+		"props": [
+			{
+				"name": "plans",
+				"type": "Array"
+			},
+			{
+				"name": "default",
+				"type": "() => {"
+			},
+			{
+				"name": "return [",
+				"type": "String"
+			},
+			{
+				"name": "{name",
+				"type": "\"basic\"}"
+			},
+			{
+				"name": "]",
+				"type": "String"
+			},
+			{
+				"name": "}",
+				"type": "String"
+			}
+		]
 	}
 }
