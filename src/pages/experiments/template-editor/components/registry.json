@@ -7,7 +7,14 @@
 	"Cta1": {
 		"role": "component",
 		"insertable": true,
-		"props": []
+		"props": [
+			{
+				"name": "title",
+				"type": "String",
+				"default": "Title",
+				"defaultSource": "'Title'"
+			}
+		]
 	},
 	"NewPage": {
 		"role": "page",

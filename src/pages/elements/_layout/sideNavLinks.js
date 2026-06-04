@@ -10,8 +10,7 @@ const sidebarComponentSectionOrder = ['components', 'forms', 'visual'];
 
 const staticIconPaths = {
 	'AI builders': 'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Zm6 9 .9 2.6 2.6.9-2.6.9L18 20l-.9-2.6-2.6-.9 2.6-.9L18 12Z',
-	Theming: 'M12 3v18M5 8h14M7 16h10',
-	'Theme lab': 'M5 18c4-7 10-11 14-12-1 4-5 10-12 14l-2-2Zm4-1 8-8M6 13l5 5',
+	Theming: 'M5 18c4-7 10-11 14-12-1 4-5 10-12 14l-2-2Zm4-1 8-8M6 13l5 5',
 	'Component spec': 'M6 5h12v14H6V5Zm3 4h6M9 13h6M9 17h3',
 	'Form schema': 'M6 4h8l4 4v12H6V4Zm8 0v5h5M9 12h6M9 16h8',
 	Studio: 'M4 5h16v14H4V5Zm4 4h8M8 13h5',
@@ -70,9 +69,8 @@ export const sideNavLinks = [
 		items: [
 			{ to: '/elements/ai', label: 'AI builders', tag: 'New' },
 			{ to: '/elements/theming', label: 'Theming', tag: 'New' },
-			{ to: '/elements/theming-lab', label: 'Theme lab', tag: 'New' },
-			{ to: '/elements/component-spec', label: 'Component spec', tag: 'New' },
-			{ to: '/elements/forms/schema', label: 'Form schema', tag: 'New' },
+			{ to: '/elements/component-spec', label: 'Component spec' },
+			{ to: '/elements/forms/schema', label: 'Form schema' },
 			{ to: '/elements/components/studio', label: 'Studio', tag: 'Pro' },
 			{ to: '/elements/components/playground', label: 'Playground' },
 		],

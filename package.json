@@ -8,6 +8,8 @@
 		"build": "vite-ssg build && node scripts/generate-seo-files.mjs",
 		"check:form-definition": "node scripts/check-form-definition.mjs",
 		"check:template-editor": "node scripts/check-template-editor-model.mjs",
+		"check:theme-ai": "node scripts/check-theme-ai-endpoint.mjs",
+		"theme-ai-server": "node scripts/theme-ai-server.mjs",
 		"preview": "vite preview"
 	},
 	"repository": {

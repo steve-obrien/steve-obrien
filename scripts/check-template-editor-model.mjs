@@ -108,6 +108,54 @@ assert.deepEqual(evaluatePreviewExpression("plan.highlight ? 'active' : 'idle'",
 	value: 'idle',
 });
 
+const propDefaultSource = `<template>
+	<h2>{{ title }}</h2>
+</template>
+
+<script setup>
+defineProps({
+	title: {
+		type: 'String',
+		default: 'Boost your productivity. Start using our app today.',
+	},
+	count: {
+		type: Number,
+		default: 3,
+	},
+	options: {
+		type: Array,
+		default: () => [{ label: 'One' }],
+	},
+});
+</script>`;
+const parsedPropDefaults = parseSource(propDefaultSource, { componentName: 'Cta1', stamp });
+assert.deepEqual(parsedPropDefaults.props.map(({ name, type, default: defaultValue }) => ({ name, type, default: defaultValue })), [
+	{ name: 'title', type: 'String', default: 'Boost your productivity. Start using our app today.' },
+	{ name: 'count', type: 'Number', default: 3 },
+	{ name: 'options', type: 'Array', default: [{ label: 'One' }] },
+]);
+assert.equal(parsedPropDefaults.scriptData.title, 'Boost your productivity. Start using our app today.');
+const rebuiltPropDefaults = buildSource(parsedPropDefaults.tree, { props: parsedPropDefaults.props }).rows.map((row) => row.text).join('\n');
+assert.match(rebuiltPropDefaults, /title: \{/);
+assert.match(rebuiltPropDefaults, /default: 'Boost your productivity\. Start using our app today\.'/);
+assert.match(rebuiltPropDefaults, /default: \(\) => \[\{ label: 'One' \}\]/);
+
+const namedSlotSource = `<template>
+	<Cta1>
+		<template #header>
+			<div>Here is the header</div>
+		</template>
+		<span>Default action</span>
+	</Cta1>
+</template>`;
+const parsedNamedSlot = parseSource(namedSlotSource, { componentName: 'NamedSlotParent', stamp });
+const namedSlotComponent = parsedNamedSlot.tree.children[0];
+assert.equal(namedSlotComponent.tag, 'Cta1');
+assert.equal(namedSlotComponent.children[0].tag, 'template');
+assert.equal(namedSlotComponent.children[0].props['v-slot:header'], '');
+const rebuiltNamedSlot = buildSource(parsedNamedSlot.tree, { props: [] }).rows.map((row) => row.text).join('\n');
+assert.match(rebuiltNamedSlot, /<template v-slot:header>/);
+
 assert.deepEqual(parseRepeatSource('item of items'), {
 	source: 'item of items',
 	item: 'item',

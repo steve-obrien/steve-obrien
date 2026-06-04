@@ -1,4 +1,5 @@
 <script setup>
+import { computed, useSlots } from 'vue';
 import CodePanel from './CodePanel.vue';
 
 // Pair a live demo with its source code — guaranteed in sync because both come
@@ -11,7 +12,7 @@ import CodePanel from './CodePanel.vue';
 //
 // Editing the example file updates both panels at once. The user can copy a
 // snippet that matches exactly what they see rendered.
-defineProps({
+const props = defineProps({
 	source: { type: String, default: '' },
 	lang: { type: String, default: 'vue' },
 	title: { type: String, default: '' },
@@ -20,7 +21,11 @@ defineProps({
 	defaultOpen: { type: Boolean, default: false },
 	codeFirst: { type: Boolean, default: false },
 	previewLines: { type: Number, default: 5 },
+	propertiesTitle: { type: String, default: 'Properties' },
 });
+
+const slots = useSlots();
+const hasProperties = computed(() => Boolean(slots.properties));
 </script>
 
 <template>
@@ -39,8 +44,26 @@ defineProps({
 			:preview-lines="previewLines"
 		/>
 
-		<div class="flex min-h-[200px] items-center justify-center p-10">
-			<slot />
+		<div
+			:class="hasProperties
+				? 'grid min-h-[200px] grid-cols-1 items-stretch bg-background md:grid-cols-[minmax(0,1fr)_18rem]'
+				: 'block'"
+		>
+			<div class="flex min-h-[200px] items-center justify-center overflow-auto p-10">
+				<slot />
+			</div>
+
+			<aside
+				v-if="hasProperties"
+				class="min-h-0 border-t border-border bg-card text-card-foreground md:border-l md:border-t-0"
+			>
+				<div class="sticky top-0 z-10 border-b border-border bg-card px-4 py-3">
+					<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{{ props.propertiesTitle }}</p>
+				</div>
+				<div class="max-h-72 space-y-4 overflow-y-auto p-4 md:max-h-[32rem]">
+					<slot name="properties" />
+				</div>
+			</aside>
 		</div>
 
 		<CodePanel

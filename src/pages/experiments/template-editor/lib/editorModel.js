@@ -155,7 +155,7 @@ export function buildSource(root, component) {
 		push('');
 		push('<script setup>');
 		push('const props = defineProps({');
-		component.props.forEach((prop) => push(`\t${prop.name}: ${prop.type || 'String'},`));
+		component.props.forEach(emitComponentProp);
 		push('});');
 		push('</' + 'script>');
 	}
@@ -167,6 +167,19 @@ export function buildSource(root, component) {
 			id,
 		});
 		if (id && !lineMap[id]) lineMap[id] = rows.length;
+	}
+
+	function emitComponentProp(prop) {
+		if (!prop?.name) return;
+		if (!hasPropDefault(prop)) {
+			push(`${propKeySource(prop.name)}: ${propTypeSource(prop)},`, null, 1);
+			return;
+		}
+
+		push(`${propKeySource(prop.name)}: {`, null, 1);
+		push(`type: ${propTypeSource(prop)},`, null, 2);
+		push(`default: ${propDefaultSource(prop)},`, null, 2);
+		push('},', null, 1);
 	}
 
 	function emitNode(node, depth) {
@@ -237,11 +250,15 @@ export function parseSource(value, { componentName = 'Component', stamp } = {}) 
 		sourceEndLine: templateStartLine + ast.loc.end.line - 1,
 		children: ast.children.map((node) => nodeFromAst(node, templateStartLine, stampNode)).filter(Boolean),
 	});
+	const props = parseProps(value);
 
 	return {
 		tree,
-		props: parseProps(value),
-		scriptData: parseScriptSetupData(value),
+		props,
+		scriptData: {
+			...propDefaultsForScriptData(props),
+			...parseScriptSetupData(value),
+		},
 	};
 }
 
@@ -296,17 +313,218 @@ function lineNumberAt(value, offset) {
 }
 
 export function parseProps(value) {
-	const match = value.match(/defineProps\(\{\s*([\s\S]*?)\s*\}\)/);
-	if (!match) return [];
-	return match[1]
-		.split('\n')
-		.map((line) => line.trim().replace(/,$/, ''))
-		.filter(Boolean)
-		.map((line) => {
-			const [name, type] = line.split(':').map((part) => part.trim());
-			return name ? { name, type: type || 'String' } : null;
-		})
+	const source = definePropsObjectSource(value);
+	if (!source) return [];
+	return splitTopLevelObjectEntries(source)
+		.map(propFromDefinePropsEntry)
 		.filter(Boolean);
+}
+
+function definePropsObjectSource(value) {
+	const parsed = parseSfc(String(value || ''), { filename: 'TemplateEditor.vue' });
+	const content = parsed.descriptor.scriptSetup?.content || String(value || '');
+	const match = /\bdefineProps\b/.exec(content);
+	if (!match) return '';
+	const paren = content.indexOf('(', match.index + match[0].length);
+	if (paren < 0) return '';
+	const objectStart = skipWhitespace(content, paren + 1);
+	if (content[objectStart] !== '{') return '';
+	const objectEnd = readLiteralExpressionEnd(content, objectStart);
+	if (objectEnd <= objectStart) return '';
+	return content.slice(objectStart + 1, objectEnd - 1);
+}
+
+function propFromDefinePropsEntry(entry) {
+	const source = entry.trim();
+	if (!source || source.startsWith('...')) return null;
+	const colon = topLevelColonIndex(source);
+	if (colon < 0) return null;
+
+	const name = propNameFromSource(source.slice(0, colon));
+	if (!name) return null;
+
+	const definition = source.slice(colon + 1).trim();
+	if (!definition) return { name, type: 'String' };
+	if (definition.startsWith('{')) return propFromOptionsObject(name, definition);
+	return {
+		name,
+		type: normalizePropType(definition),
+	};
+}
+
+function propFromOptionsObject(name, definition) {
+	const end = readLiteralExpressionEnd(definition, 0);
+	const body = end > 0 ? definition.slice(1, end - 1) : definition.replace(/^\{|\}$/g, '');
+	const options = Object.fromEntries(splitTopLevelObjectEntries(body)
+		.map((entry) => {
+			const colon = topLevelColonIndex(entry);
+			if (colon < 0) return null;
+			const key = propNameFromSource(entry.slice(0, colon));
+			return key ? [key, entry.slice(colon + 1).trim()] : null;
+		})
+		.filter(Boolean));
+	const prop = {
+		name,
+		type: normalizePropType(options.type || 'String'),
+	};
+	const propDefault = previewDefaultFromSource(options.default);
+	if (propDefault.matched) {
+		prop.default = propDefault.value;
+		prop.defaultSource = options.default.trim();
+	}
+	return prop;
+}
+
+function propDefaultsForScriptData(props) {
+	const data = {};
+	for (const prop of props || []) {
+		if (hasPropDefault(prop)) data[prop.name] = prop.default;
+	}
+	return data;
+}
+
+function splitTopLevelObjectEntries(source) {
+	const entries = [];
+	let start = 0;
+	const stack = [];
+	let quote = '';
+	let comment = '';
+
+	for (let index = 0; index < source.length; index += 1) {
+		const char = source[index];
+		const next = source[index + 1];
+		const previous = source[index - 1];
+
+		if (comment === 'line') {
+			if (char === '\n') comment = '';
+			continue;
+		}
+		if (comment === 'block') {
+			if (char === '*' && next === '/') {
+				comment = '';
+				index += 1;
+			}
+			continue;
+		}
+		if (quote) {
+			if (char === quote && previous !== '\\') quote = '';
+			continue;
+		}
+		if (char === '/' && next === '/') {
+			comment = 'line';
+			index += 1;
+			continue;
+		}
+		if (char === '/' && next === '*') {
+			comment = 'block';
+			index += 1;
+			continue;
+		}
+		if (char === '\'' || char === '"' || char === '`') {
+			quote = char;
+			continue;
+		}
+		if (char === '{' || char === '[' || char === '(') {
+			stack.push(char);
+			continue;
+		}
+		if (char === '}' || char === ']' || char === ')') {
+			if (matchesBracket(stack.at(-1), char)) stack.pop();
+			continue;
+		}
+		if (char === ',' && !stack.length) {
+			entries.push(source.slice(start, index));
+			start = index + 1;
+		}
+	}
+
+	entries.push(source.slice(start));
+	return entries.map((entry) => entry.trim()).filter(Boolean);
+}
+
+function topLevelColonIndex(source) {
+	const stack = [];
+	let quote = '';
+	for (let index = 0; index < source.length; index += 1) {
+		const char = source[index];
+		const previous = source[index - 1];
+		if (quote) {
+			if (char === quote && previous !== '\\') quote = '';
+			continue;
+		}
+		if (char === '\'' || char === '"' || char === '`') {
+			quote = char;
+			continue;
+		}
+		if (char === '{' || char === '[' || char === '(') {
+			stack.push(char);
+			continue;
+		}
+		if (char === '}' || char === ']' || char === ')') {
+			if (matchesBracket(stack.at(-1), char)) stack.pop();
+			continue;
+		}
+		if (char === ':' && !stack.length) return index;
+	}
+	return -1;
+}
+
+function propNameFromSource(source) {
+	const name = source.trim().replace(/^['"`]|['"`]$/g, '');
+	return /^[A-Za-z_$][\w$-]*$/.test(name) ? name : '';
+}
+
+function normalizePropType(source) {
+	const text = String(source || '').trim().replace(/^['"`]|['"`]$/g, '');
+	const match = text.match(/\b(String|Number|Boolean|Array|Object|Date|Function)\b/);
+	return match?.[1] || text || 'String';
+}
+
+function hasPropDefault(prop) {
+	return prop && Object.prototype.hasOwnProperty.call(prop, 'default');
+}
+
+function propKeySource(name) {
+	return /^[A-Za-z_$][\w$]*$/.test(name) ? name : JSON.stringify(name);
+}
+
+function propTypeSource(prop) {
+	return normalizePropType(prop?.type || prop?.typeSource || 'String');
+}
+
+function propDefaultSource(prop) {
+	if (prop?.defaultSource) return prop.defaultSource;
+	const source = literalSourceForValue(prop?.default);
+	if ((prop?.type === 'Array' || prop?.type === 'Object') && !/^\s*(?:function\b|\(?[^=]*\)?\s*=>)/.test(source)) {
+		return `() => ${source}`;
+	}
+	return source;
+}
+
+function previewDefaultFromSource(source) {
+	if (!source) return { matched: false, value: null };
+	return safeJsLiteralValue(defaultExpressionForEvaluation(source));
+}
+
+function defaultExpressionForEvaluation(source) {
+	const trimmed = String(source || '').trim();
+	const arrow = trimmed.match(/^(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>\s*([\s\S]+)$/);
+	if (arrow) return defaultExpressionFromFunctionBody(arrow[1]);
+	const fn = trimmed.match(/^function\b[\s\S]*?\{\s*return\s+([\s\S]*?)\s*;?\s*\}$/);
+	if (fn) return fn[1].trim();
+	return trimmed;
+}
+
+function defaultExpressionFromFunctionBody(body) {
+	const trimmed = body.trim();
+	const returned = trimmed.match(/^\{\s*return\s+([\s\S]*?)\s*;?\s*\}$/);
+	return returned ? returned[1].trim() : trimmed;
+}
+
+function literalSourceForValue(value) {
+	if (typeof value === 'string') return `'${value.replace(/\\/g, '\\\\').replace(/'/g, '\\\'')}'`;
+	if (value === undefined) return 'undefined';
+	return JSON.stringify(value);
 }
 
 export function parseScriptSetupData(value) {
@@ -617,10 +835,17 @@ function attrsForNode(node) {
 	const props = node.props || {};
 	const repeat = node.repeat?.source ? ` v-for="${encodeAttribute(node.repeat.source)}"` : '';
 	const attrs = Object.entries(props)
-		.filter(([, value]) => value !== '' && value != null)
-		.map(([key, value]) => ` ${key}="${encodeAttribute(value)}"`)
+		.map(([key, value]) => attrSource(key, value))
+		.filter(Boolean)
 		.join('');
 	return `${repeat}${attrs}`;
+}
+
+function attrSource(key, value) {
+	if (value == null) return '';
+	if (key.startsWith('v-slot') && value === '') return ` ${key}`;
+	if (value === '') return '';
+	return ` ${key}="${encodeAttribute(value)}"`;
 }
 
 function bindingExpression(node) {

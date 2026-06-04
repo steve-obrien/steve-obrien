@@ -1,6 +1,6 @@
 <script setup>
-import { cloneVNode, computed, defineComponent, h, isVNode, nextTick, onBeforeUnmount, ref, watch } from 'vue';
-import { ElClassToggleInput, ElCodeInput, ElSplitterPanel, ElTreeView } from '../../lib/vue';
+import { cloneVNode, computed, defineComponent, h, isVNode, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { ElClassToggleInput, ElCodeInput, ElSplitterPanel, ElTabs, ElTreeView } from '../../lib/vue';
 import { tailwindClassIndex } from '../../forms/_shared/serverLookup.js';
 import { componentRegistry as elementsComponentRegistry } from '../inspector/componentRegistry.js';
 import InspectorField from '../inspector/InspectorField.vue';
@@ -28,7 +28,8 @@ const props = defineProps({
 	defaultCodeOpen: { type: Boolean, default: true },
 	previewClass: { type: String, default: '' },
 	codeHeight: { type: Number, default: 260 },
-	wide: { type: Boolean, default: true },
+	wide: { type: Boolean, default: false },
+	expandable: { type: Boolean, default: true },
 });
 
 const codeEditorEl = ref(null);
@@ -41,6 +42,9 @@ const selectedId = ref('');
 const hoveredId = ref('');
 const selectedCodeLineOverride = ref(0);
 const isCodeOpen = ref(props.defaultCodeOpen);
+const isExpanded = ref(false);
+const isCompactStacked = ref(false);
+const compactPanelTab = ref('properties');
 const newAttr = ref({ name: '', value: '' });
 const rootData = ref(cloneData(props.rootData));
 const rootDataText = ref(JSON.stringify(rootData.value, null, '\t'));
@@ -50,6 +54,8 @@ const layerOpenValues = ref([]);
 let nextNodeId = 0;
 let suppressCodeRevealOnce = false;
 let tailwindRefreshTimer = null;
+let previousBodyOverflow = '';
+let bodyScrollLocked = false;
 
 const flatNodes = computed(() => tree.value ? flatten(tree.value) : []);
 const selectedNode = computed(() => findNode(tree.value, selectedId.value) || tree.value);
@@ -71,9 +77,20 @@ const selectedResolvedValue = computed(() => selectedNode.value?.binding ? resol
 const layerTreeItems = computed(() => tree.value ? [layerItemFromNode(tree.value)] : []);
 const selectedLayerValue = computed(() => selectedId.value || '');
 const hoveredLayerValue = computed(() => hoveredId.value || '');
-const codePanelStyle = computed(() => ({
-	height: isCodeOpen.value ? `${props.codeHeight}px` : '0px',
-}));
+const previewPaneSize = computed(() => isExpanded.value ? 360 : Math.max(180, props.codeHeight - 40));
+const compactSplitterOrientation = computed(() => isCompactStacked.value ? 'vertical' : 'horizontal');
+const compactPreviewSize = computed(() => isCompactStacked.value ? 240 : 500);
+const compactMinStart = computed(() => isCompactStacked.value ? 160 : 260);
+const compactMinMain = computed(() => isCompactStacked.value ? 180 : 280);
+const compactPanelTabs = computed(() => [
+	{ key: 'properties', label: 'Properties' },
+	{ key: 'layers', label: 'Layers' },
+	...(isCodeOpen.value ? [{ key: 'code', label: 'Code' }] : []),
+]);
+const shellClass = computed(() => [
+	props.wide && !isExpanded.value && 'template-example-editor-wide',
+	isExpanded.value ? 'template-example-editor-expanded' : 'template-example-editor-compact',
+]);
 
 const TemplateExampleNode = defineComponent({
 	name: 'TemplateExampleNode',
@@ -132,8 +149,34 @@ watch(selectedId, () => {
 
 watch([codeText, sourceText], queueTailwindRefresh);
 
+watch(compactPanelTab, () => {
+	nextTick(layoutEditor);
+});
+
+watch(isCodeOpen, (open) => {
+	if (!open && compactPanelTab.value === 'code') compactPanelTab.value = 'properties';
+});
+
+watch(isExpanded, (expanded) => {
+	syncBodyScrollLock(expanded);
+	nextTick(layoutEditor);
+});
+
+onMounted(() => {
+	if (typeof window !== 'undefined') {
+		window.addEventListener('keydown', onKeydown);
+		window.addEventListener('resize', syncCompactBreakpoint);
+		syncCompactBreakpoint();
+	}
+});
+
 onBeforeUnmount(() => {
 	if (typeof window !== 'undefined') window.clearTimeout(tailwindRefreshTimer);
+	if (typeof window !== 'undefined') {
+		window.removeEventListener('keydown', onKeydown);
+		window.removeEventListener('resize', syncCompactBreakpoint);
+	}
+	syncBodyScrollLock(false);
 });
 
 function resetFromSource(value = props.source) {
@@ -195,6 +238,10 @@ function selectNode(id) {
 	selectedId.value = id;
 }
 
+function selectFromStage(id) {
+	selectNode(id);
+}
+
 function selectFromLayer(event) {
 	const id = event?.item?.nodeId || event?.value || '';
 	if (!id) return;
@@ -242,12 +289,54 @@ function applyCodeLineHighlight() {
 	codeEditorEl.value?.revealLine(selectedSourceLine.value);
 }
 
-function foldCode() {
-	codeEditorEl.value?.foldAll();
+function toggleCodeOpen() {
+	isCodeOpen.value = !isCodeOpen.value;
+	if (isCodeOpen.value && !isExpanded.value) compactPanelTab.value = 'code';
+	if (!isCodeOpen.value && compactPanelTab.value === 'code') compactPanelTab.value = 'properties';
+	nextTick(layoutEditor);
 }
 
-function unfoldCode() {
-	codeEditorEl.value?.unfoldAll();
+function expandEditor() {
+	if (!props.expandable || isExpanded.value) return;
+	isExpanded.value = true;
+}
+
+function collapseEditor() {
+	if (!isExpanded.value) return;
+	isExpanded.value = false;
+}
+
+function layoutEditor() {
+	codeEditorEl.value?.layout?.();
+	applyCodeLineHighlight();
+}
+
+function onKeydown(event) {
+	if (event.key !== 'Escape' || !isExpanded.value) return;
+	event.preventDefault();
+	collapseEditor();
+}
+
+function syncBodyScrollLock(locked) {
+	if (typeof document === 'undefined') return;
+	if (locked && !bodyScrollLocked) {
+		previousBodyOverflow = document.body.style.overflow;
+		document.body.style.overflow = 'hidden';
+		bodyScrollLocked = true;
+		return;
+	}
+	if (!locked && bodyScrollLocked) {
+		document.body.style.overflow = previousBodyOverflow;
+		bodyScrollLocked = false;
+	}
+}
+
+function syncCompactBreakpoint() {
+	if (typeof window === 'undefined') return;
+	const nextStacked = window.matchMedia('(max-width: 900px)').matches;
+	if (isCompactStacked.value === nextStacked) return;
+	isCompactStacked.value = nextStacked;
+	nextTick(layoutEditor);
 }
 
 function sourceLineForNode(node, id) {
@@ -732,15 +821,18 @@ async function refreshTailwind() {
 <template>
 	<figure
 		class="template-example-editor-shell my-6 overflow-hidden rounded-2xl border border-border bg-background text-foreground"
-		:class="wide && 'template-example-editor-wide'"
+		:class="shellClass"
 	>
 		<figcaption v-if="title || description" class="border-b border-border bg-secondary/40 px-5 py-3">
-			<p v-if="title" class="text-sm font-semibold tracking-tight text-foreground">{{ title }}</p>
-			<p v-if="description" class="mt-0.5 text-sm text-muted-foreground">{{ description }}</p>
+			<div class="min-w-0">
+				<p v-if="title" class="text-sm font-semibold tracking-tight text-foreground">{{ title }}</p>
+				<p v-if="description" class="mt-0.5 text-sm text-muted-foreground">{{ description }}</p>
+			</div>
 		</figcaption>
 
 		<ElSplitterPanel
-			class="template-example-editor-workspace min-h-[42rem] bg-background"
+			v-if="isExpanded"
+			class="template-example-editor-workspace bg-background"
 			:start-size="240"
 			:end-size="360"
 			:min-start="180"
@@ -779,14 +871,70 @@ async function refreshTailwind() {
 						<p class="truncate font-mono text-[11px] text-muted-foreground">{{ sourceFileLabel }}</p>
 					</div>
 					<div class="flex shrink-0 items-center gap-2">
-						<button type="button" class="h-7 rounded-md border border-border px-2 text-[11px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground" @click="foldCode">Fold all</button>
-						<button type="button" class="h-7 rounded-md border border-border px-2 text-[11px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground" @click="unfoldCode">Unfold</button>
 						<button type="button" class="h-7 rounded-md border border-border px-2 text-[11px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground" @click="resetFromSource()">Reset</button>
-						<button type="button" class="h-7 rounded-md bg-secondary px-2 text-[11px] font-medium text-secondary-foreground hover:bg-secondary/80" @click="isCodeOpen = !isCodeOpen">{{ isCodeOpen ? 'Hide code' : 'Show code' }}</button>
+						<button type="button" class="h-7 rounded-md bg-secondary px-2 text-[11px] font-medium text-secondary-foreground hover:bg-secondary/80" @click="toggleCodeOpen">{{ isCodeOpen ? 'Hide code' : 'Show code' }}</button>
+						<button
+							v-if="expandable"
+							type="button"
+							class="h-7 rounded-md bg-primary px-2.5 text-[11px] font-semibold text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+							:aria-label="isExpanded ? 'Close expanded editor' : 'Expand editor'"
+							@click="isExpanded ? collapseEditor() : expandEditor()"
+						>
+							{{ isExpanded ? 'Close' : 'Expand' }}
+						</button>
 					</div>
 				</div>
 
-				<div class="min-h-0 flex-1 overflow-auto bg-muted/35 p-5">
+				<ElSplitterPanel
+					v-if="isCodeOpen"
+					orientation="vertical"
+					class="template-example-editor-main-split min-h-0 flex-1 bg-background"
+					:start-size="previewPaneSize"
+					:min-start="160"
+					:min-main="180"
+					:handle-size="8"
+				>
+					<template #start>
+						<div class="h-full min-h-0 overflow-auto bg-muted/35 p-5">
+							<div class="mx-auto min-h-full max-w-5xl rounded-lg border border-border bg-background p-5 shadow-sm" :class="previewClass">
+								<TemplateExampleNode
+									v-if="tree"
+									:node="tree"
+									:selected-id="selectedId"
+									:hovered-id="hoveredId"
+									:data-scope="stageScope"
+									@select="selectNode"
+									@hover="hoveredId = $event"
+									@hover-end="hoveredId = ''"
+								/>
+								<p v-else class="text-sm text-muted-foreground">No template loaded.</p>
+							</div>
+						</div>
+					</template>
+
+					<section class="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] border-t border-border bg-card text-card-foreground">
+						<div class="flex h-10 items-center justify-between border-b border-border px-4">
+							<p class="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Code</p>
+							<p class="truncate text-[11px]" :class="codeError ? 'text-destructive' : 'text-muted-foreground'">{{ codeError || filename }}</p>
+						</div>
+						<div class="min-h-0">
+							<TemplateMonacoEditor
+								ref="codeEditorEl"
+								:model-value="codeText"
+								:selected-line="selectedSourceLine"
+								:hovered-line="hoveredSourceLine"
+								:path="filename"
+								lang="vue"
+								@cursor-line-change="selectFromCodeLine"
+								@hover-line-change="hoverFromCodeLine"
+								@ready="applyCodeLineHighlight"
+								@update:model-value="onCodeInput"
+							/>
+						</div>
+					</section>
+				</ElSplitterPanel>
+
+				<div v-else class="min-h-0 flex-1 overflow-auto bg-muted/35 p-5">
 					<div class="mx-auto min-h-full max-w-5xl rounded-lg border border-border bg-background p-5 shadow-sm" :class="previewClass">
 						<TemplateExampleNode
 							v-if="tree"
@@ -801,27 +949,6 @@ async function refreshTailwind() {
 						<p v-else class="text-sm text-muted-foreground">No template loaded.</p>
 					</div>
 				</div>
-
-				<section class="grid shrink-0 grid-rows-[auto_minmax(0,1fr)] border-t border-border bg-card text-card-foreground transition-[height]" :style="codePanelStyle">
-					<div v-show="isCodeOpen" class="flex h-10 items-center justify-between border-b border-border px-4">
-						<p class="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Code</p>
-						<p class="truncate text-[11px]" :class="codeError ? 'text-destructive' : 'text-muted-foreground'">{{ codeError || filename }}</p>
-					</div>
-					<div v-show="isCodeOpen" class="min-h-0">
-						<TemplateMonacoEditor
-							ref="codeEditorEl"
-							:model-value="codeText"
-							:selected-line="selectedSourceLine"
-							:hovered-line="hoveredSourceLine"
-							:path="filename"
-							lang="vue"
-							@cursor-line-change="selectFromCodeLine"
-							@hover-line-change="hoverFromCodeLine"
-							@ready="applyCodeLineHighlight"
-							@update:model-value="onCodeInput"
-						/>
-					</div>
-				</section>
 			</section>
 
 			<template #end>
@@ -916,12 +1043,255 @@ async function refreshTailwind() {
 				</aside>
 			</template>
 		</ElSplitterPanel>
+
+		<section v-else class="template-example-editor-compact-workspace flex min-h-0 flex-col bg-background">
+			<div class="flex min-h-12 flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-4 py-2 text-card-foreground">
+				<div class="min-w-0">
+					<p class="truncate text-sm font-medium">{{ selectedNode?.label || selectedNode?.tag || 'Template' }}</p>
+					<p class="truncate font-mono text-[11px] text-muted-foreground">{{ sourceFileLabel }}</p>
+				</div>
+				<div class="flex shrink-0 flex-wrap items-center justify-end gap-2">
+					<button type="button" class="h-8 rounded-md border border-border px-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground" @click="resetFromSource()">Reset</button>
+					<button type="button" class="h-8 rounded-md bg-secondary px-2.5 text-xs font-medium text-secondary-foreground hover:bg-secondary/80" @click="toggleCodeOpen">{{ isCodeOpen ? 'Hide code' : 'Show code' }}</button>
+					<button
+						v-if="expandable"
+						type="button"
+						class="h-8 rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+						aria-label="Expand editor"
+						@click="expandEditor"
+					>
+						Expand
+					</button>
+				</div>
+			</div>
+
+			<ElSplitterPanel
+				class="template-example-editor-compact-body min-h-0 flex-1 p-4"
+				:orientation="compactSplitterOrientation"
+				:start-size="compactPreviewSize"
+				:min-start="compactMinStart"
+				:min-main="compactMinMain"
+				:handle-size="8"
+				@resize="layoutEditor"
+			>
+				<template #start>
+					<section class="template-example-editor-compact-stage grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-lg border border-border bg-background">
+						<div class="flex h-10 items-center justify-between border-b border-border bg-card px-4 text-card-foreground">
+							<p class="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Preview</p>
+							<p class="truncate text-[11px] text-muted-foreground">{{ selectedNode?.label || selectedNode?.tag || 'Template' }}</p>
+						</div>
+						<div class="min-h-0 overflow-auto bg-muted/35 p-4">
+							<div class="mx-auto min-h-full max-w-5xl rounded-lg border border-border bg-background p-4 shadow-sm" :class="previewClass">
+								<TemplateExampleNode
+									v-if="tree"
+									:node="tree"
+									:selected-id="selectedId"
+									:hovered-id="hoveredId"
+									:data-scope="stageScope"
+									@select="selectFromStage"
+									@hover="hoveredId = $event"
+									@hover-end="hoveredId = ''"
+								/>
+								<p v-else class="text-sm text-muted-foreground">No template loaded.</p>
+							</div>
+						</div>
+					</section>
+				</template>
+
+				<aside class="template-example-editor-compact-side h-full min-h-0 overflow-hidden rounded-lg border border-border bg-card text-card-foreground">
+					<ElTabs v-model="compactPanelTab" :tabs="compactPanelTabs" fill class="template-example-editor-compact-tabs h-full min-h-0 p-3">
+						<template #properties>
+							<section class="template-example-editor-compact-panel overflow-auto bg-card text-card-foreground">
+								<div class="border-b border-border pb-3">
+									<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Properties</p>
+									<p class="mt-1 truncate text-sm font-medium text-foreground">{{ selectedNode?.tag || selectedNode?.label || 'Template' }}</p>
+								</div>
+								<div class="space-y-4 py-4">
+									<label v-if="selectedNode && 'binding' in selectedNode" class="grid gap-1">
+										<span class="text-xs text-muted-foreground">Data binding</span>
+										<input class="h-9 rounded-md border border-input bg-background px-3 font-mono text-xs text-foreground outline-none focus:border-ring" :value="selectedNode.binding || ''" @input="updateBinding($event.target.value)">
+									</label>
+									<div v-if="selectedResolvedValue != null" class="rounded-md border border-border bg-background px-3 py-2">
+										<p class="text-[11px] font-medium text-muted-foreground">Resolved value</p>
+										<code class="mt-1 block truncate font-mono text-xs text-primary">{{ selectedResolvedValue }}</code>
+									</div>
+									<label v-if="selectedNode && 'text' in selectedNode" class="grid gap-1">
+										<span class="text-xs text-muted-foreground">Text</span>
+										<input class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus:border-ring" :value="selectedNode.text || ''" @input="updateText($event.target.value)">
+									</label>
+									<label v-if="selectedNode?.repeat" class="grid gap-1">
+										<span class="text-xs text-muted-foreground">Repeated template</span>
+										<input class="h-9 rounded-md border border-input bg-background px-3 font-mono text-xs text-foreground outline-none focus:border-ring" :value="selectedNode.repeat.source" @input="updateRepeatSource($event.target.value)">
+									</label>
+
+									<div v-if="selectedNode && selectedNode.type !== 'root'" class="grid gap-1">
+										<span class="text-xs text-muted-foreground">Class</span>
+										<div class="template-example-class-input">
+											<ElClassToggleInput
+												:key="selectedNode.id"
+												:chrome="false"
+												:model-value="selectedNode.props?.class || ''"
+												:options="tailwindClassIndex"
+												placeholder="Add class"
+												@update:model-value="updateSelectedClass"
+											/>
+										</div>
+									</div>
+
+									<div v-if="selectedInspectorFields.length" class="grid gap-3">
+										<p class="text-xs font-medium text-muted-foreground">Component props</p>
+										<InspectorField
+											v-for="field in selectedInspectorFields"
+											:key="field.key"
+											:field="field"
+											:model-value="selectedInspectorFieldValue(field)"
+											@update:model-value="updateSelectedInspectorField(field, $event)"
+										/>
+									</div>
+
+									<div v-if="selectedNode && selectedNode.type !== 'root'" class="grid gap-2">
+										<div class="flex items-center justify-between">
+											<span class="text-xs text-muted-foreground">HTML attributes</span>
+											<span class="text-[11px] text-muted-foreground">{{ selectedAttrs.length }}</span>
+										</div>
+										<div v-if="selectedAttrs.length" class="grid gap-2">
+											<div
+												v-for="[key, value] in selectedAttrs"
+												:key="key"
+												class="grid min-w-0 gap-2 sm:grid-cols-[minmax(6rem,0.35fr)_minmax(0,1fr)_auto]"
+											>
+												<input class="h-8 min-w-0 rounded-md border border-input bg-muted px-2 font-mono text-[11px] text-muted-foreground outline-none" readonly :value="key">
+												<input class="h-8 min-w-0 rounded-md border border-input bg-background px-2 font-mono text-xs text-foreground outline-none focus:border-ring" :value="value" @input="updateSelectedProp(key, $event.target.value)">
+												<button type="button" class="h-8 rounded-md border border-border px-2 text-[11px] text-muted-foreground hover:bg-destructive/10 hover:text-destructive" @click="removeSelectedAttr(key)">Remove</button>
+											</div>
+										</div>
+										<div class="grid min-w-0 gap-2 sm:grid-cols-[minmax(6rem,0.35fr)_minmax(0,1fr)_auto]">
+											<input v-model="newAttr.name" class="h-8 min-w-0 rounded-md border border-input bg-background px-2 font-mono text-[11px] text-foreground outline-none focus:border-ring" placeholder="aria-label">
+											<input v-model="newAttr.value" class="h-8 min-w-0 rounded-md border border-input bg-background px-2 font-mono text-xs text-foreground outline-none focus:border-ring" placeholder="value">
+											<button type="button" class="h-8 rounded-md bg-secondary px-2 text-xs text-secondary-foreground hover:bg-secondary/80" @click="addSelectedAttr">Add</button>
+										</div>
+									</div>
+
+									<div v-if="selectedNode?.type === 'root'" class="grid gap-2">
+										<div class="flex items-center justify-between">
+											<span class="text-xs text-muted-foreground">Root data</span>
+											<span class="text-[11px]" :class="rootDataError ? 'text-destructive' : 'text-muted-foreground'">{{ rootDataError || 'Live' }}</span>
+										</div>
+										<ElCodeInput
+											:model-value="rootDataText"
+											:rows="8"
+											:editor="true"
+											:_register-field="false"
+											:chrome="false"
+											lang="json"
+											class="template-example-root-data"
+											@update:model-value="updateRootData"
+										/>
+									</div>
+								</div>
+							</section>
+						</template>
+
+						<template #layers>
+							<section class="template-example-editor-compact-panel overflow-auto bg-background p-2">
+								<ElTreeView
+									:model-value="selectedLayerValue"
+									:items="layerTreeItems"
+									:open-values="layerOpenValues"
+									:hovered-value="hoveredLayerValue"
+									:chrome="false"
+									:draggable="false"
+									label="Template example layers"
+									class="template-example-layer-tree"
+									@select="selectFromLayer"
+									@hover="hoverFromLayer"
+									@hover-end="clearHoverFromLayer"
+									@update:open-values="layerOpenValues = $event"
+								/>
+							</section>
+						</template>
+
+						<template #code>
+							<section class="template-example-editor-compact-panel grid grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-card text-card-foreground">
+								<div class="flex h-10 items-center justify-between border-b border-border">
+									<p class="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Code</p>
+									<p class="truncate text-[11px]" :class="codeError ? 'text-destructive' : 'text-muted-foreground'">{{ codeError || filename }}</p>
+								</div>
+								<div class="min-h-0">
+									<TemplateMonacoEditor
+										ref="codeEditorEl"
+										:model-value="codeText"
+										:selected-line="selectedSourceLine"
+										:hovered-line="hoveredSourceLine"
+										:path="filename"
+										lang="vue"
+										@cursor-line-change="selectFromCodeLine"
+										@hover-line-change="hoverFromCodeLine"
+										@ready="applyCodeLineHighlight"
+										@update:model-value="onCodeInput"
+									/>
+								</div>
+							</section>
+						</template>
+					</ElTabs>
+				</aside>
+			</ElSplitterPanel>
+		</section>
 	</figure>
 </template>
 
 <style scoped>
 .template-example-editor-shell {
 	max-width: none;
+}
+
+.template-example-editor-expanded {
+	position: fixed;
+	inset: 0;
+	z-index: 100;
+	display: grid;
+	width: 100vw;
+	height: 100dvh;
+	grid-template-rows: auto minmax(0, 1fr);
+	margin: 0 !important;
+	border-width: 0;
+	border-radius: 0 !important;
+	box-shadow: 0 24px 80px color-mix(in oklch, var(--foreground) 18%, transparent);
+	overflow: hidden !important;
+}
+
+.template-example-editor-compact {
+	overflow: hidden !important;
+}
+
+.template-example-editor-compact-workspace {
+	height: min(70vh, 42rem);
+	min-height: 32rem;
+}
+
+.template-example-editor-compact-body {
+	height: 100%;
+	box-sizing: border-box;
+}
+
+.template-example-editor-compact-stage,
+.template-example-editor-compact-side {
+	min-width: 0;
+	min-height: 0;
+}
+
+.template-example-editor-compact-tabs {
+	min-width: 0;
+}
+
+.template-example-editor-compact-tabs :deep([role="tablist"]) {
+	max-width: 100%;
+	overflow-x: auto;
+}
+
+.template-example-editor-compact-panel {
+	height: 100%;
+	min-height: 0;
 }
 
 @media (min-width: 1024px) {
@@ -932,8 +1302,16 @@ async function refreshTailwind() {
 	}
 }
 
-.template-example-editor-workspace {
-	height: min(78vh, 52rem);
+.template-example-editor-expanded .template-example-editor-workspace {
+	height: auto;
+	min-height: 0;
+}
+
+@media (max-width: 640px) {
+	.template-example-editor-compact-workspace {
+		height: 34rem;
+		min-height: 30rem;
+	}
 }
 
 .template-example-layer-tree {

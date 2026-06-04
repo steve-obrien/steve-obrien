@@ -6,6 +6,7 @@ import { componentRegistry as elementsComponentRegistry, groupedRegistry as elem
 import InspectorField from '../../elements/_layout/inspector/InspectorField.vue';
 import { inferSchema } from '../../elements/_layout/inspector/useInspector.js';
 import StageViewport from './components/StageViewport.vue';
+import TemplateFileBrowser from './components/TemplateFileBrowser.vue';
 import TemplateMonacoEditor from './components/TemplateMonacoEditor.vue';
 import {
 	buildSource,
@@ -340,6 +341,8 @@ const newAttr = ref({ name: '', value: '' });
 const isCreateMenuOpen = ref(false);
 const isCreateDialogOpen = ref(false);
 const isDeveloperMenuOpen = ref(false);
+const isFileBrowserOpen = ref(false);
+const fileBrowserValue = ref('');
 const sidebarPanels = ref({ components: true, layers: true });
 const createKind = ref('component');
 const createFromSelection = ref(false);
@@ -366,6 +369,7 @@ let lastVisualHistorySnapshot = null;
 let syncingLayerOpenFromCode = false;
 let dropTargetHoverId = '';
 const componentApiEndpoint = '/experiments/template-editor/components';
+const fileBrowserEndpoint = '/experiments/template-editor/files';
 const minCodeDrawerHeight = 220;
 const maxCodeDrawerHeight = 560;
 const maxVisualHistoryEntries = 80;
@@ -387,6 +391,7 @@ const sourceFileName = computed(() => shortSourceFile(sourceFile.value));
 const flatNodes = computed(() => tree.value ? flatten(tree.value) : []);
 const selectedNode = computed(() => findNode(tree.value, selectedId.value) || tree.value);
 const stageRootScope = computed(() => ({
+	$slots: {},
 	...rootData.value,
 	...activeScriptData.value,
 }));
@@ -416,7 +421,10 @@ const layerTreeItems = computed(() => tree.value ? [layerItemFromNode(tree.value
 const selectedLayerValue = computed(() => selectedId.value ? layerValueForNodeId(tree.value, selectedId.value) : '');
 const layerDragSourceValue = computed(() => draggingNodeId.value ? layerValueForNodeId(tree.value, draggingNodeId.value) : '');
 const hoveredLayerValue = computed(() => hoveredNodeId.value ? layerValueForNodeId(tree.value, hoveredNodeId.value) : '');
-const dropTargetLayerValue = computed(() => dropTargetId.value ? layerValueForNodeId(tree.value, dropTargetId.value) : '');
+const dropTargetLayerValue = computed(() => {
+	const targetId = slotDropTargetFromId(dropTargetId.value)?.nodeId || dropTargetId.value;
+	return targetId ? layerValueForNodeId(tree.value, targetId) : '';
+});
 const hoveredSourceLine = computed(() => {
 	if (!hoveredNodeId.value) return 0;
 	if (hoveredCodeLineOverride.value && nodeIdForSourceLine(hoveredCodeLineOverride.value) === hoveredNodeId.value) {
@@ -1369,6 +1377,20 @@ function addToSelected(entry) {
 function addFromDrop(target) {
 	const { id: targetId, position } = dropDetailsFromTarget(target, selectedId.value);
 	if (!targetId) return;
+	const slotTarget = slotDropTargetFromId(targetId);
+	if (slotTarget) {
+		if (draggingNodeId.value) {
+			moveNodeToSlot(draggingNodeId.value, slotTarget.nodeId, slotTarget.name);
+			draggingNodeId.value = '';
+			clearDropTarget();
+			return;
+		}
+		if (!draggingEntry.value) return;
+		insertEntryInSlot(draggingEntry.value, slotTarget.nodeId, slotTarget.name);
+		draggingEntry.value = null;
+		clearDropTarget();
+		return;
+	}
 	if (draggingNodeId.value) {
 		moveNodeTo(draggingNodeId.value, targetId, position);
 		draggingNodeId.value = '';
@@ -1401,7 +1423,8 @@ function markDropTarget(target) {
 		clearDropTarget();
 		return;
 	}
-	if (dropTargetId.value !== id) revealNodeInLayers(id);
+	const layerTargetId = slotDropTargetFromId(id)?.nodeId || id;
+	if (dropTargetId.value !== id) revealNodeInLayers(layerTargetId);
 	dropTargetId.value = id;
 	dropTargetPosition.value = position;
 	previewHoveredDropTarget(id);
@@ -1433,16 +1456,19 @@ function normalizeDropPosition(position, fallback = 'inside') {
 
 function canDropOnStageTarget(id, position) {
 	if (!id) return false;
+	const slotTarget = slotDropTargetFromId(id);
+	if (slotTarget) return canDropIntoSlotTarget(slotTarget, position);
 	if (draggingNodeId.value) return canMoveNodeTo(draggingNodeId.value, id, position);
 	if (draggingEntry.value) return canInsertAtLayer(id, position);
 	return false;
 }
 
 function previewHoveredDropTarget(id) {
-	const node = findNode(tree.value, id);
+	const nodeId = slotDropTargetFromId(id)?.nodeId || id;
+	const node = findNode(tree.value, nodeId);
 	if (!node) return;
-	dropTargetHoverId = id;
-	setHoveredNode(id, { codeLine: sourceLineForNode(node, id) });
+	dropTargetHoverId = nodeId;
+	setHoveredNode(nodeId, { codeLine: sourceLineForNode(node, nodeId) });
 }
 
 function clearDropTargetHover() {
@@ -1545,6 +1571,52 @@ function insertNodeAt(node, targetId, position = 'inside') {
 	return true;
 }
 
+function insertEntryInSlot(entry, componentId, slotName) {
+	const componentNode = findNode(tree.value, componentId);
+	if (!componentNode || componentNode.type !== 'component') return false;
+	const slotTemplate = ensureSlotTemplateNode(componentNode, slotName);
+	const node = stamp(entry.create());
+	slotTemplate.children = [...(slotTemplate.children || []), node];
+	selectedId.value = node.id;
+	visualChanged();
+	return true;
+}
+
+function moveNodeToSlot(draggedId, componentId, slotName) {
+	if (!canMoveNodeToSlot(draggedId, componentId, slotName)) return false;
+	const dragged = findNode(tree.value, draggedId);
+	const oldParent = findParent(tree.value, draggedId);
+	const componentNode = findNode(tree.value, componentId);
+	if (!dragged || !oldParent || !componentNode) return false;
+
+	oldParent.children = oldParent.children.filter((child) => child.id !== draggedId);
+	oldParent.children = [...oldParent.children];
+
+	const slotTemplate = ensureSlotTemplateNode(componentNode, slotName);
+	slotTemplate.children = [...(slotTemplate.children || []), dragged];
+	selectedId.value = draggedId;
+	visualChanged();
+	return true;
+}
+
+function ensureSlotTemplateNode(componentNode, slotName = 'default') {
+	const normalizedName = slotName || 'default';
+	const existing = (componentNode.children || []).find((child) => namedSlotTemplateName(child) === normalizedName);
+	if (existing) return existing;
+
+	const slotTemplate = stamp({
+		type: 'element',
+		tag: 'template',
+		label: normalizedName === 'default' ? '#default' : `#${normalizedName}`,
+		props: {
+			[`v-slot:${normalizedName}`]: '',
+		},
+		children: [],
+	});
+	componentNode.children = [...(componentNode.children || []), slotTemplate];
+	return slotTemplate;
+}
+
 function moveNodeTo(draggedId, targetId, position = 'after') {
 	if (!canMoveNodeTo(draggedId, targetId, position)) return false;
 	const dragged = findNode(tree.value, draggedId);
@@ -1566,6 +1638,27 @@ function moveNodeTo(draggedId, targetId, position = 'after') {
 
 	selectedId.value = draggedId;
 	visualChanged();
+	return true;
+}
+
+function canDropIntoSlotTarget(slotTarget, position) {
+	if (position !== 'inside') return false;
+	if (!slotTarget?.nodeId || !slotTarget.name) return false;
+	const componentNode = findNode(tree.value, slotTarget.nodeId);
+	if (!componentNode || componentNode.type !== 'component') return false;
+	if (draggingEntry.value) return true;
+	if (draggingNodeId.value) return canMoveNodeToSlot(draggingNodeId.value, slotTarget.nodeId, slotTarget.name);
+	return false;
+}
+
+function canMoveNodeToSlot(draggedId, componentId, slotName) {
+	if (!tree.value || !draggedId || !componentId || draggedId === componentId || !slotName) return false;
+	const dragged = findNode(tree.value, draggedId);
+	const componentNode = findNode(tree.value, componentId);
+	const oldParent = findParent(tree.value, draggedId);
+	if (!dragged || !componentNode || !oldParent) return false;
+	if (namedSlotTemplateName(dragged)) return false;
+	if (isDescendant(dragged, componentId)) return false;
 	return true;
 }
 
@@ -1795,6 +1888,42 @@ function updateRootData(value) {
 	} catch (error) {
 		rootDataError.value = error instanceof Error ? error.message : 'Invalid JSON.';
 	}
+}
+
+function toggleFileBrowser() {
+	isFileBrowserOpen.value = !isFileBrowserOpen.value;
+	if (isFileBrowserOpen.value) {
+		isCreateMenuOpen.value = false;
+		isDeveloperMenuOpen.value = false;
+	}
+}
+
+function openFileFromBrowser(file) {
+	if (!file?.name || !file?.source) return;
+	const existing = componentStore.value.find((component) => component.file === file.file || component.name === file.name);
+	const record = {
+		name: file.name,
+		file: file.file,
+		role: file.role || existing?.role || 'component',
+		editable: true,
+		insertable: file.insertable ?? existing?.insertable ?? file.role !== 'page',
+		props: Array.isArray(file.props) ? file.props : existing?.props || [],
+		custom: true,
+		source: file.source,
+	};
+
+	if (existing) Object.assign(existing, record);
+	else componentStore.value = [...componentStore.value, record];
+
+	componentPreviewCache.clear();
+	fileBrowserValue.value = file.path ? `file:${file.path}` : file.file;
+	componentStack.value = [record.name];
+	isFileBrowserOpen.value = false;
+	saveTarget.value = 'Disk';
+	savedAt.value = '';
+
+	if (activeComponentName.value === record.name) loadActiveComponent();
+	else activeComponentName.value = record.name;
 }
 
 function toggleSidebarPanel(panel) {
@@ -2385,6 +2514,7 @@ function splitClassVariantToken(value) {
 function previewAttrsForNode(node, scope, rootCommon = null) {
 	const attrs = {};
 	for (const [key, value] of Object.entries(node.props || {})) {
+		if (isPreviewStructuralProp(key)) continue;
 		if (key.startsWith(':')) {
 			const name = domPropName(key.slice(1));
 			const resolved = resolveExpression(value, scope);
@@ -2410,6 +2540,14 @@ function previewAttrsForNode(node, scope, rootCommon = null) {
 	if (attrs.class) attrs.class = classWithPreviewStates(attrs, attrs.class);
 	if (isImageNode(node)) prepareImagePreviewAttrs(attrs);
 	return attrs;
+}
+
+function isPreviewStructuralProp(key) {
+	return key === 'v-if'
+		|| key === 'v-else-if'
+		|| key === 'v-else'
+		|| key === 'v-show'
+		|| key.startsWith('v-slot');
 }
 
 function prepareImagePreviewAttrs(attrs) {
@@ -2440,17 +2578,26 @@ function renderComponentPreview(node, ctx, common, scope, slotChildren, depth = 
 	try {
 		const previewModel = componentPreviewModel(component);
 		const previewTree = previewModel.tree;
+		const previewSlots = slotContentWithHints(slotChildren, componentSlotHintNames(component, slotChildren, node, ctx));
 		const componentScope = {
 			...(previewModel.scriptData || {}),
 			...componentScopeFor(node, component, scope),
+			$slots: slotPresenceForScope(previewSlots),
 		};
-		const roots = previewTree.children.flatMap((child) => toArray(renderPreviewNode(child, ctx, node, componentScope, slotChildren, null, depth + 1)));
+		const roots = previewTree.children.flatMap((child) => toArray(renderPreviewNode(child, ctx, node, componentScope, previewSlots, null, depth + 1)));
 		if (!roots.length) return null;
 		if (roots.length > 1) return h('section', common, roots);
-		return renderPreviewNode(previewTree.children[0], ctx, node, componentScope, slotChildren, common, depth + 1);
+		return renderPreviewNode(previewTree.children[0], ctx, node, componentScope, previewSlots, common, depth + 1);
 	} catch {
 		return null;
 	}
+}
+
+function shouldRenderPreviewNode(node, scope) {
+	const props = node.props || {};
+	if (Object.prototype.hasOwnProperty.call(props, 'v-if')) return Boolean(resolveExpression(props['v-if'], scope));
+	if (Object.prototype.hasOwnProperty.call(props, 'v-else-if')) return Boolean(resolveExpression(props['v-else-if'], scope));
+	return true;
 }
 
 /**
@@ -2460,27 +2607,41 @@ function renderComponentPreview(node, ctx, common, scope, slotChildren, depth = 
  * keep their real ids and can still be selected directly.
  */
 function renderPreviewNode(node, ctx, ownerNode, scope, slotChildren, rootCommon = null, depth = 0) {
+	if (!shouldRenderPreviewNode(node, scope)) return null;
 	if (node.type === 'literal') return renderInlineValue(node, node.text || 'Text', scope);
 	if (node.repeat) return renderPreviewRepeatNode(node, ctx, ownerNode, scope, slotChildren, rootCommon, depth);
 	if (node.type === 'element' && node.tag === 'slot') {
-		return slotChildren.length ? slotChildren : h('div', previewAttrsForNode(node, scope, rootCommon), 'Slot content');
+		const name = slotOutletName(node);
+		const projectedSlot = slotContentByName(slotChildren, name);
+		if (projectedSlot.length) return projectedSlot;
+		if (slotHinted(slotChildren, name)) return renderSlotHint(ownerNode, node, ctx, name);
+		const fallbackChildren = renderPreviewChildren(node, ctx, ownerNode, scope, slotChildren, depth);
+		return fallbackChildren.length
+			? fallbackChildren
+			: h('div', previewAttrsForNode(node, scope, rootCommon), `${name} slot`);
 	}
 
 	const attrs = previewAttrsForNode(node, scope, rootCommon);
-	const children = renderPreviewChildren(node, ctx, ownerNode, scope, slotChildren, depth);
 
 	if (node.type === 'headline') return h('h1', attrs, renderInlineValue(node, 'Heading', scope));
 	if (node.type === 'text') return h('p', attrs, renderInlineValue(node, 'Text', scope));
 	if (node.type === 'paragraph') return h('p', attrs, renderInlineValue(node, 'Paragraph', scope));
+	if (node.type === 'element' && node.tag === 'template') {
+		return renderPreviewChildren(node, ctx, ownerNode, scope, slotChildren, depth);
+	}
+
+	const children = renderPreviewChildren(node, ctx, ownerNode, scope, slotChildren, depth);
+
 	if (node.type === 'element') {
 		const tag = node.tag || 'section';
 		return h(tag, attrs, voidTags.has(tag) ? null : (children.length ? children : inlineContentForNode(node, scope)));
 	}
 	if (node.type === 'component') {
-		const previewSlotChildren = slotContentForNode(node, children, scope);
+		const previewSlotChildren = slotContentForNode(node, (child, slotDepth) => renderPreviewNode(child, ctx, node, scope, slotChildren, null, slotDepth), scope, depth + 1);
 		const preview = renderComponentPreview(node, ctx, attrs, scope, previewSlotChildren, depth + 1);
 		if (preview) return preview;
-		return h('section', attrs, previewSlotChildren.length ? previewSlotChildren : node.text || node.label);
+		const defaultSlot = slotContentByName(previewSlotChildren);
+		return h('section', attrs, defaultSlot.length ? defaultSlot : node.text || node.label);
 	}
 	return h('section', attrs, children.length ? children : node.label);
 }
@@ -2508,6 +2669,7 @@ function renderPreviewRepeatNode(node, ctx, ownerNode, scope, slotChildren, root
  */
 function renderNode(node, ctx) {
 	if (node.type === 'literal') return renderInlineValue(node, node.text || 'Text', ctx.scope || {});
+	if (!shouldRenderPreviewNode(node, ctx.scope || {})) return null;
 
 	const selected = ctx.selectedId === node.id;
 	const hovered = ctx.hoveredId === node.id;
@@ -2540,9 +2702,23 @@ function renderNode(node, ctx) {
 
 	if (node.type === 'root') return h('div', { ...common, class: classWithPreviewStates(common, 'min-h-full w-full', stageClass, common.class) }, children);
 	if (node.type === 'component') {
-		const slotChildren = slotContentForNode(node, children, scope);
+		const slotChildren = slotContentForNode(node, (child) => h(TemplateNode, {
+			key: child.id,
+			node: child,
+			selectedId: ctx.selectedId,
+			hoveredId: ctx.hoveredId,
+			dropTargetId: ctx.dropTargetId,
+			dropTargetPosition: ctx.dropTargetPosition,
+			dataScope: scope,
+			onSelect: (id) => ctx.emit('select', id),
+			onOpenComponent: (target) => ctx.emit('open-component', target),
+			onDropOnNode: (target) => ctx.emit('drop-on-node', target),
+			onNodeDragStart: (id) => ctx.emit('node-drag-start', id),
+			onNodeDragOver: (target) => ctx.emit('node-drag-over', target),
+		}), scope);
+		const defaultSlot = slotContentByName(slotChildren);
 		if (elementsEntryForTag(node.tag)?.component && stageClass && !common.class) common.class = classWithPreviewStates(common, stageClass);
-		const elementsPreview = renderElementsComponent(node, common, slotChildren);
+		const elementsPreview = renderElementsComponent(node, common, defaultSlot);
 		if (elementsPreview) return elementsPreview;
 		const preview = renderComponentPreview(node, ctx, common, scope, slotChildren);
 		if (preview) return preview;
@@ -2555,6 +2731,7 @@ function renderNode(node, ctx) {
 	if (node.type === 'text') return h('p', common, renderInlineValue(node, 'Text', scope));
 	if (node.type === 'paragraph') return h('p', common, renderInlineValue(node, 'Paragraph', scope));
 	if (node.type === 'element' && node.tag === 'slot') return h('div', common, 'Slot content');
+	if (node.type === 'element' && node.tag === 'template') return children;
 	if (node.type === 'element') return h(node.tag || 'section', common, children.length ? children : inlineContentForNode(node, scope));
 	if (node.type === 'component' && node.tag === 'MetricGrid') {
 		return h('section', common, rootData.value.metrics.map((item) => h('article', { class: 'rounded-lg border border-border bg-card p-4 text-card-foreground shadow-sm' }, [
@@ -2577,10 +2754,144 @@ function renderElementsComponent(node, attrs, slotChildren) {
 	return h(entry.component, props, slotChildren.length ? { default: () => slotChildren } : undefined);
 }
 
-function slotContentForNode(node, renderedChildren, scope) {
-	if (renderedChildren.length) return renderedChildren;
-	if (!node.inline?.length && !node.binding && !node.text) return [];
-	return [renderInlineValue(node, node.text || node.label, scope)];
+function renderSlotHint(ownerNode, slotNode, ctx, name) {
+	const targetId = slotDropTargetId(ownerNode.id, name);
+	const dropTarget = ctx.dropTargetId === targetId;
+	const label = name === 'default' ? 'Default slot' : `${name} slot`;
+
+	return h('div', {
+		class: 'template-slot-hint',
+		'data-template-node': ownerNode.id,
+		'data-template-slot-target': targetId,
+		'data-template-drop-target': dropTarget ? 'true' : null,
+		'data-template-drop-position': dropTarget ? 'inside' : null,
+		onClick: (event) => {
+			event.stopPropagation();
+			ctx.emit('select', ownerNode.id);
+		},
+		onDrop: (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			ctx.emit('drop-on-node', { id: targetId, position: 'inside' });
+		},
+		onDragover: (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			ctx.emit('node-drag-over', { id: targetId, position: 'inside' });
+		},
+	}, [
+		h('span', { class: 'template-slot-hint__label' }, label),
+		h('span', { class: 'template-slot-hint__helper' }, 'Drop content here'),
+	]);
+}
+
+function componentSlotHintNames(component, slotContent, node, ctx) {
+	if (!shouldShowSlotHints(node, ctx)) return [];
+	return componentSlotNames(component)
+		.filter((name) => !slotContentByName(slotContent, name).length);
+}
+
+function shouldShowSlotHints() {
+	return Boolean(draggingEntry.value || draggingNodeId.value || dropTargetId.value);
+}
+
+function componentSlotNames(component) {
+	try {
+		const model = componentPreviewModel(component);
+		const names = new Set();
+		collectSlotNames(model.tree, names);
+		return [...names];
+	} catch {
+		return [];
+	}
+}
+
+function collectSlotNames(node, names) {
+	if (!node) return;
+	if (node.type === 'element' && node.tag === 'slot') names.add(slotOutletName(node));
+	(node.children || []).forEach((child) => collectSlotNames(child, names));
+}
+
+function slotContentForNode(node, renderChild, scope, childDepth = 0) {
+	const slotContent = { default: [], named: {} };
+
+	for (const child of node.children || []) {
+		const slotName = namedSlotTemplateName(child);
+		if (slotName) {
+			slotContent.named[slotName] = [
+				...(slotContent.named[slotName] || []),
+				...(child.children || []).flatMap((slotChild) => toArray(renderChild(slotChild, childDepth + 1))),
+			];
+			continue;
+		}
+		slotContent.default.push(...toArray(renderChild(child, childDepth)));
+	}
+
+	if (!slotContent.default.length && (node.inline?.length || node.binding || node.text)) {
+		slotContent.default.push(renderInlineValue(node, node.text || node.label, scope));
+	}
+
+	return slotContent;
+}
+
+function slotContentWithHints(slotContent, names) {
+	const hinted = Object.fromEntries((names || []).map((name) => [name || 'default', true]));
+	if (!Object.keys(hinted).length) return slotContent;
+	return {
+		default: slotContent?.default || [],
+		named: slotContent?.named || {},
+		hinted: {
+			...(slotContent?.hinted || {}),
+			...hinted,
+		},
+	};
+}
+
+function slotContentByName(slotContent, name = 'default') {
+	if (Array.isArray(slotContent)) return name === 'default' ? slotContent : [];
+	if (!slotContent) return [];
+	return name === 'default'
+		? slotContent.default || []
+		: slotContent.named?.[name] || [];
+}
+
+function slotHinted(slotContent, name = 'default') {
+	return Boolean(slotContent?.hinted?.[name || 'default']);
+}
+
+function slotPresenceForScope(slotContent) {
+	const slots = {};
+	if (slotContentByName(slotContent).length) slots.default = true;
+	for (const [name, content] of Object.entries(slotContent?.named || {})) {
+		if (content.length) slots[name] = true;
+	}
+	for (const name of Object.keys(slotContent?.hinted || {})) {
+		slots[name] = true;
+	}
+	return slots;
+}
+
+function slotOutletName(node) {
+	return node.props?.name || 'default';
+}
+
+function namedSlotTemplateName(node) {
+	if (node?.type !== 'element' || node.tag !== 'template') return '';
+	const entry = Object.entries(node.props || {}).find(([key]) => key.startsWith('v-slot:'));
+	return entry ? entry[0].slice('v-slot:'.length) || 'default' : '';
+}
+
+function slotDropTargetId(nodeId, name = 'default') {
+	return `${nodeId}::slot:${encodeURIComponent(name || 'default')}`;
+}
+
+function slotDropTargetFromId(id) {
+	const match = String(id || '').match(/^(.*?)::slot:(.+)$/);
+	if (!match) return null;
+	return {
+		nodeId: match[1],
+		name: decodeURIComponent(match[2] || 'default') || 'default',
+	};
 }
 
 function renderChildren(node, ctx, scope) {
@@ -2693,20 +3004,48 @@ function isEmptyElement(node) {
 				<template #start>
 					<aside class="flex h-screen min-h-0 flex-col overflow-hidden border-r border-border bg-card text-card-foreground">
 						<div class="shrink-0 border-b border-border p-4">
-							<p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Experiment</p>
-							<h1 class="mt-1 text-sm font-semibold text-foreground">Template Studio</h1>
-							<div class="mt-3 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+							<div class="flex items-start gap-3">
 								<button
-									v-for="(name, index) in componentStack"
-									:key="`${name}-${index}`"
 									type="button"
-									class="rounded px-1.5 py-1 hover:bg-secondary hover:text-foreground"
-									:class="index === componentStack.length - 1 && 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground'"
-									@click="openFromStack(index)"
-								>{{ name }}</button>
+									class="grid size-9 shrink-0 place-items-center rounded-md border border-border bg-background text-muted-foreground hover:border-ring hover:bg-secondary hover:text-foreground"
+									:class="isFileBrowserOpen && 'border-ring bg-secondary text-foreground'"
+									:aria-pressed="isFileBrowserOpen"
+									aria-label="Open file browser"
+									title="Open file browser"
+									@click="toggleFileBrowser"
+								>
+									<svg viewBox="0 0 24 24" class="size-4" fill="none" aria-hidden="true">
+										<path d="M4 6.5h6l2 2h8v9.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+										<path d="M4 10h16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+									</svg>
+								</button>
+								<div class="min-w-0 flex-1">
+									<p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Experiment</p>
+									<h1 class="mt-1 text-sm font-semibold text-foreground">Template Studio</h1>
+									<div class="mt-3 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+										<button
+											v-for="(name, index) in componentStack"
+											:key="`${name}-${index}`"
+											type="button"
+											class="max-w-full truncate rounded px-1.5 py-1 hover:bg-secondary hover:text-foreground"
+											:class="index === componentStack.length - 1 && 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground'"
+											@click="openFromStack(index)"
+										>{{ name }}</button>
+									</div>
+								</div>
 							</div>
 						</div>
 
+						<TemplateFileBrowser
+							v-if="isFileBrowserOpen"
+							v-model="fileBrowserValue"
+							class="min-h-0 flex-1"
+							:endpoint="fileBrowserEndpoint"
+							@open-file="openFileFromBrowser"
+							@close="isFileBrowserOpen = false"
+						/>
+
+						<template v-else>
 						<section
 							class="flex min-h-0 flex-col border-b border-border"
 							:class="sidebarPanels.components ? 'flex-[1.25_1_0]' : 'flex-none'"
@@ -2835,6 +3174,7 @@ function isEmptyElement(node) {
 								/>
 							</div>
 						</section>
+						</template>
 					</aside>
 				</template>
 
@@ -3259,6 +3599,33 @@ function isEmptyElement(node) {
 :deep([data-template-drop-target="true"]) {
 	outline: 3px dashed var(--ring);
 	box-shadow: 0 0 0 4px color-mix(in oklch, var(--ring) 18%, transparent), 0 8px 18px color-mix(in oklch, var(--ring) 22%, transparent);
+}
+
+:deep(.template-slot-hint) {
+	position: relative;
+	display: flex;
+	min-height: 3rem;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	border: 1px dashed color-mix(in oklch, var(--ring) 62%, transparent);
+	border-radius: 0.5rem;
+	background: color-mix(in oklch, var(--background) 86%, var(--accent));
+	padding: 0.75rem 0.875rem;
+	color: var(--foreground);
+	cursor: copy;
+}
+
+:deep(.template-slot-hint__label) {
+	font-size: 0.75rem;
+	font-weight: 650;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+:deep(.template-slot-hint__helper) {
+	font-size: 0.75rem;
+	color: var(--muted-foreground);
 }
 
 :deep([data-template-drop-position]) {

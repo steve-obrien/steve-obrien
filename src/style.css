@@ -5,6 +5,23 @@
 :root {
 	color-scheme: light;
 	--radius: 0.625rem;
+	--radius-sm: calc(var(--radius) * 0.6);
+	--radius-md: calc(var(--radius) * 0.8);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) * 1.4);
+	--radius-2xl: calc(var(--radius) * 1.8);
+	--radius-3xl: calc(var(--radius) * 2.2);
+	--radius-4xl: calc(var(--radius) * 2.6);
+	--shadow-color: oklch(0 0 0);
+	--shadow-strength: 8%;
+	--shadow-distance: 1;
+	--shadow-softness: 1;
+	--shadow-xs: 0 calc(var(--shadow-distance) * 1px) calc(var(--shadow-softness) * 1px) 0 color-mix(in oklch, var(--shadow-color) calc(var(--shadow-strength) * 0.55), transparent);
+	--shadow-sm: 0 calc(var(--shadow-distance) * 1px) calc(var(--shadow-softness) * 2px) 0 color-mix(in oklch, var(--shadow-color) calc(var(--shadow-strength) * 0.75), transparent);
+	--shadow-md: 0 calc(var(--shadow-distance) * 3px) calc(var(--shadow-softness) * 8px) -2px color-mix(in oklch, var(--shadow-color) var(--shadow-strength), transparent);
+	--shadow-lg: 0 calc(var(--shadow-distance) * 8px) calc(var(--shadow-softness) * 20px) -6px color-mix(in oklch, var(--shadow-color) calc(var(--shadow-strength) * 1.25), transparent);
+	--shadow-xl: 0 calc(var(--shadow-distance) * 14px) calc(var(--shadow-softness) * 34px) -10px color-mix(in oklch, var(--shadow-color) calc(var(--shadow-strength) * 1.35), transparent);
+	--shadow-2xl: 0 calc(var(--shadow-distance) * 24px) calc(var(--shadow-softness) * 60px) -18px color-mix(in oklch, var(--shadow-color) calc(var(--shadow-strength) * 1.6), transparent);
 	--background: oklch(10 0 0);
 	--foreground: oklch(0.145 0 0);
 	--card: oklch(1 0 0);
@@ -114,6 +131,39 @@ body {
 	color: var(--foreground);
 	text-rendering: optimizeLegibility;
 	-webkit-font-smoothing: antialiased;
+}
+
+@layer utilities {
+	.shadow-xs {
+		--tw-shadow: var(--shadow-xs);
+		box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+	}
+
+	.shadow-sm {
+		--tw-shadow: var(--shadow-sm);
+		box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+	}
+
+	.shadow,
+	.shadow-md {
+		--tw-shadow: var(--shadow-md);
+		box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+	}
+
+	.shadow-lg {
+		--tw-shadow: var(--shadow-lg);
+		box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+	}
+
+	.shadow-xl {
+		--tw-shadow: var(--shadow-xl);
+		box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+	}
+
+	.shadow-2xl {
+		--tw-shadow: var(--shadow-2xl);
+		box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+	}
 }
 
 /* Elements custom-elements: hide pre-upgrade light-DOM children so SSR'd

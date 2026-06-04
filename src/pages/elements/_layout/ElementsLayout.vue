@@ -55,7 +55,7 @@ watch(() => route.fullPath, async () => {
 					<span class="ml-2 hidden rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground ring-1 ring-border md:inline">v1.0</span>
 				</RouterLink>
 				<!-- Mobile menu-->
-				<ElButton class="shrink-0 lg:hidden" variant="secondary" @click="mobileMenuOpen = true">Menu</ElButton>
+				<ElButton class="shrink-0 md:hidden" variant="secondary" @click="mobileMenuOpen = true">Menu</ElButton>
 				<Teleport to="body">
 					<ElDrawer v-model="mobileMenuOpen" side="left" title="Menu" width="min(88vw, var(--container-xs))">
 						<div class="space-y-6 p-4 text-sm text-muted-foreground">
@@ -75,7 +75,7 @@ watch(() => route.fullPath, async () => {
 						</div>
 					</ElDrawer>
 				</Teleport>
-				<nav class="hidden min-w-0 items-center gap-1 text-sm lg:flex">
+				<nav class="hidden min-w-0 items-center gap-1 text-sm md:flex">
 					<RouterLink
 						v-for="l in topLinks"
 						:key="l.to"
