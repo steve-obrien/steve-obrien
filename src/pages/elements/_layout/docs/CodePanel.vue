@@ -60,7 +60,7 @@ function expandPreview() {
 <template>
 	<div>
 		<div
-			class="flex items-center justify-between bg-secondary/40 px-3 py-1.5 text-xs"
+			class="flex min-w-0 items-center justify-between bg-secondary/40 px-3 py-1.5 text-xs"
 			:class="borderTop && 'border-t border-border'"
 		>
 			<button
@@ -86,7 +86,7 @@ function expandPreview() {
 
 		<div
 			v-if="showCode"
-			class="el-code relative border-t border-border transition-[max-height] duration-300 ease-out"
+			class="el-code relative min-w-0 max-w-full border-t border-border transition-[max-height] duration-300 ease-out"
 			:class="isClipped ? 'cursor-pointer overflow-hidden' : 'overflow-auto'"
 			:style="codeStyle"
 			@click="expandPreview"

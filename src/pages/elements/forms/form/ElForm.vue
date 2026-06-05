@@ -1,5 +1,5 @@
 <script>
-import { computed, defineComponent, h, inject, provide, reactive, toRaw, watch } from 'vue';
+import { computed, defineAsyncComponent, defineComponent, h, inject, provide, reactive, toRaw, watch } from 'vue';
 import ElAutocomplete from '../autocomplete/ElAutocomplete.vue';
 import ElCalendar from '../calendar/ElCalendar.vue';
 import ElCheckbox from '../checkbox/ElCheckbox.vue';
@@ -7,8 +7,6 @@ import ElCodeInput from '../code-input/ElCodeInput.vue';
 import ElCombobox from '../combobox/ElCombobox.vue';
 import ElDatePicker from '../date-picker/ElDatePicker.vue';
 import ElEmailInput from '../email-input/ElEmailInput.vue';
-import ElJsonInput from '../json-input/ElJsonInput.vue';
-import ElJsonListInput from '../json-list-input/ElJsonListInput.vue';
 import ElNativeSelect from '../native-select/ElNativeSelect.vue';
 import ElNumberInput from '../number-input/ElNumberInput.vue';
 import ElPasswordInput from '../password-input/ElPasswordInput.vue';
@@ -21,7 +19,10 @@ import ElToggle from '../toggle/ElToggle.vue';
 import ElUrlInput from '../url-input/ElUrlInput.vue';
 import { formFieldProviderKey, normalizeErrors } from '../field/useField.js';
 import { deletePathValue, forms, getPathValue, setPathValue } from './formApi.js';
-import { normalizeFormChildren, normalizeFormNode } from './formDefinition.js';
+import { formNodeDefaultValue, normalizeFormChildren, normalizeFormNode } from './formDefinition.js';
+
+const ElJsonInput = defineAsyncComponent(() => import('../json-input/ElJsonInput.vue'));
+const ElJsonListInput = defineAsyncComponent(() => import('../json-list-input/ElJsonListInput.vue'));
 
 const formComponents = {
 	ElAutocomplete,
@@ -80,7 +81,44 @@ function clone(value) {
 }
 
 function snapshot(value) {
-	return clone(value || {});
+	return clone(value ?? {});
+}
+
+function replaceReactiveValue(target, nextValue) {
+	if (Array.isArray(target)) {
+		const next = Array.isArray(nextValue) ? snapshot(nextValue) : [];
+		target.splice(0, target.length, ...next);
+		return;
+	}
+	const next = nextValue && typeof nextValue === 'object' && !Array.isArray(nextValue) ? snapshot(nextValue) : {};
+	for (const key of Object.keys(target)) delete target[key];
+	Object.assign(target, next);
+}
+
+function syncReactiveObject(target, nextValue) {
+	const incoming = nextValue && typeof nextValue === 'object' && !Array.isArray(nextValue) ? nextValue : {};
+	for (const key of Object.keys(target)) {
+		if (!(key in incoming)) delete target[key];
+	}
+	Object.assign(target, incoming);
+}
+
+function singularLabel(label) {
+	const normalized = String(label || 'row').trim().toLowerCase();
+	if (normalized === 'children') return 'child';
+	if (normalized.endsWith('ies')) return `${normalized.slice(0, -3)}y`;
+	if (normalized.endsWith('s')) return normalized.slice(0, -1);
+	return normalized;
+}
+
+function jsonListSchemaForNode(node) {
+	if (node.props?.schema) return node.props.schema;
+	if (node.type !== 'array') return undefined;
+	return {
+		type: 'array',
+		...(node.props?.label ? { label: node.props.label } : {}),
+		...(node.items ? { items: node.items } : {}),
+	};
 }
 
 function normalizeFieldState(state = {}) {
@@ -161,7 +199,17 @@ const RenderNode = defineComponent({
 			const componentName = node.component || node.type || 'div';
 			const component = componentName === 'ElForm' ? ElFormComponent : formComponents[componentName] || componentName;
 			const children = (node.children || []).map((child, index) => h(RenderNode, { node: child, key: child.id || index }));
-			return h(component, { ...(node.props || {}) }, children.length ? () => children : undefined);
+			const nodeProps = {
+				...(node.props || {}),
+				...(componentName === 'ElForm' ? {
+					type: node.type,
+					items: node.items,
+				} : {}),
+				...(componentName === 'ElJsonListInput' ? {
+					schema: jsonListSchemaForNode(node),
+				} : {}),
+			};
+			return h(component, nodeProps, children.length ? () => children : undefined);
 		};
 	},
 });
@@ -188,9 +236,64 @@ ElFormComponent = defineComponent({
 	},
 	props: {
 		modelValue: {
-			type: Object,
+			type: [Array, Object],
 			default: () => ({}),
 			_edit: { component: 'ElJsonInput', description: 'Current form value keyed by field path.' },
+		},
+		type: {
+			type: String,
+			default: 'object',
+			_edit: { options: ['object', 'array'], description: 'Render a single object form or an array of form rows.' },
+		},
+		multiple: {
+			type: Boolean,
+			default: false,
+			_edit: { description: 'Render this form as a repeatable array of itself.' },
+		},
+		items: {
+			type: [Array, Object],
+			default: null,
+			_edit: { component: 'ElJsonInput', description: 'Schema used for each row when type is array.' },
+		},
+		addLabel: {
+			type: String,
+			default: '',
+			_edit: { description: 'Button label for adding a row in array mode.' },
+		},
+		compact: {
+			type: Boolean,
+			default: false,
+			_edit: { description: 'Reduce spacing for inspectors and narrow layouts.' },
+		},
+		label: {
+			type: String,
+			default: '',
+			_edit: { description: 'Optional group label.' },
+		},
+		description: {
+			type: String,
+			default: '',
+			_edit: { description: 'Optional group description.' },
+		},
+		required: {
+			type: Boolean,
+			default: false,
+			_edit: { description: 'Show a required marker on the group label.' },
+		},
+		visible: {
+			type: Boolean,
+			default: true,
+			_edit: { description: 'Show or hide the rendered form.' },
+		},
+		tag: {
+			type: String,
+			default: '',
+			_edit: { description: 'Override the rendered root element.' },
+		},
+		isolated: {
+			type: Boolean,
+			default: false,
+			_edit: { description: 'Create a standalone provider even when nested inside another form.' },
 		},
 		name: {
 			type: String,
@@ -213,15 +316,35 @@ ElFormComponent = defineComponent({
 	},
 	emits: ['update:modelValue', 'update:children', 'schema-change', 'change', 'submit', 'invalid'],
 	setup(props, { attrs, emit, expose, slots }) {
-		const parent = inject(formFieldProviderKey, null);
+		const injectedParent = inject(formFieldProviderKey, null);
+		const parent = props.isolated ? null : injectedParent;
 		const isRoot = !parent;
-		const values = isRoot ? reactive(snapshot(props.modelValue)) : parent.values;
+		const initialValue = props.multiple || props.type === 'array'
+			? (Array.isArray(props.modelValue) ? props.modelValue : [])
+			: (props.modelValue || {});
+		const values = isRoot ? reactive(snapshot(initialValue)) : parent.values;
 		const fieldStates = isRoot ? reactive({}) : parent.fieldStates;
 		const fields = isRoot ? reactive(new Map()) : parent.fields;
 		const errors = isRoot ? reactive({}) : parent.errors;
 		const subforms = isRoot ? reactive({}) : parent.subforms;
 		const schemaChildren = reactive([]);
 		const scopePath = computed(() => (isRoot ? '' : joinPath(parent?.scopePath || '', props.name)));
+		const isArrayMode = computed(() => props.multiple || props.type === 'array');
+		const normalizedItems = computed(() => {
+			if (props.items) return normalizeFormNode(props.items);
+			if (schemaChildren.length) {
+				return normalizeFormNode({
+					type: 'ElForm',
+					children: schemaChildren,
+				});
+			}
+			return normalizeFormNode({ type: 'ElForm', children: [] });
+		});
+		const arrayRows = computed(() => {
+			const value = isRoot ? values : getPathValue(values, scopePath.value);
+			return Array.isArray(value) ? value : [];
+		});
+		const arrayAddLabel = computed(() => props.addLabel || `+ Add ${singularLabel(props.label || props.name || 'row')}`);
 
 		const scopedFieldEntries = computed(() => Array.from(fields.entries()).filter(([path]) => ownField(path, scopePath.value)));
 		const scopedErrorEntries = computed(() => Object.entries(errors).filter(([path]) => ownField(path, scopePath.value)));
@@ -287,6 +410,34 @@ ElFormComponent = defineComponent({
 		function emitChange(name) {
 			emit('change', payload(name));
 			if (!isRoot) parent.emitChange?.(name);
+		}
+
+		function setArrayRows(nextRows) {
+			const next = Array.isArray(nextRows) ? snapshot(nextRows) : [];
+			if (isRoot) {
+				replaceReactiveValue(values, next);
+			} else if (scopePath.value) {
+				setPathValue(values, scopePath.value, next);
+			}
+			emitModel();
+			emitChange(scopePath.value);
+		}
+
+		function addArrayRow() {
+			const index = arrayRows.value.length;
+			setArrayRows([...arrayRows.value, formNodeDefaultValue(normalizedItems.value, { index })]);
+		}
+
+		function removeArrayRow(rowIndex) {
+			setArrayRows(arrayRows.value.filter((_, index) => index !== rowIndex));
+		}
+
+		function moveArrayRow(rowIndex, dir) {
+			const nextIndex = rowIndex + dir;
+			if (nextIndex < 0 || nextIndex >= arrayRows.value.length) return;
+			const next = [...arrayRows.value];
+			[next[rowIndex], next[nextIndex]] = [next[nextIndex], next[rowIndex]];
+			setArrayRows(next);
 		}
 
 		function emitSchemaChange() {
@@ -510,8 +661,7 @@ ElFormComponent = defineComponent({
 
 		function reset(nextValues = props.modelValue || {}) {
 			if (isRoot) {
-				for (const key of Object.keys(values)) delete values[key];
-				Object.assign(values, nextValues);
+				replaceReactiveValue(values, isArrayMode.value ? (Array.isArray(nextValues) ? nextValues : []) : nextValues);
 				for (const key of Object.keys(fieldStates)) delete fieldStates[key];
 				for (const key of Object.keys(errors)) delete errors[key];
 			} else {
@@ -563,6 +713,9 @@ ElFormComponent = defineComponent({
 			removeChild,
 			replaceChild,
 			addSubform,
+			addArrayRow,
+			removeArrayRow,
+			moveArrayRow,
 			registerField,
 			unregisterField,
 			validate,
@@ -577,12 +730,20 @@ ElFormComponent = defineComponent({
 
 		watch(() => props.modelValue, (nextValue) => {
 			if (!isRoot) return;
-			const incoming = nextValue || {};
-			for (const key of Object.keys(values)) {
-				if (!(key in incoming)) delete values[key];
+			if (isArrayMode.value) {
+				replaceReactiveValue(values, Array.isArray(nextValue) ? nextValue : []);
+				return;
 			}
-			Object.assign(values, incoming);
+			syncReactiveObject(values, nextValue);
 		}, { deep: true });
+
+		watch([isArrayMode, scopePath], () => {
+			if (!isArrayMode.value || isRoot || !scopePath.value) return;
+			if (!Array.isArray(getPathValue(values, scopePath.value))) {
+				setPathValue(values, scopePath.value, []);
+				emitModel();
+			}
+		}, { immediate: true });
 
 		watch(() => props.children, syncChildren, { deep: true, immediate: true });
 
@@ -603,6 +764,117 @@ ElFormComponent = defineComponent({
 		provide(formFieldProviderKey, provider);
 		expose(provider);
 
+		function renderGroupHeader() {
+			if (!props.label && !props.description) return [];
+			return [
+				h('div', { class: 'space-y-0.5' }, [
+					props.label
+						? h('p', { class: 'text-[11px] font-semibold uppercase tracking-wider text-muted-foreground' }, [
+							props.label,
+							props.required ? h('span', { class: 'text-destructive' }, '*') : null,
+						])
+						: null,
+					props.description
+						? h('p', { class: 'text-[11px] leading-snug text-muted-foreground' }, props.description)
+						: null,
+				]),
+			];
+		}
+
+		function renderRoot(children) {
+			if (props.visible === false) return null;
+			const tag = props.tag || (isRoot ? 'form' : 'fieldset');
+			const rootProps = {
+				...attrs,
+				...(tag === 'form' ? {
+					noValidate: attrs.noValidate ?? attrs.novalidate ?? true,
+					onSubmit,
+				} : {}),
+			};
+			return h(tag, rootProps, children);
+		}
+
+		function rowButton(label, title, onClick) {
+			return h('button', {
+				type: 'button',
+				class: [
+					'grid place-items-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground',
+					props.compact ? 'size-6' : 'size-7',
+				],
+				title,
+				'aria-label': title,
+				onClick,
+			}, label);
+		}
+
+		function renderArrayItem(row, rowIndex) {
+			const item = normalizedItems.value || normalizeFormNode({ type: 'json' });
+			const itemContent = item.type === 'object'
+				? h(ElFormComponent, {
+					name: String(rowIndex),
+					type: 'object',
+					children: item.children || [],
+					compact: props.compact,
+					tag: 'fieldset',
+					class: props.compact ? 'space-y-1.5' : 'space-y-2',
+				})
+				: h(RenderNode, {
+					node: {
+						...item,
+						props: {
+							...(item.props || {}),
+							name: String(rowIndex),
+							label: item.props?.label || `Row ${rowIndex + 1}`,
+						},
+					},
+				});
+
+			return h('div', {
+				key: rowIndex,
+				class: [
+					'rounded-lg border border-border bg-background',
+					props.compact ? 'space-y-1.5 p-1.5' : 'space-y-2 p-2',
+				],
+			}, [
+				h('div', { class: 'flex items-center justify-between gap-2' }, [
+					h('span', { class: 'text-[11px] font-semibold uppercase tracking-wider text-muted-foreground' }, `Row ${rowIndex + 1}`),
+					h('span', { class: 'flex items-center gap-1' }, [
+						rowButton('↑', `Move row ${rowIndex + 1} up`, () => moveArrayRow(rowIndex, -1)),
+						rowButton('↓', `Move row ${rowIndex + 1} down`, () => moveArrayRow(rowIndex, 1)),
+						h('button', {
+							type: 'button',
+							class: [
+								'grid place-items-center rounded-md text-destructive hover:bg-destructive/10',
+								props.compact ? 'size-6' : 'size-7',
+							],
+							title: 'Remove',
+							'aria-label': `Remove row ${rowIndex + 1}`,
+							onClick: () => removeArrayRow(rowIndex),
+						}, '×'),
+					]),
+				]),
+				itemContent,
+			]);
+		}
+
+		function renderArray(slotChildren) {
+			return [
+				...renderGroupHeader(),
+				h('div', { class: props.compact ? 'space-y-1.5' : 'space-y-2' }, [
+					...arrayRows.value.map((row, index) => renderArrayItem(row, index)),
+					h('button', {
+						type: 'button',
+						class: [
+							'flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-border bg-background text-xs font-medium text-muted-foreground hover:border-primary/40 hover:text-foreground',
+							props.compact ? 'py-1.5' : 'py-2',
+						],
+						onClick: addArrayRow,
+					}, arrayAddLabel.value),
+				]),
+				...slotChildren,
+			];
+		}
+
 		return () => {
 			const slotProps = {
 				values,
@@ -618,16 +890,13 @@ ElFormComponent = defineComponent({
 			));
 			const slotChildren = slots.default ? slots.default(slotProps) : [];
 
-			return h(isRoot ? 'form' : 'fieldset', {
-				...attrs,
-				...(isRoot ? {
-					noValidate: attrs.noValidate ?? attrs.novalidate ?? true,
-					onSubmit,
-				} : {}),
-			}, [
-				...renderedChildren,
-				...slotChildren,
-			]);
+			return renderRoot(isArrayMode.value
+				? renderArray(slotChildren)
+				: [
+					...renderGroupHeader(),
+					...renderedChildren,
+					...slotChildren,
+				]);
 		};
 	},
 });

@@ -24,11 +24,30 @@ const playgroundInitial = {
 		{ label: 'Profile', value: 'profile', shortcut: 'Cmd+P' },
 		{ label: 'Settings', value: 'settings', shortcut: 'Cmd+,' },
 	],
-	schema: [
-		{ key: 'label', label: 'Label', placeholder: 'Profile', default: (index) => `Item ${index + 1}` },
-		{ key: 'value', label: 'Value', placeholder: 'profile', default: (index) => `item-${index + 1}` },
-		{ key: 'shortcut', label: 'Shortcut', placeholder: 'Cmd+P' },
-	],
+	schema: {
+		type: 'array',
+		label: 'Menu items',
+		items: {
+			type: 'ElForm',
+			properties: {
+				label: {
+					type: 'string',
+					label: 'Label',
+					placeholder: 'Profile',
+				},
+				value: {
+					type: 'string',
+					label: 'Value',
+					placeholder: 'profile',
+				},
+				shortcut: {
+					type: 'string',
+					label: 'Shortcut',
+					placeholder: 'Cmd+P',
+				},
+			},
+		},
+	},
 };
 </script>
 
@@ -58,7 +77,7 @@ const playgroundInitial = {
 				<Example
 					:source="SchemaRowsSrc"
 					filename="SchemaRows.vue"
-					description="The schema controls which fields appear, their labels, placeholders, input types, and defaults for new rows."
+					description="The standardized form schema controls which fields appear, their labels, placeholders, input types, options, and defaults for new rows."
 				>
 					<SchemaRows />
 				</Example>

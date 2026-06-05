@@ -5,7 +5,7 @@ defineOptions({
 	__doc: {
 		name: 'Drawer',
 		tag: '<ElDrawer>',
-		description: 'A slide-out panel for navigation menus, filters, or any secondary surface — slides from the left or right with backdrop dismiss, scroll lock, and focus trap built in.',
+		description: 'A slide-out panel for navigation menus, filters, or any secondary surface — slides from the left, right, or bottom with backdrop dismiss, drag dismiss, scroll lock, and focus trap built in.',
 		slots: [
 			{ name: 'trigger', description: 'Element that opens the drawer when clicked (omit when controlling open state yourself).' },
 			{ name: '(default)', description: 'Panel body.' },
@@ -16,6 +16,7 @@ defineOptions({
 			{ keys: 'Esc', action: 'Closes the drawer.' },
 			{ keys: 'Tab / Shift+Tab', action: 'Focus stays within the panel while open.' },
 			{ keys: 'Click backdrop', action: 'Dismisses the drawer. Add `static` on the host to disable.' },
+			{ keys: 'Drag handle', action: 'Bottom drawers can be dragged down from the pill handle to close.' },
 		],
 	},
 });
@@ -31,7 +32,7 @@ const props = defineProps({
 	side: {
 		type: String,
 		default: 'right',
-		_edit: { options: ['left', 'right'], description: 'Edge the panel slides in from.' },
+		_edit: { options: ['left', 'right', 'bottom'], description: 'Edge the panel slides in from.' },
 	},
 	title: {
 		type: String,
@@ -123,6 +124,15 @@ defineExpose({
 		<div
 			class="flex h-full flex-col bg-card/95 ring-1 ring-border backdrop-blur-sm"
 		>
+			<button
+				v-if="side === 'bottom'"
+				data-drag-handle
+				type="button"
+				class="group mx-auto mt-1 flex h-9 w-28 shrink-0 items-center justify-center"
+				aria-label="Drag to close drawer"
+			>
+				<span class="block h-1.5 w-12 rounded-full bg-muted-foreground/35 transition group-hover:bg-muted-foreground/50"></span>
+			</button>
 			<header v-if="title || $slots.header" class="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-4">
 				<slot name="header">
 						<h2 v-if="title" :id="titleId" class="text-base font-semibold tracking-tight text-foreground">{{ title }}</h2>

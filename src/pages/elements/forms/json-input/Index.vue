@@ -42,7 +42,7 @@ const doc = ElJsonInput.__doc;
 				<Example
 					:source="FormAndJsonSrc"
 					filename="FormAndJson.vue"
-					description="A practical pattern: normal form fields for common edits, raw JSON for advanced edits."
+					description="A standardized form schema renders common edits as fields, while the JSON tab stays available for manual changes."
 				>
 					<FormAndJson />
 				</Example>

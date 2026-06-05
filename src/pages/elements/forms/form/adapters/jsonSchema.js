@@ -134,7 +134,7 @@ function jsonSchemaComponentFor(schema, path, options) {
 	if (format === 'uri' || format === 'url') return 'ElUrlInput';
 	if (format === 'date') return 'ElDatePicker';
 	if (type === 'number' || type === 'integer') return 'ElNumberInput';
-	if (type === 'boolean') return 'ElCheckbox';
+	if (type === 'boolean') return 'ElToggle';
 	if (plain.maxLength && plain.maxLength > 160) return 'ElTextareaInput';
 	return 'ElTextInput';
 }

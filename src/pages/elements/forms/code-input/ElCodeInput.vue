@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import ElField from '../field/ElField.vue';
 import { fieldProps } from '../field/fieldProps.js';
 import { useField } from '../field/useField.js';
@@ -51,12 +51,35 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'focus', 'blur']);
 const mountEl = ref(null);
+const textareaEl = ref(null);
 const enhanced = ref(false);
 const field = useField(props, emit, { idPrefix: 'el-code-input', register: props._registerField });
+const labelId = computed(() => (field.fieldAttrs.value.label ? `${field.id.value}-label` : ''));
 let editorView = null;
 
 function update(value) {
 	field.onInput(value);
+}
+
+function applyEditorAttrs() {
+	if (!editorView?.dom) return;
+	editorView.dom.id = field.id.value;
+	editorView.dom.setAttribute('role', 'textbox');
+	editorView.dom.setAttribute('aria-multiline', 'true');
+	if (labelId.value) editorView.dom.setAttribute('aria-labelledby', labelId.value);
+	else editorView.dom.removeAttribute('aria-labelledby');
+	if (field.describedBy.value) editorView.dom.setAttribute('aria-describedby', field.describedBy.value);
+	else editorView.dom.removeAttribute('aria-describedby');
+	if (field.invalid.value) editorView.dom.setAttribute('aria-invalid', 'true');
+	else editorView.dom.removeAttribute('aria-invalid');
+}
+
+function focusControl() {
+	if (editorView) {
+		editorView.focus();
+		return;
+	}
+	textareaEl.value?.focus?.();
 }
 
 async function languageExtension(lang) {
@@ -79,7 +102,6 @@ async function mountEditor() {
 		const lang = await languageExtension(props.lang);
 		const theme = cm.EditorView.theme({
 			'&': {
-				minHeight: `${Math.max(props.rows, 4) * 1.65 + 2.5}rem`,
 				backgroundColor: 'var(--background)',
 				color: 'var(--foreground)',
 				fontSize: '12.5px',
@@ -123,11 +145,14 @@ async function mountEditor() {
 				}),
 			],
 		});
+		applyEditorAttrs();
 		enhanced.value = true;
 	} catch {
 		enhanced.value = false;
 	}
 }
+
+watch([labelId, field.describedBy, field.invalid], applyEditorAttrs);
 
 watch(field.value, (value) => {
 	if (!editorView) return;
@@ -147,10 +172,23 @@ onBeforeUnmount(() => {
 
 <template>
 	<ElField v-bind="field.fieldAttrs.value" :chrome="chrome">
+		<template #label="{ label, required, htmlFor }">
+			<label
+				v-if="label"
+				:id="labelId || undefined"
+				:for="enhanced ? undefined : htmlFor"
+				class="block cursor-pointer text-[11px] font-medium uppercase tracking-wider text-muted-foreground"
+				@click="enhanced ? focusControl() : undefined"
+			>
+				{{ label }}
+				<span v-if="required" class="text-destructive">*</span>
+			</label>
+		</template>
 		<div class="overflow-hidden rounded-xl border border-input bg-background focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30 data-[invalid]:border-destructive data-[invalid]:focus-within:border-destructive data-[invalid]:focus-within:ring-destructive/25" :data-invalid="field.invalid.value ? '' : undefined">
 			<div v-show="enhanced" ref="mountEl"></div>
 			<textarea
 				v-if="!enhanced"
+				ref="textareaEl"
 				v-bind="field.inputAttrs.value"
 				:rows="rows"
 				spellcheck="false"

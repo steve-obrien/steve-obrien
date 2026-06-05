@@ -17,7 +17,7 @@ export const defaultComponentByType = {
 	url: 'ElUrlInput',
 	number: 'ElNumberInput',
 	integer: 'ElNumberInput',
-	boolean: 'ElCheckbox',
+	boolean: 'ElToggle',
 	date: 'ElDatePicker',
 	array: 'ElJsonListInput',
 	object: 'ElForm',
@@ -75,6 +75,85 @@ function clone(value) {
 	if (value == null || typeof value !== 'object') return value;
 	if (Array.isArray(value)) return value.map(clone);
 	return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, clone(item)]));
+}
+
+function formatInferredLabel(key = '') {
+	return String(key)
+		.replace(/[-_]+/g, ' ')
+		.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+		.replace(/^./, (char) => char.toUpperCase());
+}
+
+function definedValues(values) {
+	return values.filter((value) => value !== undefined && value !== null);
+}
+
+function inferStringType(value, key = '') {
+	const name = String(key).toLowerCase();
+	const text = String(value || '');
+	if (name.includes('email') || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text)) return 'email';
+	if (
+		name === 'url'
+		|| name === 'href'
+		|| name.endsWith('url')
+		|| name.includes('avatar')
+		|| name.includes('image')
+		|| /^https?:\/\//.test(text)
+	) return 'url';
+	if (name.includes('date') || /^\d{4}-\d{2}-\d{2}$/.test(text)) return 'date';
+	if (text.length > 160 || text.includes('\n')) return 'text';
+	return 'string';
+}
+
+function inferNodeForValues(values, context = {}) {
+	const candidates = definedValues(values);
+	const props = context.key ? { label: formatInferredLabel(context.key) } : {};
+
+	if (!candidates.length) return { type: 'json', ...props };
+	if (candidates.every(Array.isArray)) {
+		return {
+			type: 'array',
+			...props,
+			items: inferNodeForValues(candidates.flat(), context),
+		};
+	}
+	if (candidates.every((value) => value && typeof value === 'object' && !Array.isArray(value))) {
+		return inferObjectFormNode(candidates, props);
+	}
+	if (candidates.some((value) => value && typeof value === 'object')) return { type: 'json', ...props };
+	if (candidates.every((value) => typeof value === 'boolean')) return { type: 'boolean', ...props };
+	if (candidates.every((value) => typeof value === 'number')) {
+		return { type: candidates.every(Number.isInteger) ? 'integer' : 'number', ...props };
+	}
+	if (candidates.every((value) => typeof value === 'string')) {
+		return { type: inferStringType(candidates[0], context.key), ...props };
+	}
+	return { type: 'json', ...props };
+}
+
+function inferObjectFormNode(objects, props = {}) {
+	const keys = [...new Set(objects.flatMap((object) => Object.keys(object)))];
+	return {
+		type: 'ElForm',
+		...props,
+		properties: Object.fromEntries(keys.map((key) => [
+			key,
+			inferNodeForValues(objects.map((object) => object[key]), { key }),
+		])),
+	};
+}
+
+export function inferFormNodeFromValue(value) {
+	if (Array.isArray(value)) {
+		return {
+			type: 'array',
+			items: inferNodeForValues(value),
+		};
+	}
+	if (value && typeof value === 'object') {
+		return inferObjectFormNode([value]);
+	}
+	return null;
 }
 
 function shorthandProps(node) {
@@ -185,6 +264,35 @@ export function normalizeFormNode(node, context = {}) {
 
 export function normalizeFormChildren(children) {
 	return normalizeChildren(children).filter(Boolean);
+}
+
+function resolveDefaultValue(value, context = {}) {
+	return typeof value === 'function' ? value(context.index ?? 0, context) : clone(value);
+}
+
+export function formNodeDefaultValue(node, context = {}) {
+	const normalized = normalizeFormNode(node);
+	if (!normalized) return null;
+	const props = normalized.props || {};
+	if (props.default !== undefined) return resolveDefaultValue(props.default, context);
+	if (props.options?.length) {
+		const first = props.options[0];
+		return first && typeof first === 'object' && 'value' in first ? clone(first.value) : clone(first);
+	}
+	if (normalized.type === 'object') {
+		return Object.fromEntries(
+			(normalized.children || [])
+				.map((child) => [child.props?.name, formNodeDefaultValue(child, context)])
+				.filter(([name]) => name),
+		);
+	}
+	if (normalized.type === 'array') return [];
+	if (normalized.type === 'boolean') return false;
+	if (normalized.type === 'number' || normalized.type === 'integer') return 0;
+	if (normalized.type === 'json') return null;
+	if (props.name === 'id' || props.name === 'value') return `item-${(context.index ?? 0) + 1}`;
+	if (props.name === 'label' || props.name === 'name') return `Item ${(context.index ?? 0) + 1}`;
+	return '';
 }
 
 function optionValues(options) {

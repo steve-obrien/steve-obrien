@@ -99,6 +99,14 @@ assert.deepEqual(parsedScriptData.scriptData.nav, [
 ]);
 assert.equal(parsedScriptData.scriptData.ignored, undefined);
 assert.deepEqual(parseScriptSetupData(scriptDataSource).nav[0], { label: 'Hero', href: '#hero' });
+const regeneratedScriptDataSource = buildSource(parsedScriptData.tree, {
+	props: parsedScriptData.props,
+	scriptData: parsedScriptData.scriptData,
+}).rows.map((row) => row.text).join('\n');
+assert.match(regeneratedScriptDataSource, /const nav = \[/);
+const reparsedGeneratedScriptData = parseSource(regeneratedScriptDataSource, { componentName: 'ScriptData', stamp });
+assert.equal(reparsedGeneratedScriptData.scriptData.nav.length, 2);
+assert.equal(reparsedGeneratedScriptData.scriptData.nav[0].label, 'Hero');
 assert.deepEqual(evaluatePreviewExpression("{ width: node.score + '%' }", { node: { score: 62 } }), {
 	matched: true,
 	value: { width: '62%' },

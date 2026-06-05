@@ -7,12 +7,41 @@ const rows = ref([
 	{ id: 'toast-2', title: 'Could not publish', tone: 'danger', duration: 0 },
 ]);
 
-const schema = [
-	{ key: 'id', label: 'ID', placeholder: 'toast-id', default: (index) => `toast-${index + 1}` },
-	{ key: 'title', label: 'Title', placeholder: 'Successfully saved' },
-	{ key: 'tone', label: 'Tone', placeholder: 'default | success | danger | warning', default: 'default' },
-	{ key: 'duration', label: 'Duration', type: 'number', default: 3600 },
-];
+const schema = {
+	type: 'array',
+	label: 'Toast rows',
+	items: {
+		type: 'ElForm',
+		properties: {
+			id: {
+				type: 'string',
+				label: 'ID',
+				placeholder: 'toast-id',
+			},
+			title: {
+				type: 'string',
+				label: 'Title',
+				placeholder: 'Successfully saved',
+			},
+			tone: {
+				type: 'string',
+				component: 'ElSelectInput',
+				label: 'Tone',
+				options: [
+					'default',
+					'success',
+					'danger',
+					'warning',
+				],
+			},
+			duration: {
+				type: 'number',
+				label: 'Duration',
+				default: 3600,
+			},
+		},
+	},
+};
 </script>
 
 <template>

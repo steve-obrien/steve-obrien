@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {
 	formDefinitionToJsonSchema,
+	inferFormNodeFromValue,
 	normalizeFormChildren,
 	normalizeFormNode,
 	registerFormType,
@@ -98,6 +99,28 @@ assert.equal(team.component, 'ElForm');
 assert.equal(fieldByName(team.children, 'invites').component, 'ElJsonListInput');
 assert.equal(fieldByName(team.children, 'invites').items.type, 'object');
 assert.equal(fieldByName(team.children, 'invites').items.children[0].props.name, 'email');
+
+const directArray = normalizeFormNode({
+	type: 'array',
+	items: { type: 'UserInvite' },
+});
+
+assert.equal(directArray.type, 'array');
+assert.equal(directArray.component, 'ElJsonListInput');
+assert.equal(directArray.items.component, 'ElForm');
+
+const inferredMenuItems = normalizeFormNode(inferFormNodeFromValue([
+	{ label: 'Open', value: 'open', href: 'https://example.com' },
+	{ label: 'Advanced', value: 'advanced', children: [{ label: 'Export', value: 'export' }] },
+	{ separator: true },
+]));
+
+assert.equal(inferredMenuItems.component, 'ElJsonListInput');
+assert.equal(inferredMenuItems.items.component, 'ElForm');
+assert.equal(fieldByName(inferredMenuItems.items.children, 'label').component, 'ElTextInput');
+assert.equal(fieldByName(inferredMenuItems.items.children, 'href').component, 'ElUrlInput');
+assert.equal(fieldByName(inferredMenuItems.items.children, 'separator').component, 'ElToggle');
+assert.equal(fieldByName(inferredMenuItems.items.children, 'children').component, 'ElJsonListInput');
 
 const schema = formDefinitionToJsonSchema(team);
 assert.deepEqual(schema, {

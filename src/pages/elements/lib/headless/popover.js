@@ -62,7 +62,7 @@ export class ElementPopover extends ElementBase {
 			{ name: 'floating-mode', type: "'viewport' | 'anchor'", description: 'viewport keeps the panel inside the browser; anchor keeps it attached to the trigger while scrolling.' },
 			{ name: 'flip', type: 'boolean', description: 'Allow the panel to flip to the opposite side when it would collide with the viewport.' },
 			{ name: 'lock-scroll', type: 'boolean', description: 'Lock document scrolling while the panel is open.' },
-			{ name: 'trigger', type: "'click' | 'hover'", description: 'How the trigger opens the panel. Default is click.' },
+			{ name: 'trigger', type: "'click' | 'hover' | 'hover-click'", description: 'How the trigger opens the panel. hover-click opens on hover and pins open on click.' },
 			{ name: 'hover-close-delay', type: 'number', description: 'Delay before closing a hover-triggered panel after pointer/focus leaves.' },
 			{ name: 'data-trigger-id', type: 'string', description: 'Id of an external trigger element.' },
 			{ name: 'data-panel-id', type: 'string', description: 'Id of an external (teleported) panel element.' },
@@ -95,6 +95,7 @@ export class ElementPopover extends ElementBase {
 		this._dismissOff = null;
 		this._dismissBindFrame = 0;
 		this._hoverCloseTimer = 0;
+		this._hoverPinned = false;
 	}
 
 	_positionOpts() {
@@ -144,6 +145,14 @@ export class ElementPopover extends ElementBase {
 		return this.getAttribute('trigger') || 'click';
 	}
 
+	_isHoverMode() {
+		return this._triggerMode() === 'hover' || this._triggerMode() === 'hover-click';
+	}
+
+	_isHoverClickMode() {
+		return this._triggerMode() === 'hover-click';
+	}
+
 	_hoverCloseDelay() {
 		return Math.max(0, Number(this.getAttribute('hover-close-delay') || 140));
 	}
@@ -160,16 +169,24 @@ export class ElementPopover extends ElementBase {
 	}
 
 	_closeFromHoverSoon() {
+		if (this._hoverPinned) return;
 		this._clearHoverClose();
 		this._hoverCloseTimer = setTimeout(() => {
 			this._hoverCloseTimer = 0;
+			if (this._hoverPinned) return;
 			this._syncOpen(false, false);
 		}, this._hoverCloseDelay());
 	}
 
+	_pinFromClick() {
+		this._clearHoverClose();
+		this._hoverPinned = true;
+		this._syncOpen(true, false);
+	}
+
 	_bindPanelHover() {
 		this._unbindPanelHover();
-		if (this._triggerMode() !== 'hover' || !this._panel) return;
+		if (!this._isHoverMode() || !this._panel) return;
 		const offPointerEnter = this.on(this._panel, 'pointerenter', () => this._clearHoverClose());
 		const offPointerLeave = this.on(this._panel, 'pointerleave', () => this._closeFromHoverSoon());
 		const offMouseEnter = this.on(this._panel, 'mouseenter', () => this._clearHoverClose());
@@ -219,13 +236,19 @@ export class ElementPopover extends ElementBase {
 		if (!isNativeTrigger(this._trigger) && !this._trigger.hasAttribute('tabindex')) {
 			this._trigger.setAttribute('tabindex', '0');
 		}
-		if (this._triggerMode() === 'hover') {
+		if (this._isHoverMode()) {
 			const offPointerEnter = this.on(this._trigger, 'pointerenter', () => this._openFromHover());
 			const offPointerLeave = this.on(this._trigger, 'pointerleave', () => this._closeFromHoverSoon());
 			const offMouseEnter = this.on(this._trigger, 'mouseenter', () => this._openFromHover());
 			const offMouseLeave = this.on(this._trigger, 'mouseleave', () => this._closeFromHoverSoon());
 			const offFocusIn = this.on(this._trigger, 'focusin', () => this._openFromHover());
 			const offFocusOut = this.on(this._trigger, 'focusout', () => this._closeFromHoverSoon());
+			const offClick = this._isHoverClickMode() ? this.on(this._trigger, 'click', () => this._pinFromClick()) : null;
+			const offKeydown = this._isHoverClickMode() ? this.on(this._trigger, 'keydown', (event) => {
+				if (event.key !== 'Enter' && event.key !== ' ') return;
+				event.preventDefault();
+				this._pinFromClick();
+			}) : null;
 			this._bindPanelHover();
 			this._triggerOff = () => {
 				offPointerEnter?.();
@@ -234,6 +257,8 @@ export class ElementPopover extends ElementBase {
 				offMouseLeave?.();
 				offFocusIn?.();
 				offFocusOut?.();
+				offClick?.();
+				offKeydown?.();
 			};
 			return;
 		}
@@ -309,6 +334,7 @@ export class ElementPopover extends ElementBase {
 			this._syncScrollLock(true);
 			this._bindDismiss();
 		} else {
+			this._hoverPinned = false;
 			this._unbindReflow();
 			this._unbindDismiss();
 			this._syncScrollLock(false);

@@ -164,7 +164,7 @@ function componentFor(schema, path, options) {
 	if (format === 'email') return 'ElEmailInput';
 	if (format === 'url') return 'ElUrlInput';
 	if (/number|bigint|int|float|double/.test(type)) return 'ElNumberInput';
-	if (/boolean|bool/.test(type)) return 'ElCheckbox';
+	if (/boolean|bool/.test(type)) return 'ElToggle';
 	if (/date/.test(type)) return 'ElCalendar';
 	return 'ElTextInput';
 }

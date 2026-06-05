@@ -1,29 +1,51 @@
 const eagerComponentModules = import.meta.glob([
 	'../components/*/El*.vue',
 	'../forms/*/El*.vue',
+	'../mobile/*/El*.vue',
 	'../visual/*/El*.vue',
 	'!../components/playground/ElRenderer.vue',
 	'!../components/toast/ElToastItem.vue',
 	'!../forms/_shared/El*.vue',
 ], { eager: true, import: 'default' });
 
+const eagerComponentSourceModules = import.meta.glob([
+	'../components/*/El*.vue',
+	'../forms/*/El*.vue',
+	'../mobile/*/El*.vue',
+	'../visual/*/El*.vue',
+	'!../components/playground/ElRenderer.vue',
+	'!../components/toast/ElToastItem.vue',
+	'!../forms/_shared/El*.vue',
+], { eager: true, import: 'default', query: '?raw' });
+
 const lazyComponentModules = import.meta.glob([
 	'../components/*/El*.vue',
 	'../forms/*/El*.vue',
+	'../mobile/*/El*.vue',
 	'../visual/*/El*.vue',
 	'!../components/playground/ElRenderer.vue',
 	'!../components/toast/ElToastItem.vue',
 	'!../forms/_shared/El*.vue',
 ], { import: 'default' });
 
-export const componentSections = ['components', 'visual', 'forms'];
+const lazyComponentSourceModules = import.meta.glob([
+	'../components/*/El*.vue',
+	'../forms/*/El*.vue',
+	'../mobile/*/El*.vue',
+	'../visual/*/El*.vue',
+	'!../components/playground/ElRenderer.vue',
+	'!../components/toast/ElToastItem.vue',
+	'!../forms/_shared/El*.vue',
+], { import: 'default', query: '?raw' });
+
+export const componentSections = ['components', 'visual', 'forms', 'mobile'];
 
 export function getComponentRecords() {
-	return recordsFromModules(eagerComponentModules, 'component');
+	return recordsFromModules(eagerComponentModules, 'component', eagerComponentSourceModules, 'source');
 }
 
 export function getLazyComponentRecords() {
-	return recordsFromModules(lazyComponentModules, 'loader');
+	return recordsFromModules(lazyComponentModules, 'loader', lazyComponentSourceModules, 'sourceLoader');
 }
 
 export function getComponentRecordByRoute(route) {
@@ -43,6 +65,7 @@ export function labelFromSection(section) {
 	return {
 		components: 'Components',
 		forms: 'Forms',
+		mobile: 'Mobile',
 		visual: 'Visual',
 	}[section] || labelFromSlug(section);
 }
@@ -77,14 +100,14 @@ export function primaryExportNameForSlug(slug) {
 		.join('')}`;
 }
 
-function recordsFromModules(modules, valueKey) {
+function recordsFromModules(modules, valueKey, sourceModules = {}, sourceKey = 'source') {
 	return Object.entries(modules)
-		.map(([path, value]) => recordFromPath(path, valueKey, value))
+		.map(([path, value]) => recordFromPath(path, valueKey, value, sourceKey, sourceModules[path]))
 		.filter(Boolean);
 }
 
-function recordFromPath(path, valueKey, value) {
-	const match = path.match(/^\.\.\/(components|forms|visual)\/([^/]+)\/(El[^/]+)\.vue$/);
+function recordFromPath(path, valueKey, value, sourceKey, source) {
+	const match = path.match(/^\.\.\/(components|forms|mobile|visual)\/([^/]+)\/(El[^/]+)\.vue$/);
 	if (!match) return null;
 	const [, section, slug, exportName] = match;
 	return {
@@ -94,6 +117,7 @@ function recordFromPath(path, valueKey, value) {
 		slug,
 		exportName,
 		route: `/elements/${section}/${slug}`,
+		[sourceKey]: source,
 		[valueKey]: value,
 	};
 }

@@ -396,7 +396,7 @@ const stageRootScope = computed(() => ({
 	...activeScriptData.value,
 }));
 const selectedData = computed(() => selectedNode.value?.binding ? getPath(stageRootScope.value, selectedNode.value.binding) : null);
-const source = computed(() => buildSource(tree.value, activeComponent.value));
+const source = computed(() => buildSource(tree.value, sourceComponentForBuild()));
 const sourceText = computed(() => source.value.rows.map((row) => row.text).join('\n'));
 const codeLineMode = computed(() => codeDirty.value || codeText.value !== sourceText.value);
 const selectedSourceLine = computed(() => sourceLineForNode(selectedNode.value, selectedId.value) || 1);
@@ -2150,7 +2150,7 @@ function applyCode(value, options = {}) {
 		const previousLayerValue = options.keepSelection ? layerValueForNodeId(tree.value, selectedId.value) : '';
 		const parsed = parseSource(value);
 		tree.value = parsed.tree;
-		activeScriptData.value = parsed.scriptData || {};
+		activeScriptData.value = previewScriptDataForParsedTree(parsed.tree, parsed.scriptData || {});
 		if (activeComponent.value) activeComponent.value.props = parsed.props;
 		pruneForcedStates();
 		const preservedSelection = previousLayerValue ? nodeIdForLayerValue(tree.value, previousLayerValue) : '';
@@ -2171,6 +2171,37 @@ function applyCode(value, options = {}) {
 	} catch (error) {
 		codeError.value = error.message;
 	}
+}
+
+function sourceComponentForBuild() {
+	if (!activeComponent.value) return null;
+	return {
+		...activeComponent.value,
+		scriptData: activeScriptData.value,
+	};
+}
+
+function previewScriptDataForParsedTree(parsedTree, parsedScriptData) {
+	const nextData = { ...(parsedScriptData || {}) };
+	for (const name of repeatListRootNames(parsedTree)) {
+		if (Object.prototype.hasOwnProperty.call(nextData, name)) continue;
+		if (!Object.prototype.hasOwnProperty.call(activeScriptData.value, name)) continue;
+		nextData[name] = cloneData(activeScriptData.value[name]);
+	}
+	return nextData;
+}
+
+function repeatListRootNames(node, names = new Set()) {
+	if (!node) return names;
+	const rootName = expressionRootName(node.repeat?.list);
+	if (rootName) names.add(rootName);
+	(node.children || []).forEach((child) => repeatListRootNames(child, names));
+	return names;
+}
+
+function expressionRootName(expression) {
+	const match = String(expression || '').trim().match(/^([A-Za-z_$][\w$]*)/);
+	return match?.[1] || '';
 }
 
 /**
@@ -3264,6 +3295,7 @@ function isEmptyElement(node) {
 							@hover-node="setHoveredNode"
 							@clear-hover="clearHoveredStageNode"
 							@delete-selected="removeSelected"
+							@select-node="selectNode"
 						>
 							<TemplateNode
 								v-if="tree"

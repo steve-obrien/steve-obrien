@@ -3,6 +3,8 @@ import { computed, onMounted, reactive, ref, useSlots } from 'vue';
 import CodePanel from './CodePanel.vue';
 import InspectorField from '../inspector/InspectorField.vue';
 import { inferSchema } from '../inspector/useInspector.js';
+import MobilePreview from './MobilePreview.vue';
+import ElAppShell from '../../mobile/shell/ElAppShell.vue';
 
 // Two modes, one component:
 //
@@ -32,6 +34,11 @@ const props = defineProps({
 	filename: { type: String, default: 'Playground.vue' },
 	/** Merged over defineProps defaults — for required props (tabs, items, options, …). */
 	initial: { type: Object, default: () => ({}) },
+	presentation: {
+		type: String,
+		default: 'default',
+		validator: (value) => ['default', 'mobile'].includes(value),
+	},
 });
 
 const slots = useSlots();
@@ -145,30 +152,111 @@ const codeFilename = computed(() => {
 	if (tab.value === 'data') return 'data';
 	return useSfc.value ? props.filename : 'Playground.vue';
 });
+
+const isMobilePresentation = computed(() => props.presentation === 'mobile');
+const mobileSlot = computed(() => props.inspect?.__doc?.playground?.mobileSlot || 'content');
+const previewClasses = computed(() => {
+	if (isMobilePresentation.value) {
+		return 'flex min-h-80 min-w-0 items-center justify-center overflow-hidden p-4 sm:p-8';
+	}
+	return 'flex min-h-80 items-center justify-center overflow-auto p-10';
+});
 </script>
 
 <template>
-	<figure class="my-6 overflow-hidden rounded-2xl border border-border bg-background">
+	<figure class="my-6 min-w-0 overflow-hidden rounded-2xl border border-border bg-background">
 		<figcaption v-if="title || description" class="border-b border-border bg-secondary/40 px-5 py-3">
 			<p v-if="title" class="text-sm font-semibold tracking-tight text-foreground">{{ title }}</p>
 			<p v-if="description" class="mt-0.5 text-sm text-muted-foreground">{{ description }}</p>
 		</figcaption>
 
-		<div class="grid max-h-[38rem] w-full grid-cols-1 items-stretch bg-gradient-to-br from-secondary/40 via-background to-secondary/30 lg:grid-cols-[minmax(0,1fr)_18rem]">
-			<div class="flex min-h-80 items-center justify-center overflow-auto p-10">
-				<!-- SFC mode: render the playground SFC; it owns the data + slots. -->
-				<component v-if="useSfc" :is="component" ref="playgroundRef" />
-				<!-- Auto mode: render the inspected component, forwarding every parent slot. -->
-				<component
-					v-else
-					:is="inspect"
-					v-bind="autoData"
-					@update:modelValue="onUpdateModelValue"
-				>
-					<template v-for="(_, name) in slots" :key="name" #[name]="slotProps">
-						<slot :name="name" v-bind="slotProps || {}" />
-					</template>
-				</component>
+		<div class="grid max-h-[38rem] w-full min-w-0 grid-cols-1 items-stretch bg-gradient-to-br from-secondary/40 via-background to-secondary/30 lg:grid-cols-[minmax(0,1fr)_18rem]">
+			<div :class="previewClasses">
+				<MobilePreview v-if="isMobilePresentation" :title="title">
+					<!-- SFC mode: render the playground SFC; it owns the data + slots. -->
+					<component v-if="useSfc" :is="component" ref="playgroundRef" />
+					<component
+						v-else-if="mobileSlot === 'shell'"
+						:is="inspect"
+						v-bind="autoData"
+						@update:modelValue="onUpdateModelValue"
+					>
+						<template #top>
+							<div class="border-b border-border bg-card px-4 py-3">
+								<p class="text-sm font-semibold text-foreground">Preview</p>
+								<p class="text-xs text-muted-foreground">Mobile component</p>
+							</div>
+						</template>
+						<div class="space-y-3 p-4">
+							<div class="rounded-[1.5rem] bg-primary p-5 text-primary-foreground">
+								<p class="text-xs font-medium uppercase tracking-[0.16em] opacity-80">Sample</p>
+								<p class="mt-2 text-xl font-semibold">Scrollable app content</p>
+							</div>
+							<div class="rounded-[1.5rem] border border-border bg-card p-4">
+								<p class="text-sm font-medium text-foreground">Card content</p>
+								<p class="mt-1 text-xs leading-5 text-muted-foreground">The shell keeps top and bottom chrome pinned while this area scrolls.</p>
+							</div>
+						</div>
+						<template #bottom>
+							<div class="border-t border-border bg-card px-4 py-3 text-center text-xs font-medium text-muted-foreground">Bottom chrome</div>
+						</template>
+					</component>
+					<ElAppShell v-else>
+						<template v-if="mobileSlot === 'top'" #top>
+							<component
+								:is="inspect"
+								v-bind="autoData"
+								@update:modelValue="onUpdateModelValue"
+							/>
+						</template>
+						<div class="space-y-3 p-4">
+							<component
+								v-if="mobileSlot === 'content'"
+								:is="inspect"
+								v-bind="autoData"
+								@update:modelValue="onUpdateModelValue"
+							>
+								<template v-for="(_, name) in slots" :key="name" #[name]="slotProps">
+									<slot :name="name" v-bind="slotProps || {}" />
+								</template>
+							</component>
+							<div v-else class="rounded-[1.5rem] bg-primary p-5 text-primary-foreground">
+								<p class="text-xs font-medium uppercase tracking-[0.16em] opacity-80">Preview</p>
+								<p class="mt-2 text-xl font-semibold">Mobile content area</p>
+							</div>
+						</div>
+						<template v-if="mobileSlot === 'overlay'" #overlay>
+							<component
+								:is="inspect"
+								v-bind="autoData"
+								@update:modelValue="onUpdateModelValue"
+							/>
+						</template>
+						<template v-if="mobileSlot === 'bottom'" #bottom>
+							<component
+								:is="inspect"
+								v-bind="autoData"
+								@update:modelValue="onUpdateModelValue"
+							/>
+						</template>
+					</ElAppShell>
+				</MobilePreview>
+
+				<template v-else>
+					<!-- SFC mode: render the playground SFC; it owns the data + slots. -->
+					<component v-if="useSfc" :is="component" ref="playgroundRef" />
+					<!-- Auto mode: render the inspected component, forwarding every parent slot. -->
+					<component
+						v-else
+						:is="inspect"
+						v-bind="autoData"
+						@update:modelValue="onUpdateModelValue"
+					>
+						<template v-for="(_, name) in slots" :key="name" #[name]="slotProps">
+							<slot :name="name" v-bind="slotProps || {}" />
+						</template>
+					</component>
+				</template>
 			</div>
 
 			<aside class="min-h-0 border-t border-border bg-background/70 text-left backdrop-blur lg:border-l lg:border-t-0">

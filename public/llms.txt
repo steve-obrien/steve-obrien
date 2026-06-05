@@ -8,6 +8,7 @@ Primary docs:
 - Theming: /elements/theming
 - Component spec: /elements/component-spec
 - Studio: /elements/components/studio
+- Mobile: /elements/mobile
 - Blocks: /elements/blocks/dashboard, /elements/blocks/chat, /elements/blocks/mail, /elements/blocks/forms, /elements/blocks/login, /elements/blocks/application-layout
 - Components: /elements/components/button, /elements/forms/text-input, /elements/visual/card
 - Headless: /elements/headless
@@ -41,6 +42,7 @@ import {
 Common families:
 - Components: `ElButton`, `ElDropdown`, `ElDialog`, `ElDrawer`, `ElPopover`, `ElTabs`, `ElTooltip`, `ElAccordion`, `ElMenu`, `ElTreeView`, `ElContextMenu`, `ElCommandPalette`, `ElToastStack`.
 - Forms: `ElForm`, `ElField`, `ElTextInput`, `ElEmailInput`, `ElUrlInput`, `ElTextareaInput`, `ElNumberInput`, `ElRangeInput`, `ElNativeSelect`, `ElSelectInput`, `ElListbox`, `ElCombobox`, `ElAutocomplete`, `ElCheckbox`, `ElRadioGroup`, `ElToggle`, `ElToggleButton`, `ElToggleButtonGroup`, `ElCalendar`, `ElDatePicker`, `ElPasswordInput`, `ElCodeInput`, `ElJsonInput`, `ElJsonListInput`, `ElColorInput`.
+- Mobile: `ElAppShell`, `ElAppTopBar`, `ElAppBottomNav`, `ElAppListItem`, `ElSafeArea`, `ElActionSheet`. Use shared form primitives such as `ElTextInput` for mobile search fields.
 - Visual: `ElCard`.
 - Utilities: `useToasts`, `fieldProps`, `useField`, validators, form registry helpers, tree utilities, `ElRenderer`.
 

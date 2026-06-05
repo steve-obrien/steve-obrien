@@ -19,13 +19,49 @@ const people = ref([
 	},
 ]);
 
-const schema = [
-	{ key: 'value', label: 'Value', placeholder: 'person-id', default: (index) => `person-${index + 1}` },
-	{ key: 'label', label: 'Name', placeholder: 'Person name', default: (index) => `Person ${index + 1}` },
-	{ key: 'role', label: 'Role', placeholder: 'Role or title' },
-	{ key: 'avatar', label: 'Avatar URL', type: 'url', placeholder: 'https://...' },
-	{ key: 'meta', label: 'Meta', type: 'json', default: () => ({ team: '', timezone: '' }) },
-];
+const schema = {
+	type: 'array',
+	label: 'People',
+	items: {
+		type: 'ElForm',
+		properties: {
+			value: {
+				type: 'string',
+				label: 'Value',
+				placeholder: 'person-id',
+			},
+			label: {
+				type: 'string',
+				label: 'Name',
+				placeholder: 'Person name',
+			},
+			role: {
+				type: 'string',
+				label: 'Role',
+				placeholder: 'Role or title',
+			},
+			avatar: {
+				type: 'url',
+				label: 'Avatar URL',
+				placeholder: 'https://...',
+			},
+			meta: {
+				type: 'ElForm',
+				label: 'Meta',
+				properties: {
+					team: {
+						type: 'string',
+						label: 'Team',
+					},
+					timezone: {
+						type: 'string',
+						label: 'Timezone',
+					},
+				},
+			},
+		},
+	},
+};
 </script>
 
 <template>

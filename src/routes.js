@@ -54,7 +54,11 @@ const generatedComponentRoutes = getLazyComponentRecords()
 		return {
 			path: record.route,
 			component: generatedComponentPage,
-			props: { componentLoader: record.loader },
+			props: {
+				componentLoader: record.loader,
+				componentSourceLoader: record.sourceLoader,
+				section: record.section,
+			},
 			meta: { title: titleFromRoutePath(record.route) },
 		};
 	})

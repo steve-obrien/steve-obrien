@@ -1,6 +1,7 @@
 <script setup>
 import { computed, useSlots } from 'vue';
 import CodePanel from './CodePanel.vue';
+import MobilePreview from './MobilePreview.vue';
 
 // Pair a live demo with its source code — guaranteed in sync because both come
 // from the same SFC file:
@@ -22,14 +23,30 @@ const props = defineProps({
 	codeFirst: { type: Boolean, default: false },
 	previewLines: { type: Number, default: 5 },
 	propertiesTitle: { type: String, default: 'Properties' },
+	presentation: {
+		type: String,
+		default: 'default',
+		validator: (value) => ['default', 'mobile'].includes(value),
+	},
+	deviceTitle: { type: String, default: '' },
+	device: { type: String, default: 'Elements Phone' },
 });
 
 const slots = useSlots();
 const hasProperties = computed(() => Boolean(slots.properties));
+const isMobilePresentation = computed(() => props.presentation === 'mobile');
+const previewClasses = computed(() => {
+	if (isMobilePresentation.value) {
+		return hasProperties.value
+			? 'flex min-h-[200px] items-center justify-center overflow-hidden bg-secondary/30 p-4 sm:p-8'
+			: 'flex min-h-[200px] items-center justify-center overflow-hidden bg-secondary/30 p-4 sm:p-8';
+	}
+	return 'flex min-h-[200px] items-center justify-center overflow-auto p-10';
+});
 </script>
 
 <template>
-	<figure class="my-6 overflow-hidden rounded-2xl border border-border bg-background">
+	<figure class="my-6 min-w-0 overflow-hidden rounded-2xl border border-border bg-background">
 		<figcaption v-if="title || description" class="border-b border-border bg-secondary/40 px-5 py-3">
 			<p v-if="title" class="text-sm font-semibold tracking-tight text-foreground">{{ title }}</p>
 			<p v-if="description" class="mt-0.5 text-sm text-muted-foreground">{{ description }}</p>
@@ -49,8 +66,15 @@ const hasProperties = computed(() => Boolean(slots.properties));
 				? 'grid min-h-[200px] grid-cols-1 items-stretch bg-background md:grid-cols-[minmax(0,1fr)_18rem]'
 				: 'block'"
 		>
-			<div class="flex min-h-[200px] items-center justify-center overflow-auto p-10">
-				<slot />
+			<div :class="previewClasses">
+				<MobilePreview
+					v-if="isMobilePresentation"
+					:title="deviceTitle || title"
+					:device="device"
+				>
+					<slot />
+				</MobilePreview>
+				<slot v-else />
 			</div>
 
 			<aside

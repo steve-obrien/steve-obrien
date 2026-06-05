@@ -1,50 +1,101 @@
 <script setup>
-import { computed, ref } from 'vue';
-import { ElCheckbox, ElJsonInput, ElNativeSelect, ElTextInput } from '../../../lib/vue';
+import { ref } from 'vue';
+import { ElJsonInput } from '../../../lib/vue';
 
 const config = ref({
-	name: 'Elements CRM',
-	visibility: 'team',
-	enableAi: true,
+	teamName: 'Platform team',
+	ownerEmail: 'platform@example.com',
+	defaultRole: 'member',
+	active: true,
+	billing: {
+		name: 'Alex Morgan',
+		email: 'billing@example.com',
+	},
+	invites: [
+		{ email: 'maya@example.com', role: 'admin' },
+		{ email: 'noah@example.com', role: 'viewer' },
+	],
 });
 
-const jsonValue = computed({
-	get: () => config.value,
-	set: (value) => {
-		if (value && typeof value === 'object' && !Array.isArray(value)) config.value = value;
+const schema = {
+	type: 'ElForm',
+	properties: {
+		teamName: {
+			type: 'string',
+			label: 'Team name',
+			required: true,
+			placeholder: 'Platform team',
+		},
+		ownerEmail: {
+			type: 'email',
+			label: 'Owner email',
+			required: true,
+		},
+		defaultRole: {
+			type: 'string',
+			component: 'ElSelectInput',
+			label: 'Default role',
+			options: [
+				{ label: 'Admin', value: 'admin' },
+				{ label: 'Member', value: 'member' },
+				{ label: 'Viewer', value: 'viewer' },
+			],
+		},
+		active: {
+			type: 'boolean',
+			label: 'Active team',
+		},
+		billing: {
+			type: 'ElForm',
+			label: 'Billing contact',
+			properties: {
+				name: {
+					type: 'string',
+					label: 'Contact name',
+				},
+				email: {
+					type: 'email',
+					label: 'Contact email',
+				},
+			},
+		},
+		invites: {
+			type: 'array',
+			label: 'Invites',
+			items: {
+				type: 'ElForm',
+				properties: {
+					email: {
+						type: 'email',
+						label: 'Invitee email',
+						required: true,
+					},
+					role: {
+						type: 'string',
+						component: 'ElSelectInput',
+						label: 'Role',
+						options: [
+							'admin',
+							'member',
+							'viewer',
+						],
+					},
+				},
+			},
+		},
 	},
-});
+};
 </script>
 
 <template>
-	<div class="grid w-full max-w-4xl gap-5 lg:grid-cols-2">
-		<div class="space-y-4 rounded-2xl border border-border bg-card p-5 text-card-foreground">
-			<h3 class="text-lg font-semibold tracking-tight">Form controls</h3>
-			<ElTextInput
-				v-model="config.name"
-				label="Workspace name"
-			/>
-			<ElNativeSelect
-				v-model="config.visibility"
-				label="Visibility"
-				:options="[
-					{ label: 'Private', value: 'private' },
-					{ label: 'Team', value: 'team' },
-					{ label: 'Public', value: 'public' },
-				]"
-			/>
-			<ElCheckbox
-				v-model="config.enableAi"
-				label="Enable AI features"
-				description="Expose AI-specific examples and generated UI helpers."
-			/>
-		</div>
-
+	<div class="grid w-full max-w-4xl gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
 		<ElJsonInput
-			v-model="jsonValue"
-			label="Raw JSON"
-			description="Edit the same data directly. Valid JSON updates the form."
-			:rows="13"
+			v-model="config"
+			label="Team setup"
+			description="The same schema renders field controls and a raw JSON editor."
+			:schema="schema"
+			:rows="15"
 		/>
+		<pre class="max-h-[34rem] overflow-auto rounded-xl border border-border bg-secondary/50 p-3 text-xs text-muted-foreground">{{ config }}</pre>
 	</div>
 </template>

@@ -100,6 +100,7 @@ export {
 	FORM_NODE_RESERVED_KEYS,
 	defaultComponentByType,
 	formDefinitionToJsonSchema,
+	formNodeDefaultValue,
 	formNodeToJsonSchema,
 	getFormType,
 	normalizeFormChildren,
@@ -117,6 +118,14 @@ export {
 	zodSchemaAdapter,
 	zodSchemaToChildren,
 } from '../../forms/form/schemaAdapter.js';
+
+// Mobile primitives
+export { default as ElAppBottomNav } from '../../mobile/bottom-nav/ElAppBottomNav.vue';
+export { default as ElAppListItem } from '../../mobile/list-item/ElAppListItem.vue';
+export { default as ElAppShell } from '../../mobile/shell/ElAppShell.vue';
+export { default as ElAppTopBar } from '../../mobile/top-bar/ElAppTopBar.vue';
+export { default as ElActionSheet } from '../../mobile/action-sheet/ElActionSheet.vue';
+export { default as ElSafeArea } from '../../mobile/safe-area/ElSafeArea.vue';
 
 // Rehydration
 export { default as ElRenderer } from '../../components/playground/ElRenderer.vue';

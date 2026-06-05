@@ -9,6 +9,7 @@ import ComponentProps from '../../_layout/docs/ComponentProps.vue';
 import ComponentEvents from '../../_layout/docs/ComponentEvents.vue';
 import ComponentKeyboard from '../../_layout/docs/ComponentKeyboard.vue';
 import { ElTreeView } from '../../lib/vue';
+import ElTreeViewSrc from './ElTreeView.vue?raw';
 import Layers from './examples/Layers.vue';
 import LayersSrc from './examples/Layers.vue?raw';
 import ExternalDrops from './examples/ExternalDrops.vue';
@@ -110,65 +111,58 @@ function applyDropToRows(rows, { item, target, position }) {
 <template>
 	<ElementsLayout>
 		<DocPage
-			name="Tree view"
-			tagline="Keyboard navigable trees for layers panels, file browsers, document outlines, and async server-backed hierarchies."
-			tag="<ElTreeView>"
-		>
+		name="Tree view"
+		tagline="Keyboard navigable trees for layers panels, file browsers, document outlines, and async server-backed hierarchies."
+		tag="<ElTreeView>">
 			<DocSection eyebrow="Playground" title="Try every prop live">
 				<Playground
-					:inspect="ElTreeView"
-					:initial="{ modelValue: 'content', items: initialItems }"
-					title="Tree view playground"
-					description="Edit the data, select nodes, expand branches, and reorder items with drag and drop."
-				/>
+				:inspect="ElTreeView"
+				:initial="{ modelValue: 'content', items: initialItems }"
+				title="Tree view playground"
+				description="Edit the data, select nodes, expand branches, and reorder items with drag and drop." />
 			</DocSection>
 
 			<DocSection eyebrow="Demo" title="Figma-style layers">
 				<Example
-					:source="LayersSrc"
-					filename="Layers.vue"
-					description="Use v-model to programmatically highlight a layer from the stage, custom slots for metadata, and drag/drop to reorder the tree."
-				>
+				:source="LayersSrc"
+				filename="Layers.vue"
+				description="Use v-model to programmatically highlight a layer from the stage, custom slots for metadata, and drag/drop to reorder the tree.">
 					<Layers />
 				</Example>
 			</DocSection>
 
 			<DocSection eyebrow="Demo" title="External drag/drop">
 				<Example
-					:source="ExternalDropsSrc"
-					filename="ExternalDrops.vue"
-					description="Accept drops from a palette by declaring DataTransfer types, then apply the insertion in your store."
-				>
+				:source="ExternalDropsSrc"
+				filename="ExternalDrops.vue"
+				description="Accept drops from a palette by declaring DataTransfer types, then apply the insertion in your store.">
 					<ExternalDrops />
 				</Example>
 			</DocSection>
 
 			<DocSection eyebrow="Demo" title="File browser">
 				<Example
-					:source="FileBrowserSrc"
-					filename="FileBrowser.vue"
-					description="A file tree can use folder/file icons and comfortable row density while keeping the same keyboard navigation."
-				>
+				:source="FileBrowserSrc"
+				filename="FileBrowser.vue"
+				description="A file tree can use ElContextMenu for folder, file, and empty-space actions while the tree only emits the right-click context.">
 					<FileBrowser />
 				</Example>
 			</DocSection>
 
 			<DocSection eyebrow="Demo" title="Finder-style sidebar">
 				<Example
-					:source="FinderMenuSrc"
-					filename="FinderMenu.vue"
-					description="Use the finder variant with toggleTransition for a softer sidebar tree that feels closer to an Apple Finder menu."
-				>
+				:source="FinderMenuSrc"
+				filename="FinderMenu.vue"
+				description="Use the finder variant with toggleTransition for a softer sidebar tree that feels closer to an Apple Finder menu.">
 					<FinderMenu />
 				</Example>
 			</DocSection>
 
 			<DocSection eyebrow="Demo" title="Async loading">
 				<Example
-					:source="AsyncLoadingSrc"
-					filename="AsyncLoading.vue"
-					description="Lazy nodes emit load-children on expand. Show loading on the node, then replace its children from the server response."
-				>
+				:source="AsyncLoadingSrc"
+				filename="AsyncLoading.vue"
+				description="Lazy nodes emit load-children on expand. Show loading on the node, then replace its children from the server response.">
 					<AsyncLoading />
 				</Example>
 			</DocSection>
@@ -181,6 +175,9 @@ function applyDropToRows(rows, { item, target, position }) {
 					</p>
 					<p>
 						When a valid drag hovers over a collapsed branch, the branch opens after <code class="text-foreground">dragExpandDelay</code>. This matches file explorers and layers panels where users pause over a folder/group before dropping inside nested content.
+					</p>
+					<p>
+						Context menus follow the same pattern: TreeView emits a generic <code class="text-foreground">context-menu</code> intent with <code class="text-foreground">kind</code>, <code class="text-foreground">item</code>, and <code class="text-foreground">node</code>. Your app can pass that payload to <code class="text-foreground">ElContextMenu</code> and decide whether a folder, file, DOM node, layer, or empty tree space should receive different actions.
 					</p>
 					<p>
 						The generic tree helpers are exported separately so a store can flatten visible rows, build an id index, and move nested items without mounting the component. A normalized store can still use the same event shape, then implement its own move operation against
@@ -206,10 +203,9 @@ function applyDropToRows(rows, { item, target, position }) {
 						<span>Use</span>
 					</div>
 					<div
-						v-for="utility in utilityRows"
-						:key="utility.name"
-						class="grid gap-2 border-b border-border px-4 py-3 last:border-b-0 md:grid-cols-[minmax(13rem,0.9fr)_1.5fr] md:gap-4"
-					>
+					v-for="utility in utilityRows"
+					:key="utility.name"
+					class="grid gap-2 border-b border-border px-4 py-3 last:border-b-0 md:grid-cols-[minmax(13rem,0.9fr)_1.5fr] md:gap-4">
 						<code class="text-foreground">{{ utility.name }}</code>
 						<p class="leading-6 text-muted-foreground">{{ utility.description }}</p>
 					</div>
@@ -225,12 +221,12 @@ function applyDropToRows(rows, { item, target, position }) {
 						When a drop happens, treat the TreeView event as an instruction. Update the moved row's parent id and sibling order in your store or API, then let the derived tree refresh. That keeps the visual component from owning persistence rules.
 					</p>
 				</div>
-				<CodeBlock class="mt-5" :code="databaseCode" lang="js" />
+				<CodeBlock class="mt-5" :code="databaseCode" lang="js"></CodeBlock>
 			</DocSection>
 
 			<DocSection title="Reference">
-				<ComponentProps :component="ElTreeView" />
-				<ComponentEvents :component="ElTreeView" />
+				<ComponentProps :component="ElTreeView" :source="ElTreeViewSrc" />
+				<ComponentEvents :component="ElTreeView" :source="ElTreeViewSrc" />
 				<ComponentKeyboard :component="ElTreeView" />
 			</DocSection>
 		</DocPage>

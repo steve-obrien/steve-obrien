@@ -9,6 +9,177 @@ import {
 	treeItemChildren,
 	treeItemHasChildren,
 } from './treeUtils.js';
+import { treeItemsFormSchema } from './treeSchemas.js';
+
+/**
+ * @typedef {object} TreeItemAction
+ * @property {string} [value]
+ * @property {string} [label]
+ * @property {string} [icon]
+ * @property {boolean} [disabled]
+ */
+
+/**
+ * @typedef {object} TreeItem
+ * @property {string|number} [id]
+ * @property {string|number} [value]
+ * @property {string} [label]
+ * @property {string} [name]
+ * @property {string} [icon]
+ * @property {string} [rightIcon]
+ * @property {string} [rightIconAction]
+ * @property {string} [rightIconLabel]
+ * @property {boolean} [open]
+ * @property {boolean} [lazy]
+ * @property {boolean} [loading]
+ * @property {boolean} [disabled]
+ * @property {boolean} [draggable]
+ * @property {boolean} [acceptsChildren]
+ * @property {string} [slot]
+ * @property {Array<TreeItemAction>} [actions]
+ * @property {Array<TreeItem>} [children]
+ * Extra app-specific fields are preserved and returned in node payloads.
+ */
+
+/**
+ * @typedef {Array<TreeItem>} TreeItems
+ * @example
+ * const items = [
+ * 	{
+ * 		id: 'src',
+ * 		label: 'src',
+ * 		type: 'folder',
+ * 		open: true,
+ * 		children: [
+ * 			{ id: 'src-index', label: 'Index.vue', type: 'file' },
+ * 		],
+ * 	},
+ * ];
+ */
+
+/**
+ * @typedef {object} TreeNode
+ * @property {TreeItem} item
+ * @property {string|number} value
+ * @property {string|number} label
+ * @property {number} depth
+ * @property {TreeNode|null} parent
+ * @property {Array<number>} path
+ * @property {boolean} open
+ * @property {boolean} loading
+ * @property {boolean} expandable
+ */
+
+/**
+ * @typedef {object} TreeContextMenuPayload
+ * @property {MouseEvent} event
+ * @property {'item'|'empty'} kind
+ * @property {TreeItem|null} item
+ * @property {string|number|null} value
+ * @property {TreeNode|null} node
+ * @example
+ * const rowContext = {
+ * 	event: new MouseEvent('contextmenu'),
+ * 	kind: 'item',
+ * 	item: { id: 'src-pages-elements', label: 'ElementsLayout.vue', type: 'file' },
+ * 	value: 'src-pages-elements',
+ * 	node: {
+ * 		item: { id: 'src-pages-elements', label: 'ElementsLayout.vue', type: 'file' },
+ * 		value: 'src-pages-elements',
+ * 		label: 'ElementsLayout.vue',
+ * 		depth: 3,
+ * 		parent: null,
+ * 		path: [0, 0, 0],
+ * 		open: false,
+ * 		loading: false,
+ * 		expandable: false,
+ * 	},
+ * };
+ * @example
+ * const emptyContext = {
+ * 	event: new MouseEvent('contextmenu'),
+ * 	kind: 'empty',
+ * 	item: null,
+ * 	value: null,
+ * 	node: null,
+ * };
+ */
+
+/**
+ * @typedef {'before'|'inside'|'after'} TreeDropPosition
+ */
+
+/**
+ * @typedef {'tree'|'external'} TreeDropKind
+ */
+
+/**
+ * @typedef {object} TreeSelectionPayload
+ * @property {TreeItem} item
+ * @property {string|number} value
+ * @property {TreeNode} node
+ */
+
+/**
+ * @typedef {object} TreeActionPayload
+ * @property {TreeItemAction} action
+ * @property {TreeItem} item
+ * @property {string|number} value
+ * @property {TreeNode} node
+ */
+
+/**
+ * @typedef {object} TreeTogglePayload
+ * @property {TreeItem} item
+ * @property {string|number} value
+ * @property {boolean} open
+ */
+
+/**
+ * @typedef {object} TreeLoadChildrenPayload
+ * @property {TreeItem} item
+ * @property {string|number} value
+ */
+
+/**
+ * @typedef {object} TreeDragPreviewPayload
+ * @property {TreeItem} item
+ * @property {string|number} value
+ * @property {TreeNode} node
+ * @property {TreeDropPosition} position
+ * @property {TreeDropKind} kind
+ */
+
+/**
+ * @typedef {object} TreeDragPreviewEndPayload
+ * @property {string|number} value
+ * @property {TreeDropPosition} position
+ * @property {TreeDropKind} kind
+ */
+
+/**
+ * @typedef {object} TreeReorderPayload
+ * @property {TreeItems} items
+ * @property {TreeItem} item
+ * @property {string|number} sourceValue
+ * @property {TreeNode} sourceNode
+ * @property {TreeItem} target
+ * @property {string|number} targetValue
+ * @property {TreeNode} targetNode
+ * @property {TreeDropPosition} position
+ */
+
+/**
+ * @typedef {object} TreeExternalDropPayload
+ * @property {DragEvent} event
+ * @property {DataTransfer|null} dataTransfer
+ * @property {Array<string>} types
+ * @property {(type: string) => string} getData
+ * @property {TreeItem} item
+ * @property {string|number} value
+ * @property {TreeNode} node
+ * @property {TreeDropPosition} position
+ */
 
 defineOptions({
 	__doc: {
@@ -22,18 +193,24 @@ defineOptions({
 			{ name: 'item.slot', payload: '{ item, node, depth, open, selected, loading }', description: 'Set item.slot to a named slot for special node rendering.' },
 		],
 		events: [
-			{ name: 'update:modelValue', payload: '(value)', description: 'Emitted when the selected node changes.' },
-			{ name: 'select', payload: '({ item, value, node })', description: 'Fired when a tree item is selected.' },
-			{ name: 'hover', payload: '({ item, value, node })', description: 'Fired when a pointer enters a tree row.' },
-			{ name: 'hover-end', payload: '({ item, value, node })', description: 'Fired when a pointer leaves a tree row.' },
-			{ name: 'action', payload: '({ action, item, value, node })', description: 'Fired when a right-side item action is clicked.' },
-			{ name: 'toggle', payload: '({ item, value, open })', description: 'Fired when a branch is opened or closed.' },
-			{ name: 'load-children', payload: '({ item, value })', description: 'Fired when a lazy node is opened and needs children.' },
-			{ name: 'drag-preview', payload: '({ item, value, node, position, kind })', description: 'Fired while a valid drag target is being previewed.' },
-			{ name: 'drag-preview-end', payload: '({ value, position, kind })', description: 'Fired when the current drag preview is cleared.' },
-			{ name: 'reorder', payload: '({ items, item, sourceValue, sourceNode, target, targetValue, targetNode, position })', description: 'Fired after drag/drop with a reordered items array.' },
-			{ name: 'external-drop', payload: '({ event, dataTransfer, types, getData, item, value, node, position })', description: 'Fired when accepted data from outside the tree is dropped onto a row.' },
-			{ name: 'update:items', payload: '(items)', description: 'Emitted with the reordered tree so callers can sync v-model:items.' },
+			{ name: 'update:modelValue', payload: '(value: string | number)', description: 'Emitted when the selected node changes.' },
+			{ name: 'select', payload: '({ item, value, node })', typeRef: 'TreeSelectionPayload', description: 'Fired when a tree item is selected.' },
+			{ name: 'hover', payload: '({ item, value, node })', typeRef: 'TreeSelectionPayload', description: 'Fired when a pointer enters a tree row.' },
+			{ name: 'hover-end', payload: '({ item, value, node })', typeRef: 'TreeSelectionPayload', description: 'Fired when a pointer leaves a tree row.' },
+			{ name: 'action', payload: '({ action, item, value, node })', typeRef: 'TreeActionPayload', description: 'Fired when a right-side item action is clicked.' },
+			{
+				name: 'context-menu',
+				payload: '(payload: TreeContextMenuPayload)',
+				typeRef: 'TreeContextMenuPayload',
+				description: 'Fired when a tree row or empty tree space is right-clicked. Use kind to distinguish item from empty context.',
+			},
+			{ name: 'toggle', payload: '({ item, value, open })', typeRef: 'TreeTogglePayload', description: 'Fired when a branch is opened or closed.' },
+			{ name: 'load-children', payload: '({ item, value })', typeRef: 'TreeLoadChildrenPayload', description: 'Fired when a lazy node is opened and needs children.' },
+			{ name: 'drag-preview', payload: '({ item, value, node, position, kind })', typeRef: 'TreeDragPreviewPayload', description: 'Fired while a valid drag target is being previewed.' },
+			{ name: 'drag-preview-end', payload: '({ value, position, kind })', typeRef: 'TreeDragPreviewEndPayload', description: 'Fired when the current drag preview is cleared.' },
+			{ name: 'reorder', payload: '({ items, item, sourceValue, sourceNode, target, targetValue, targetNode, position })', typeRef: 'TreeReorderPayload', description: 'Fired after drag/drop with a reordered items array.' },
+			{ name: 'external-drop', payload: '({ event, dataTransfer, types, getData, item, value, node, position })', typeRef: 'TreeExternalDropPayload', description: 'Fired when accepted data from outside the tree is dropped onto a row.' },
+			{ name: 'update:items', payload: '(items: TreeItems)', description: 'Emitted with the reordered tree so callers can sync v-model:items.' },
 		],
 		keyboard: [
 			{ keys: '↑ / ↓', action: 'Move focus through visible items.' },
@@ -46,12 +223,16 @@ defineOptions({
 	},
 });
 
+
 const props = defineProps({
 	modelValue: {
 		type: [String, Number],
 		default: '',
 		_edit: { description: 'Selected node value. Update it programmatically to highlight a node from another part of the UI.' },
 	},
+	/**
+	 * @type {TreeItems}
+	 */
 	items: {
 		type: Array,
 		required: true,
@@ -61,15 +242,7 @@ const props = defineProps({
 			props: {
 				compact: true,
 				addLabel: '+ Add node',
-				schema: [
-					{ key: 'id', label: 'ID', placeholder: 'node-id', default: (index) => `node-${index + 1}` },
-					{ key: 'label', label: 'Label', placeholder: 'Layer name', default: (index) => `Node ${index + 1}` },
-					{ key: 'icon', label: 'Icon path', placeholder: 'SVG path data' },
-					{ key: 'rightIcon', label: 'Right icon', placeholder: 'SVG path data' },
-					{ key: 'open', label: 'Open', type: 'boolean', default: false },
-					{ key: 'lazy', label: 'Lazy', type: 'boolean', default: false },
-					{ key: 'acceptsChildren', label: 'Accept drops', type: 'boolean', default: true },
-				],
+				schema: treeItemsFormSchema,
 			},
 		},
 	},
@@ -160,7 +333,7 @@ const props = defineProps({
 	},
 });
 
-const emit = defineEmits(['update:modelValue', 'update:items', 'update:openValues', 'select', 'hover', 'hover-end', 'action', 'toggle', 'load-children', 'drag-preview', 'drag-preview-end', 'reorder', 'external-drop']);
+const emit = defineEmits(['update:modelValue', 'update:items', 'update:openValues', 'select', 'hover', 'hover-end', 'action', 'context-menu', 'toggle', 'load-children', 'drag-preview', 'drag-preview-end', 'reorder', 'external-drop']);
 const activeValue = ref(props.modelValue);
 const openSet = ref(new Set(seedTreeOpenValues(props.items, props.openValues)));
 const dropTarget = ref(null);
@@ -275,6 +448,29 @@ function onActionClick(action, node) {
 		item: node.item,
 		value: node.value,
 		node,
+	});
+}
+
+function onRowContextMenu(event, node) {
+	event.preventDefault();
+	activeValue.value = node.value;
+	emit('context-menu', {
+		event,
+		item: node.item,
+		value: node.value,
+		node,
+		kind: 'item',
+	});
+}
+
+function onTreeContextMenu(event) {
+	event.preventDefault();
+	emit('context-menu', {
+		event,
+		item: null,
+		value: null,
+		node: null,
+		kind: 'empty',
 	});
 }
 
@@ -629,6 +825,7 @@ onBeforeUnmount(cancelDragExpand);
 		]"
 		:aria-label="label"
 		:aria-describedby="draggable ? `${treeId}-instructions` : undefined"
+		@contextmenu="onTreeContextMenu"
 	>
 		<p v-if="draggable" :id="`${treeId}-instructions`" class="sr-only">Use Alt plus Up or Down arrow to reorder the focused tree item.</p>
 		<p class="sr-only" aria-live="polite">{{ liveMessage }}</p>
@@ -671,6 +868,7 @@ onBeforeUnmount(cancelDragExpand);
 				@drop="onDrop($event, node)"
 				@dragend="onDragEnd"
 				@focus="activeValue = node.value"
+				@contextmenu.stop="onRowContextMenu($event, node)"
 			>
 				<slot
 					name="row"

@@ -7,7 +7,13 @@
 const SHIKI_URL = 'https://esm.sh/shiki@1';
 const LIGHT = 'github-light';
 const DARK = 'github-dark';
-const LANGS = ['vue', 'html', 'javascript', 'typescript', 'css', 'json'];
+const LANGS = ['vue', 'html', 'javascript', 'typescript', 'css', 'json', 'markdown', 'text'];
+const LANG_ALIASES = {
+	js: 'javascript',
+	ts: 'typescript',
+	md: 'markdown',
+	txt: 'text',
+};
 
 let highlighterPromise = null;
 let loadFailed = false;
@@ -42,8 +48,9 @@ export async function highlight(code, lang = 'vue') {
 	const h = await getHighlighter();
 	if (!h) return null;
 	try {
+		const normalizedLang = LANG_ALIASES[lang] || lang;
 		return h.codeToHtml(code, {
-			lang: LANGS.includes(lang) ? lang : 'html',
+			lang: LANGS.includes(normalizedLang) ? normalizedLang : 'html',
 			themes: { light: LIGHT, dark: DARK },
 		});
 	} catch {

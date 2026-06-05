@@ -43,7 +43,7 @@ watch(field.value, (value) => {
 </script>
 
 <template>
-	<label v-if="field.visible.value" class="inline-flex cursor-pointer items-start gap-3" @click="onLabelClick">
+	<label v-if="field.visible.value" class="flex w-full cursor-pointer items-start gap-3" @click="onLabelClick">
 			<element-checkbox
 				ref="root"
 				:id="field.id.value"

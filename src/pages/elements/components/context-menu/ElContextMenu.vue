@@ -14,6 +14,7 @@ defineOptions({
 			{ name: 'item-row', payload: '{ item, index, value, label, checked, open, hasChildren }', description: 'Replace the full inner row markup while ElMenu keeps the interactive wrapper.' },
 		],
 		events: [
+			{ name: 'open', payload: '({ event })', description: 'Fired when the menu is opened.' },
 			{ name: 'select', payload: '({ value, item })', description: 'Fired when a menu item is selected.' },
 		],
 	},
@@ -39,8 +40,13 @@ const props = defineProps({
 		default: true,
 		_edit: { description: 'Lock browser scrolling while the context menu is open.' },
 	},
+	openOnContextMenu: {
+		type: Boolean,
+		default: true,
+		_edit: { description: 'Open automatically when the default slot is right-clicked. Disable when opening from another component event.' },
+	},
 });
-const emit = defineEmits(['select']);
+const emit = defineEmits(['open', 'select']);
 
 const panelId = `el-context-menu-${useId()}`;
 const trigger = ref(null);
@@ -68,9 +74,15 @@ function open(event) {
 		panel.value.showPopover?.();
 	}
 	lockScroll();
+	emit('open', { event });
 	nextTick(() => {
 		panel.value?.querySelector('[role="menuitem"]')?.focus();
 	});
+}
+
+function onTriggerContextMenu(event) {
+	if (!props.openOnContextMenu) return;
+	open(event);
 }
 
 function isOpen() {
@@ -133,10 +145,16 @@ onBeforeUnmount(() => {
 	window.removeEventListener('blur', onWindowBlur);
 	unlockScroll();
 });
+
+defineExpose({
+	open,
+	close,
+	isOpen,
+});
 </script>
 
 <template>
-	<div ref="trigger" class="contents" @contextmenu="open">
+	<div ref="trigger" class="contents" @contextmenu="onTriggerContextMenu">
 		<slot />
 	</div>
 	<Teleport to="body">

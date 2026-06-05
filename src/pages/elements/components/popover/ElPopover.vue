@@ -39,7 +39,7 @@ export const popoverProps = {
 	trigger: {
 		type: String,
 		default: 'click',
-		_edit: { options: ['click', 'hover'], description: 'How the trigger opens the popover.' },
+		_edit: { options: ['click', 'hover', 'hover-click'], description: 'How the trigger opens the popover. hover-click opens on hover and pins open on click.' },
 	},
 	hoverCloseDelay: {
 		type: Number,
@@ -160,9 +160,7 @@ onMounted(async () => {
 		:data-trigger-id="triggerId || null"
 		class="relative inline-block"
 	>
-		<span v-if="!triggerId && hasTriggerSlot" slot="trigger" data-trigger class="inline-block align-baseline">
-			<slot name="trigger" />
-		</span>
+		<span v-if="!triggerId && hasTriggerSlot" slot="trigger" data-trigger class="inline-block align-baseline"><slot name="trigger" /></span>
 		<button
 			v-else-if="!triggerId"
 			slot="trigger"
@@ -173,18 +171,18 @@ onMounted(async () => {
 		</button>
 		<div
 			slot="panel"
-			class="el-popover-panel el-floating-transition outline-none rounded-2xl"
+			class="el-popover-panel el-floating-transition outline-none rounded-lg"
 			:class="width"
 		>
 			<div
-				class="el-popover-card relative rounded-2xl border border-border bg-popover text-left text-sm text-popover-foreground shadow-2xl shadow-black/10 ring-1 ring-border/60 dark:shadow-black/40"
+				class="el-popover-card relative rounded-lg border border-border bg-popover text-left text-sm text-popover-foreground shadow-2xl shadow-black/10 ring-1 ring-border/60 dark:shadow-black/40"
 				:class="padding"
 			>
 				<svg v-if="arrow" class="el-popover-arrow" aria-hidden="true" viewBox="0 0 16 8">
 					<path class="el-popover-arrow-fill" d="M1 8L8 1L15 8Z" />
 					<path class="el-popover-arrow-stroke" d="M1 8L8 1L15 8" />
 				</svg>
-				<div class="el-popover-content relative z-10 text-left">
+				<div class="el-popover-content relative z-10 whitespace-normal text-left">
 					<slot :open="open" :close="close" :toggle="toggle" />
 				</div>
 			</div>
@@ -220,29 +218,29 @@ onMounted(async () => {
 	stroke-linejoin: round;
 }
 
-.el-floating-transition[data-side="top"] .el-popover-arrow,
-.el-popover-transition[data-side="top"] .el-popover-arrow {
-	bottom: -7px;
+.el-floating-transition[data-side="top"] > .el-popover-card > .el-popover-arrow,
+.el-popover-transition[data-side="top"] > .el-popover-card > .el-popover-arrow {
+	bottom: -8px;
 	left: var(--el-popover-arrow-x);
 	transform: translateX(-50%) rotate(180deg);
 }
 
-.el-floating-transition[data-side="bottom"] .el-popover-arrow,
-.el-popover-transition[data-side="bottom"] .el-popover-arrow {
-	top: -7px;
+.el-floating-transition[data-side="bottom"] > .el-popover-card > .el-popover-arrow,
+.el-popover-transition[data-side="bottom"] > .el-popover-card > .el-popover-arrow {
+	top: -8px;
 	left: var(--el-popover-arrow-x);
 	transform: translateX(-50%);
 }
 
-.el-floating-transition[data-side="left"] .el-popover-arrow,
-.el-popover-transition[data-side="left"] .el-popover-arrow {
+.el-floating-transition[data-side="left"] > .el-popover-card > .el-popover-arrow,
+.el-popover-transition[data-side="left"] > .el-popover-card > .el-popover-arrow {
 	right: -12px;
 	top: var(--el-popover-arrow-y);
 	transform: translateY(-50%) rotate(90deg);
 }
 
-.el-floating-transition[data-side="right"] .el-popover-arrow,
-.el-popover-transition[data-side="right"] .el-popover-arrow {
+.el-floating-transition[data-side="right"] > .el-popover-card > .el-popover-arrow,
+.el-popover-transition[data-side="right"] > .el-popover-card > .el-popover-arrow {
 	left: -12px;
 	top: var(--el-popover-arrow-y);
 	transform: translateY(-50%) rotate(-90deg);

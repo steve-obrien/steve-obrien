@@ -42,13 +42,29 @@ const DEFAULT_PANEL_CLASSES = [
 const DEFAULT_PANEL_POSITION_CLASSES = [
 	'data-[side=left]:left-0',
 	'data-[side=right]:right-0',
+	'data-[side=bottom]:bottom-0',
+	'data-[side=bottom]:left-0',
+	'data-[side=bottom]:right-0',
+	'data-[side=bottom]:top-auto',
+	'data-[side=bottom]:h-auto',
+	'data-[side=bottom]:max-h-[85vh]',
+	'data-[side=bottom]:w-full',
 ];
 const DEFAULT_PANEL_MOTION_CLASSES = [
 	'transition-transform', 'duration-300', 'ease-in-out',
 	'data-[side=left]:-translate-x-full',
 	'data-[side=right]:translate-x-full',
+	'data-[side=bottom]:translate-y-full',
 	'data-[state=open]:translate-x-0',
+	'data-[state=open]:translate-y-0',
 ];
+const DEFAULT_DRAG_HANDLE_CLASSES = [
+	'touch-none', 'cursor-grab', 'active:cursor-grabbing',
+];
+const DRAG_RETURN_MS = 180;
+const DRAG_EXIT_MS = 170;
+const DRAG_PROJECT_MS = 220;
+const DRAG_FLICK_VELOCITY = 0.45;
 
 let scrollLockCount = 0;
 function lockBodyScroll() {
@@ -106,7 +122,7 @@ export class ElementDrawer extends ElementBase {
 
 	static __doc = {
 		name: 'element-drawer',
-		description: 'Light-DOM drawer primitive anchored to the left or right edge. It owns open state, ARIA, focus trap, scroll lock, Esc/backdrop dismiss, and events while keeping panel/backdrop styling in editable Tailwind classes.',
+		description: 'Light-DOM drawer primitive anchored to the left, right, or bottom edge. It owns open state, ARIA, focus trap, scroll lock, Esc/backdrop dismiss, and events while keeping panel/backdrop styling in editable Tailwind classes.',
 		slots: [
 			{ name: 'trigger', description: 'Element that opens the drawer when clicked. You can also use data-trigger.' },
 			{ name: '(default)', description: 'Panel body. If no data-panel is provided, the drawer wraps this content in light-DOM overlay/backdrop/panel parts.' },
@@ -114,7 +130,7 @@ export class ElementDrawer extends ElementBase {
 		attributes: [
 			{ name: 'open', type: 'boolean', description: 'Reflects open state. Set to show the drawer; remove or set false to hide.' },
 			{ name: 'show', type: 'boolean', description: 'Alias for `open` (Headless UI naming).' },
-			{ name: 'side', type: 'string', description: 'Edge the panel slides from: `left` or `right` (default `right`).' },
+			{ name: 'side', type: 'string', description: 'Edge the panel slides from: `left`, `right`, or `bottom` (default `right`).' },
 			{ name: 'static', type: 'boolean', description: 'Disables backdrop-click dismiss.' },
 			{ name: 'enter', type: 'string', description: 'Tailwind classes for the enter transition (active state).' },
 			{ name: 'enter-from', type: 'string', description: 'Tailwind classes applied before the enter transition runs.' },
@@ -131,6 +147,7 @@ export class ElementDrawer extends ElementBase {
 			{ keys: 'Esc', action: 'Closes the drawer.' },
 			{ keys: 'Tab / Shift+Tab', action: 'Focus cycles within the panel while open.' },
 			{ keys: 'Click backdrop', action: 'Dismisses the drawer (disable with `static`).' },
+			{ keys: 'Drag handle', action: 'Drag `[data-drag-handle]` toward the closing edge to dismiss the drawer.' },
 		],
 		example: `<element-drawer side="right">
   <button slot="trigger">Menu</button>
@@ -151,8 +168,22 @@ export class ElementDrawer extends ElementBase {
 		this._transitionGen = 0;
 		this._releaseFocus = null;
 		this._scrollLocked = false;
+		this._dragState = null;
+		this._dragOffs = [];
+		this._dragHandleOffs = [];
+		this._dragHandleSetupQueued = false;
+		this._dragResetTimer = null;
 		this._onKey = this._onKey.bind(this);
 		this._onBackdrop = this._onBackdrop.bind(this);
+		this._onDragPointerDown = this._onDragPointerDown.bind(this);
+		this._onDragPointerMove = this._onDragPointerMove.bind(this);
+		this._onDragPointerUp = this._onDragPointerUp.bind(this);
+		this._onDragMouseDown = this._onDragMouseDown.bind(this);
+		this._onDragMouseMove = this._onDragMouseMove.bind(this);
+		this._onDragMouseUp = this._onDragMouseUp.bind(this);
+		this._onDragTouchStart = this._onDragTouchStart.bind(this);
+		this._onDragTouchMove = this._onDragTouchMove.bind(this);
+		this._onDragTouchEnd = this._onDragTouchEnd.bind(this);
 	}
 
 	connectedCallback() {
@@ -174,11 +205,16 @@ export class ElementDrawer extends ElementBase {
 		});
 
 		this.on(this._backdrop, 'click', this._onBackdrop);
+		this._queueDragHandleSetup();
 
 		if (wantsOpen(this)) this.open = true;
 	}
 
 	disconnectedCallback() {
+		this._finishDrag(false);
+		this._teardownDragHandle();
+		if (this._dragResetTimer) window.clearTimeout(this._dragResetTimer);
+		this._dragResetTimer = null;
 		this._unlockScroll();
 		document.removeEventListener('keydown', this._onKey);
 		this._releaseFocus?.();
@@ -209,6 +245,39 @@ export class ElementDrawer extends ElementBase {
 		this._panel.setAttribute('aria-modal', 'true');
 		this._panel.tabIndex = this._panel.tabIndex >= 0 ? this._panel.tabIndex : -1;
 		this._syncAria();
+	}
+
+	_setupDragHandle() {
+		const handle = this.querySelector('[data-drag-handle]');
+		if (handle === this._dragHandle && this._dragHandleOffs.length) return;
+		this._teardownDragHandle();
+		this._dragHandle = handle;
+		if (!this._dragHandle) return;
+		addDefaultClasses(this._dragHandle, DEFAULT_DRAG_HANDLE_CLASSES);
+		if (!this._dragHandle.hasAttribute('aria-label')) this._dragHandle.setAttribute('aria-label', 'Drag to close');
+		if (!this._dragHandle.hasAttribute('role')) this._dragHandle.setAttribute('role', 'button');
+		this._dragHandleOffs = [
+			this.on(this._dragHandle, 'pointerdown', this._onDragPointerDown),
+			this.on(this._dragHandle, 'mousedown', this._onDragMouseDown),
+			this.on(this._dragHandle, 'touchstart', this._onDragTouchStart, { passive: false }),
+		];
+	}
+
+	_teardownDragHandle() {
+		this._dragHandleOffs.forEach((off) => off());
+		this._dragHandleOffs = [];
+		this._dragHandle = null;
+	}
+
+	_queueDragHandleSetup() {
+		if (this._dragHandleSetupQueued) return;
+		this._dragHandleSetupQueued = true;
+		queueMicrotask(() => {
+			requestAnimationFrame(() => {
+				this._dragHandleSetupQueued = false;
+				if (this.isConnected) this._setupDragHandle();
+			});
+		});
 	}
 
 	_syncAria() {
@@ -276,6 +345,203 @@ export class ElementDrawer extends ElementBase {
 		}
 	}
 
+	_onDragPointerDown(e) {
+		this._startDrag(e, {
+			pointerId: e.pointerId,
+			capturePointer: true,
+			moveType: 'pointermove',
+			upType: 'pointerup',
+			cancelType: 'pointercancel',
+		});
+	}
+
+	_onDragMouseDown(e) {
+		if (this._dragState) return;
+		this._startDrag(e, {
+			pointerId: null,
+			capturePointer: false,
+			moveType: 'mousemove',
+			upType: 'mouseup',
+			cancelType: null,
+		});
+	}
+
+	_onDragTouchStart(e) {
+		if (this._dragState) return;
+		const touch = e.touches?.[0];
+		if (!touch) return;
+		this._startDrag({
+			button: 0,
+			clientX: touch.clientX,
+			clientY: touch.clientY,
+			preventDefault: () => e.preventDefault(),
+		}, {
+			pointerId: null,
+			capturePointer: false,
+			moveType: 'touchmove',
+			upType: 'touchend',
+			cancelType: 'touchcancel',
+		});
+	}
+
+	_startDrag(e, options) {
+		if (!this._open || this._transitioning || !this._panel) return;
+		if (e.button != null && e.button !== 0) return;
+		if (this._dragResetTimer) window.clearTimeout(this._dragResetTimer);
+		this._dragResetTimer = null;
+
+		const side = this.dataset.side || 'right';
+		const axis = side === 'bottom' ? 'y' : 'x';
+		const sign = side === 'left' ? -1 : 1;
+		const rect = this._panel.getBoundingClientRect();
+		const panelSize = axis === 'y' ? rect.height : rect.width;
+		const now = performance.now();
+
+		this._finishDrag(false);
+		this._dragState = {
+			axis,
+			closeDelta: 0,
+			capturePointer: options.capturePointer,
+			panelSize,
+			pointerId: options.pointerId,
+			prevTransform: this._panel.style.transform,
+			prevTransition: this._panel.style.transition,
+			prevWillChange: this._panel.style.willChange,
+			sign,
+			startX: e.clientX,
+			startY: e.clientY,
+			lastCloseDelta: 0,
+			lastTime: now,
+			velocity: 0,
+		};
+		this._panel.style.transition = 'none';
+		this._panel.style.willChange = 'transform';
+		if (options.capturePointer) this._dragHandle?.setPointerCapture?.(options.pointerId);
+		const moveHandler = options.moveType === 'pointermove'
+			? this._onDragPointerMove
+			: options.moveType === 'touchmove'
+				? this._onDragTouchMove
+				: this._onDragMouseMove;
+		const upHandler = options.upType === 'pointerup'
+			? this._onDragPointerUp
+			: options.upType === 'touchend'
+				? this._onDragTouchEnd
+				: this._onDragMouseUp;
+		this._dragOffs = [
+			this.on(document, options.moveType, moveHandler, { passive: false }),
+			this.on(document, options.upType, upHandler, { passive: false }),
+		];
+		if (options.cancelType) this._dragOffs.push(this.on(document, options.cancelType, upHandler, { passive: false }));
+		e.preventDefault();
+	}
+
+	_onDragPointerMove(e) {
+		const drag = this._dragState;
+		if (!drag || e.pointerId !== drag.pointerId || !this._panel) return;
+		this._updateDrag(e.clientX, e.clientY);
+		e.preventDefault();
+	}
+
+	_onDragMouseMove(e) {
+		if (!this._dragState || !this._panel) return;
+		this._updateDrag(e.clientX, e.clientY);
+		e.preventDefault();
+	}
+
+	_onDragTouchMove(e) {
+		if (!this._dragState || !this._panel) return;
+		const touch = e.touches?.[0] || e.changedTouches?.[0];
+		if (!touch) return;
+		this._updateDrag(touch.clientX, touch.clientY);
+		e.preventDefault();
+	}
+
+	_updateDrag(clientX, clientY) {
+		const drag = this._dragState;
+		if (!drag || !this._panel) return;
+		const rawDelta = drag.axis === 'y' ? clientY - drag.startY : clientX - drag.startX;
+		const directionalDelta = rawDelta * drag.sign;
+		const closeDelta = Math.min(drag.panelSize + 32, Math.max(0, directionalDelta));
+		const renderedDelta = directionalDelta < 0
+			? Math.max(-24, directionalDelta * 0.25)
+			: closeDelta;
+		const now = performance.now();
+		const elapsed = Math.max(1, now - drag.lastTime);
+		const sampleVelocity = (closeDelta - drag.lastCloseDelta) / elapsed;
+		drag.closeDelta = closeDelta;
+		drag.velocity = (drag.velocity * 0.65) + (sampleVelocity * 0.35);
+		drag.lastCloseDelta = closeDelta;
+		drag.lastTime = now;
+
+		this._panel.style.transform = this._dragTransform(drag, renderedDelta);
+	}
+
+	_onDragPointerUp(e) {
+		const drag = this._dragState;
+		if (!drag || e.pointerId !== drag.pointerId) return;
+		this._endDrag(e);
+	}
+
+	_onDragMouseUp(e) {
+		if (!this._dragState) return;
+		this._endDrag(e);
+	}
+
+	_onDragTouchEnd(e) {
+		if (!this._dragState) return;
+		this._endDrag(e);
+	}
+
+	_endDrag(e) {
+		const drag = this._dragState;
+		if (!drag) return;
+		const threshold = Math.max(44, Math.min(112, drag.panelSize * 0.24));
+		const projectedDelta = drag.closeDelta + (Math.max(0, drag.velocity) * DRAG_PROJECT_MS);
+		const hasFlick = drag.closeDelta >= 12 && drag.velocity >= DRAG_FLICK_VELOCITY;
+		this._finishDrag(drag.closeDelta >= threshold || projectedDelta >= threshold || hasFlick);
+		e?.preventDefault?.();
+	}
+
+	_dragTransform(drag, delta) {
+		if (drag.axis === 'y') return `translateY(${delta}px)`;
+		return `translateX(${delta * drag.sign}px)`;
+	}
+
+	_finishDrag(shouldClose = false) {
+		if (!this._dragState) return;
+		const drag = this._dragState;
+		this._dragOffs.forEach((off) => off());
+		this._dragOffs = [];
+		if (drag.capturePointer) this._dragHandle?.releasePointerCapture?.(drag.pointerId);
+		if (this._panel) {
+			if (shouldClose) {
+				const exitDelta = Math.max(drag.closeDelta, drag.panelSize + 32);
+				this._panel.style.transition = `transform ${DRAG_EXIT_MS}ms cubic-bezier(0.32, 0.72, 0, 1)`;
+				this._panel.style.transform = this._dragTransform(drag, exitDelta);
+				this._dragResetTimer = window.setTimeout(() => {
+					this._dragResetTimer = null;
+					this.open = false;
+					requestAnimationFrame(() => {
+						if (!this._panel) return;
+						this._panel.style.transition = drag.prevTransition;
+						this._panel.style.transform = drag.prevTransform;
+						this._panel.style.willChange = drag.prevWillChange;
+					});
+				}, DRAG_EXIT_MS);
+			} else {
+				this._panel.style.transition = drag.prevTransition || `transform ${DRAG_RETURN_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+				this._panel.getBoundingClientRect();
+				this._panel.style.transform = drag.prevTransform;
+				window.setTimeout(() => {
+					if (!this._panel || this._dragState) return;
+					this._panel.style.transition = drag.prevTransition;
+					this._panel.style.willChange = drag.prevWillChange;
+				}, DRAG_RETURN_MS);
+			}
+		}
+		this._dragState = null;
+	}
+
 	_reflectOpen(next) {
 		this.setBoolAttr('open', next);
 		if (this.hasAttribute('show')) this.setBoolAttr('show', next);
@@ -295,7 +561,8 @@ export class ElementDrawer extends ElementBase {
 
 	_syncSide() {
 		if (!this._overlay || !this._backdrop || !this._panel) return;
-		const side = this.getAttribute('side') === 'left' ? 'left' : 'right';
+		const requested = this.getAttribute('side');
+		const side = ['left', 'right', 'bottom'].includes(requested) ? requested : 'right';
 		this.dataset.side = side;
 		this._overlay.dataset.side = side;
 		this._backdrop.dataset.side = side;
@@ -319,7 +586,7 @@ export class ElementDrawer extends ElementBase {
 
 	_finishOpen() {
 		this._releaseFocus = focusTrap(this._panel);
-		requestAnimationFrame(() => this._panel.focus());
+		requestAnimationFrame(() => this._panel.focus({ preventScroll: true }));
 		this.emit('el:open');
 	}
 
@@ -328,7 +595,7 @@ export class ElementDrawer extends ElementBase {
 		document.removeEventListener('keydown', this._onKey);
 		this._releaseFocus?.();
 		this._releaseFocus = null;
-		this._trigger?.focus();
+		this._trigger?.focus({ preventScroll: true });
 		this.emit('el:close');
 	}
 
@@ -341,6 +608,7 @@ export class ElementDrawer extends ElementBase {
 		this._syncMotionClasses();
 
 		if (next) {
+			this._setupDragHandle();
 			this._open = true;
 			this._reflectOpen(true);
 			this._trigger?.setAttribute('aria-expanded', 'true');
@@ -388,11 +656,12 @@ export class ElementDrawer extends ElementBase {
 		if (!this.isConnected || !this._panel) return;
 		if (name === 'open' || name === 'show') this._setOpen(wantsOpen(this));
 		if (name === 'side') {
-			if (value !== 'left' && value !== 'right') {
+			if (!['left', 'right', 'bottom'].includes(value)) {
 				this.setAttribute('side', 'right');
 				return;
 			}
 			this._syncSide();
+			this._queueDragHandleSetup();
 		}
 		if (['enter', 'enter-from', 'enter-to', 'leave', 'leave-from', 'leave-to'].includes(name)) {
 			this._syncMotionClasses();
@@ -410,4 +679,4 @@ export class ElementDrawer extends ElementBase {
 
 defineElement('element-drawer', ElementDrawer);
 
-// Tailwind scan: fixed inset-0 z-50 pointer-events-none data-[state=open]:pointer-events-auto absolute bg-black/40 opacity-0 backdrop-blur-[2px] transition-opacity duration-300 duration-1000 ease-in ease-out ease-in-out opacity-100 scale-50 scale-100 data-[state=open]:opacity-100 top-0 bottom-0 w-[min(100%,var(--el-drawer-width,24rem))] max-w-full overflow-auto [-webkit-overflow-scrolling:touch] bg-inherit text-inherit shadow-2xl outline-none transition transition-transform data-[side=left]:left-0 data-[side=left]:-translate-x-full data-[side=right]:right-0 data-[side=right]:translate-x-full data-[state=open]:translate-x-0
+// Tailwind scan: fixed inset-0 z-50 pointer-events-none data-[state=open]:pointer-events-auto absolute bg-black/40 opacity-0 backdrop-blur-[2px] transition-opacity duration-300 duration-1000 ease-in ease-out ease-in-out opacity-100 scale-50 scale-100 data-[state=open]:opacity-100 top-0 bottom-0 w-[min(100%,var(--el-drawer-width,24rem))] max-w-full overflow-auto [-webkit-overflow-scrolling:touch] bg-inherit text-inherit shadow-2xl outline-none transition transition-transform data-[side=left]:left-0 data-[side=left]:-translate-x-full data-[side=right]:right-0 data-[side=right]:translate-x-full data-[side=bottom]:bottom-0 data-[side=bottom]:left-0 data-[side=bottom]:right-0 data-[side=bottom]:top-auto data-[side=bottom]:h-auto data-[side=bottom]:max-h-[85vh] data-[side=bottom]:w-full data-[side=bottom]:translate-y-full data-[state=open]:translate-x-0 data-[state=open]:translate-y-0 touch-none cursor-grab active:cursor-grabbing

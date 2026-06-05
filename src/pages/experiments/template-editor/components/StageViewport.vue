@@ -1,5 +1,6 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, Teleport, watch } from 'vue';
+import { createStageFrameMessage, isStageFrameMessage } from '../lib/stageFrameBridge.js';
 
 const props = defineProps({
 	selectedLabel: {
@@ -22,11 +23,22 @@ const emit = defineEmits([
 	'hover-node',
 	'clear-hover',
 	'delete-selected',
+	'select-node',
+	'frame-message',
 ]);
 
 const stageShellEl = ref(null);
+const stageFrameEl = ref(null);
+const frameMountEl = shallowRef(null);
+const frameReady = ref(false);
+const stageFrameKey = ref(0);
 const viewportMode = ref('desktop');
 const zoom = ref(1);
+
+let styleObserver = null;
+let styleSyncTimer = null;
+let frameDocumentCheckTimer = null;
+let frameRecoveryTimer = null;
 
 const viewportOptions = [
 	{ id: 'desktop', label: 'Desktop', width: 1280, height: 720 },
@@ -42,11 +54,189 @@ const frameSizerStyle = computed(() => ({
 	minHeight: `${activeViewport.value.height * zoom.value}px`,
 }));
 const frameStyle = computed(() => ({
-	width: `${activeViewport.value.width}px`,
-	minHeight: `${activeViewport.value.height}px`,
-	transform: `scale(${zoom.value})`,
-	transformOrigin: 'top left',
+	width: `${activeViewport.value.width * zoom.value}px`,
+	height: `${activeViewport.value.height * zoom.value}px`,
+	minHeight: `${activeViewport.value.height * zoom.value}px`,
 }));
+const frameState = computed(() => ({
+	viewport: activeViewport.value,
+	viewportMode: viewportMode.value,
+	zoom: zoom.value,
+	selectedLabel: props.selectedLabel,
+	canDelete: props.canDelete,
+	dragging: props.dragging,
+}));
+const stageSrcdoc = computed(() => `<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<base href="about:srcdoc">
+		<style>
+			html,
+			body,
+			#template-stage-scroll,
+			#template-stage-root {
+				min-height: 100%;
+				margin: 0;
+			}
+
+			body {
+				overflow: auto;
+				overscroll-behavior: contain;
+				background: var(--background, #fff);
+				color: var(--foreground, #111827);
+			}
+		</style>
+	</head>
+	<body>
+		<div id="template-stage-scroll">
+			<div id="template-stage-root"></div>
+		</div>
+		<script>
+			(() => {
+				const channel = 'template-editor-stage';
+				let latestState = {};
+				let resizeObserver = null;
+
+				function send(type, payload = {}) {
+					window.parent.postMessage({ channel, type, payload }, '*');
+				}
+
+				function applyState(state) {
+					latestState = state || {};
+					const root = document.getElementById('template-stage-root');
+					if (!root) return;
+					const viewport = latestState.viewport || {};
+					const zoom = Number(latestState.zoom) || 1;
+					root.style.width = (Number(viewport.width) || 1280) + 'px';
+					root.style.minHeight = (Number(viewport.height) || 720) + 'px';
+					root.style.transform = 'scale(' + zoom + ')';
+					root.style.transformOrigin = 'top left';
+					syncScrollSize();
+				}
+
+				function syncScrollSize() {
+					const root = document.getElementById('template-stage-root');
+					const scroll = document.getElementById('template-stage-scroll');
+					if (!root || !scroll) return;
+					const viewport = latestState.viewport || {};
+					const zoom = Number(latestState.zoom) || 1;
+					const width = Number(viewport.width) || 1280;
+					const height = Math.max(Number(viewport.height) || 720, root.scrollHeight || root.offsetHeight || 0);
+					scroll.style.width = (width * zoom) + 'px';
+					scroll.style.minHeight = (height * zoom) + 'px';
+				}
+
+				function observeRootSize() {
+					const root = document.getElementById('template-stage-root');
+					if (!root || resizeObserver) return;
+					if (typeof ResizeObserver !== 'function') return;
+					resizeObserver = new ResizeObserver(syncScrollSize);
+					resizeObserver.observe(root);
+				}
+
+				function closestStageLink(target) {
+					return target instanceof Element ? target.closest('a[href]') : null;
+				}
+
+				function closestTemplateNode(target) {
+					return target instanceof Element ? target.closest('[data-template-node]') : null;
+				}
+
+				function decodeHashTarget(hash) {
+					try {
+						return decodeURIComponent(hash);
+					} catch {
+						return hash;
+					}
+				}
+
+				function handleStageLinkClick(event) {
+					const link = closestStageLink(event.target);
+					if (!link) return;
+
+					const node = closestTemplateNode(event.target);
+					const nodeId = node?.getAttribute('data-template-node') || '';
+					const href = link.getAttribute('href') || '';
+					event.preventDefault();
+					event.stopPropagation();
+					event.stopImmediatePropagation();
+					send('link-click', {
+						href,
+						nodeId,
+						text: (link.textContent || '').trim(),
+					});
+					if (nodeId) send('select-node', { id: nodeId });
+
+					if (href === '#') {
+						window.scrollTo({ top: 0, behavior: 'smooth' });
+						return;
+					}
+
+					if (!href.startsWith('#')) return;
+					const target = document.getElementById(decodeHashTarget(href.slice(1)));
+					target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+				}
+
+				window.addEventListener('message', (event) => {
+					const message = event.data || {};
+					if (message.channel !== channel) return;
+					if (message.type === 'render-state') {
+						applyState(message.payload);
+						send('render-state-applied', latestState);
+					}
+					if (message.type === 'focus') document.body.focus({ preventScroll: true });
+					if (message.type === 'ping') send('pong', { state: latestState });
+				});
+
+				document.addEventListener('pointermove', (event) => {
+					const node = closestTemplateNode(event.target);
+					send('hover-node', { id: node?.getAttribute('data-template-node') || '' });
+				});
+				window.addEventListener('click', handleStageLinkClick, true);
+				window.addEventListener('auxclick', handleStageLinkClick, true);
+				document.addEventListener('pointerleave', () => send('clear-hover'));
+				document.addEventListener('dragover', (event) => event.preventDefault());
+				document.addEventListener('dragleave', (event) => {
+					if (event.relatedTarget) return;
+					send('clear-drop-target');
+				});
+				document.addEventListener('drop', (event) => {
+					event.preventDefault();
+					send('stage-drop');
+				});
+				document.addEventListener('keydown', (event) => {
+					if (!['Backspace', 'Delete'].includes(event.key)) return;
+					if (event.metaKey || event.ctrlKey || event.altKey) return;
+					if (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+					event.preventDefault();
+					send('delete-selected');
+				});
+				document.body.tabIndex = 0;
+				observeRootSize();
+				requestAnimationFrame(syncScrollSize);
+				send('ready');
+			})();
+		</` + `script>
+	</body>
+</html>`);
+
+watch(frameState, (state) => {
+	postFrameMessage('render-state', state);
+}, { deep: true });
+
+onMounted(() => {
+	queueFrameDocumentCheck();
+});
+
+onBeforeUnmount(() => {
+	window.removeEventListener('message', handleFrameMessage);
+	if (styleObserver) styleObserver.disconnect();
+	window.clearTimeout(styleSyncTimer);
+	window.clearTimeout(frameDocumentCheckTimer);
+	window.clearTimeout(frameRecoveryTimer);
+});
 
 function setViewport(mode) {
 	viewportMode.value = mode;
@@ -61,16 +251,64 @@ function stepZoom(direction) {
 	focus();
 }
 
+function handleFrameLoad() {
+	const frame = stageFrameEl.value;
+	const document = frame?.contentDocument;
+	const mount = document?.getElementById('template-stage-root') || null;
+	if (!mount) {
+		recoverFrameDocument();
+		return;
+	}
+	frameMountEl.value = mount;
+	frameReady.value = Boolean(frameMountEl.value);
+	syncFrameStyles();
+	observeParentStyles();
+	window.removeEventListener('message', handleFrameMessage);
+	window.addEventListener('message', handleFrameMessage);
+	postFrameMessage('render-state', frameState.value);
+	nextTick(focus);
+}
+
+function handleFrameMessage(event) {
+	if (event.source !== stageFrameEl.value?.contentWindow) return;
+	if (!isStageFrameMessage(event.data)) return;
+
+	const { type, payload = {} } = event.data;
+	emit('frame-message', { type, payload });
+
+	if (type === 'ready') {
+		frameReady.value = true;
+		postFrameMessage('render-state', frameState.value);
+		return;
+	}
+	if (type === 'hover-node') {
+		emit('hover-node', payload.id || '');
+		return;
+	}
+	if (type === 'select-node') {
+		if (payload.id) emit('select-node', payload.id);
+		return;
+	}
+	if (type === 'clear-hover') {
+		emit('clear-hover');
+		return;
+	}
+	if (type === 'clear-drop-target') {
+		emit('clear-drop-target');
+		return;
+	}
+	if (type === 'stage-drop') {
+		emit('stage-drop');
+		return;
+	}
+	if (type === 'delete-selected') {
+		emit('delete-selected');
+	}
+}
+
 function handlePointerDown(event) {
 	if (isEditableTarget(event.target)) return;
 	focus();
-}
-
-function handlePointerMove(event) {
-	const target = event.target instanceof Element
-		? event.target.closest('[data-template-node]')
-		: null;
-	emit('hover-node', target?.getAttribute('data-template-node') || '');
 }
 
 function handleDelete(event) {
@@ -87,11 +325,6 @@ function handleKeydown(event) {
 	handleDelete(event);
 }
 
-function handleDragLeave(event) {
-	if (event.currentTarget.contains(event.relatedTarget)) return;
-	emit('clear-drop-target');
-}
-
 function isEditableTarget(target) {
 	if (!(target instanceof HTMLElement)) return false;
 	return target.closest('input, textarea, select, [contenteditable="true"]');
@@ -99,9 +332,70 @@ function isEditableTarget(target) {
 
 function focus() {
 	stageShellEl.value?.focus({ preventScroll: true });
+	postFrameMessage('focus');
 }
 
-defineExpose({ focus });
+function postFrameMessage(type, payload = {}) {
+	const frameWindow = stageFrameEl.value?.contentWindow;
+	if (!frameWindow) return false;
+	frameWindow.postMessage(createStageFrameMessage(type, payload), '*');
+	return true;
+}
+
+function syncFrameStyles() {
+	const frameDocument = stageFrameEl.value?.contentDocument;
+	if (!frameDocument) return;
+
+	frameDocument.head
+		.querySelectorAll('[data-template-frame-style]')
+		.forEach((node) => node.remove());
+
+	document.head
+		.querySelectorAll('link[rel="stylesheet"], style')
+		.forEach((node) => {
+			const clone = node.cloneNode(true);
+			clone.setAttribute('data-template-frame-style', '');
+			frameDocument.head.appendChild(clone);
+		});
+}
+
+function observeParentStyles() {
+	if (styleObserver) return;
+	styleObserver = new MutationObserver(queueStyleSync);
+	styleObserver.observe(document.head, {
+		childList: true,
+		characterData: true,
+		subtree: true,
+	});
+}
+
+function queueStyleSync() {
+	window.clearTimeout(styleSyncTimer);
+	styleSyncTimer = window.setTimeout(syncFrameStyles, 50);
+}
+
+function queueFrameDocumentCheck() {
+	window.clearTimeout(frameDocumentCheckTimer);
+	frameDocumentCheckTimer = window.setTimeout(() => {
+		frameDocumentCheckTimer = null;
+		const document = stageFrameEl.value?.contentDocument;
+		if (!document || document.readyState === 'loading') return;
+		if (!document.getElementById('template-stage-root')) recoverFrameDocument();
+	}, 250);
+}
+
+function recoverFrameDocument() {
+	if (frameRecoveryTimer) return;
+	frameReady.value = false;
+	frameMountEl.value = null;
+	window.removeEventListener('message', handleFrameMessage);
+	frameRecoveryTimer = window.setTimeout(() => {
+		frameRecoveryTimer = null;
+		stageFrameKey.value += 1;
+	}, 0);
+}
+
+defineExpose({ focus, postFrameMessage });
 </script>
 
 <template>
@@ -145,19 +439,25 @@ defineExpose({ focus });
 			tabindex="0"
 			class="min-h-0 flex-1 overflow-auto bg-muted/35 p-6 outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
 			:class="dragging && 'bg-accent/30'"
-			@dragover.prevent
-			@dragleave="handleDragLeave"
-			@drop.prevent="emit('stage-drop')"
 			@keydown="handleKeydown"
 			@pointerdown="handlePointerDown"
-			@pointermove="handlePointerMove"
-			@pointerleave="emit('clear-hover')"
 		>
 			<div class="mx-auto" :style="frameSizerStyle">
-				<div class="overflow-hidden border border-border bg-background shadow-sm" :style="frameStyle">
-					<slot />
-				</div>
+				<iframe
+					:key="stageFrameKey"
+					ref="stageFrameEl"
+					class="block overflow-hidden border border-border bg-background shadow-sm"
+					:srcdoc="stageSrcdoc"
+					:style="frameStyle"
+					title="Template editor stage"
+					sandbox="allow-scripts allow-same-origin"
+					@load="handleFrameLoad"
+				></iframe>
 			</div>
 		</div>
+
+		<Teleport v-if="frameMountEl" :to="frameMountEl">
+			<slot />
+		</Teleport>
 	</section>
 </template>

@@ -95,6 +95,23 @@ function getOverflowSides(overflow) {
 		.map(([side]) => side);
 }
 
+function rectWithLayoutSize(element) {
+	const rect = element.getBoundingClientRect();
+	const width = element.offsetWidth || rect.width;
+	const height = element.offsetHeight || rect.height;
+	return {
+		...rect,
+		width,
+		height,
+		right: rect.left + width,
+		bottom: rect.top + height,
+	};
+}
+
+function arrowContainer(floatingEl) {
+	return floatingEl.querySelector?.('.el-popover-card') || floatingEl;
+}
+
 function getScrollParents(node) {
 	const parents = [];
 	let parent = node?.parentElement;
@@ -127,7 +144,7 @@ export function computeFloatingPosition(referenceEl, floatingEl, options = {}) {
 	const preferred = parsePlacement(placement, align);
 	const bounds = getViewportRect(Number(padding) || 0);
 	const reference = referenceEl.getBoundingClientRect();
-	const floating = floatingEl.getBoundingClientRect();
+	const floating = rectWithLayoutSize(floatingEl);
 	let side = preferred.side;
 	const resolvedAlign = preferred.align;
 
@@ -187,15 +204,21 @@ export function applyFloatingPosition(referenceEl, floatingEl, options = {}) {
 	floatingEl.style.transform = '';
 	floatingEl.style.setProperty('--el-floating-available-width', `${Math.round(result.availableWidth)}px`);
 	floatingEl.style.setProperty('--el-floating-available-height', `${Math.round(result.availableHeight)}px`);
+	const reference = referenceEl.getBoundingClientRect();
+	const arrowBox = arrowContainer(floatingEl);
+	const arrowOffsetX = arrowBox === floatingEl ? 0 : arrowBox.offsetLeft || 0;
+	const arrowOffsetY = arrowBox === floatingEl ? 0 : arrowBox.offsetTop || 0;
+	const arrowWidth = arrowBox.offsetWidth || floatingEl.offsetWidth || floatingEl.getBoundingClientRect().width;
+	const arrowHeight = arrowBox.offsetHeight || floatingEl.offsetHeight || floatingEl.getBoundingClientRect().height;
 	floatingEl.style.setProperty('--el-popover-arrow-x', `${Math.round(clamp(
-		(referenceEl.getBoundingClientRect().left + (referenceEl.getBoundingClientRect().width / 2)) - result.x,
+		(reference.left + (reference.width / 2)) - result.x - arrowOffsetX,
 		14,
-		Math.max(14, floatingEl.getBoundingClientRect().width - 14),
+		Math.max(14, arrowWidth - 14),
 	))}px`);
 	floatingEl.style.setProperty('--el-popover-arrow-y', `${Math.round(clamp(
-		(referenceEl.getBoundingClientRect().top + (referenceEl.getBoundingClientRect().height / 2)) - result.y,
+		(reference.top + (reference.height / 2)) - result.y - arrowOffsetY,
 		14,
-		Math.max(14, floatingEl.getBoundingClientRect().height - 14),
+		Math.max(14, arrowHeight - 14),
 	))}px`);
 	floatingEl.dataset.placement = result.placement;
 	floatingEl.dataset.floatingMode = result.mode;

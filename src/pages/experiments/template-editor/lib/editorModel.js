@@ -146,17 +146,23 @@ export function stampEditorNode(node, allocateId) {
 export function buildSource(root, component) {
 	const rows = [];
 	const lineMap = {};
+	const scriptDataEntries = scriptDataEntriesForComponent(component);
+	const hasProps = Boolean(component?.props?.length);
 
 	push('<template>');
 	(root?.children || []).forEach((child) => emitNode(child, 1));
 	push('</template>');
 
-	if (component?.props?.length) {
+	if (hasProps || scriptDataEntries.length) {
 		push('');
 		push('<script setup>');
-		push('const props = defineProps({');
-		component.props.forEach(emitComponentProp);
-		push('});');
+		scriptDataEntries.forEach(emitScriptDataEntry);
+		if (scriptDataEntries.length && hasProps) push('');
+		if (hasProps) {
+			push('const props = defineProps({');
+			component.props.forEach(emitComponentProp);
+			push('});');
+		}
 		push('</' + 'script>');
 	}
 
@@ -180,6 +186,19 @@ export function buildSource(root, component) {
 		push(`type: ${propTypeSource(prop)},`, null, 2);
 		push(`default: ${propDefaultSource(prop)},`, null, 2);
 		push('},', null, 1);
+	}
+
+	function emitScriptDataEntry([name, value]) {
+		const literal = dataLiteralSource(value);
+		const literalLines = literal.split('\n');
+		if (literalLines.length === 1) {
+			push(`const ${name} = ${literalLines[0]};`);
+			return;
+		}
+
+		push(`const ${name} = ${literalLines[0]}`);
+		literalLines.slice(1, -1).forEach((line) => push(line));
+		push(`${literalLines.at(-1)};`);
 	}
 
 	function emitNode(node, depth) {
@@ -525,6 +544,19 @@ function literalSourceForValue(value) {
 	if (typeof value === 'string') return `'${value.replace(/\\/g, '\\\\').replace(/'/g, '\\\'')}'`;
 	if (value === undefined) return 'undefined';
 	return JSON.stringify(value);
+}
+
+function scriptDataEntriesForComponent(component) {
+	const propNames = new Set((component?.props || []).map((prop) => prop.name).filter(Boolean));
+	return Object.entries(component?.scriptData || {})
+		.filter(([name, value]) => isSafeScopeAlias(name) && !propNames.has(name) && value !== undefined)
+		.filter(([, value]) => dataLiteralSource(value) !== 'undefined');
+}
+
+function dataLiteralSource(value) {
+	const source = JSON.stringify(value, null, '\t');
+	if (source === undefined) return 'undefined';
+	return source.replace(/<\/script/gi, '<\\/script');
 }
 
 export function parseScriptSetupData(value) {

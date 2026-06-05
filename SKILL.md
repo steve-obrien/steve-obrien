@@ -26,6 +26,7 @@ Read only what the task needs:
 - `src/pages/elements/theming/Index.vue`: token names and color usage.
 - `src/pages/elements/component-spec/Index.vue`: discovery, `__doc`, `_edit`, and Studio spec contracts.
 - `src/pages/elements/forms/Index.vue`: form field architecture overview.
+- `src/pages/elements/mobile/Index.vue`: Capacitor-oriented mobile components and phone-frame previews.
 - `src/pages/elements/lib/vue/index.js`: public Vue export surface.
 - `src/pages/elements/lib/headless/index.js`: headless custom element registration.
 
@@ -56,6 +57,7 @@ Use headless custom elements by importing `@elements/headless`; Vite treats tags
 - Use `ElNativeSelect` for small native option lists, `ElListbox` for custom single-choice lists, `ElCombobox` for search plus committed selection, and `ElAutocomplete` for free text with suggestions.
 - Use `ElCalendar` for month-grid date picking and `ElDatePicker` for typed date entry with a popover calendar.
 - Use `ElCodeInput` for prompts, snippets, templates, and structured text; use `ElJsonInput` for parsed JSON values; use `ElJsonListInput` for schema-aware arrays such as options, commands, menu rows, and inspector data.
+- Use `ElAppShell`, `ElAppTopBar`, `ElAppBottomNav`, `ElAppListItem`, `ElSafeArea`, and `ElActionSheet` for Capacitor-style app screens. Use shared form primitives such as `ElTextInput` for mobile search fields.
 
 ## Forms
 

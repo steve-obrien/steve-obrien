@@ -12,7 +12,6 @@ const props = defineProps({
 });
 
 const { initTheme } = useTheme();
-onMounted(() => initTheme());
 
 const route = useRoute();
 // Sidebar reads from nav.js — show on all elements doc pages except pricing.
@@ -43,10 +42,15 @@ watch(() => route.fullPath, async () => {
 	await nextTick();
 	scrollDetailsToTop();
 });
+
+onMounted(() => initTheme());
 </script>
 
 <template>
-	<div class="min-h-screen bg-background text-foreground">
+	<div
+		class="min-h-screen bg-background text-foreground"
+		:class="showSidebar && 'md:fixed md:inset-0 md:overflow-hidden'"
+	>
 		<header class="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur">
 			<div class="mx-auto flex h-16 w-full min-w-0 items-center justify-between gap-3 px-4 sm:px-6">
 				<RouterLink to="/elements" class="flex min-w-0 items-center gap-2 text-foreground">
@@ -101,10 +105,10 @@ watch(() => route.fullPath, async () => {
 		</header>
 
 		<div v-if="showSidebar" class="w-full px-4">
-			<div class="flex gap-12 py-10 md:h-[calc(100vh-4rem)] md:overflow-hidden md:py-0">
+			<div class="flex min-h-0 gap-12 py-10 md:h-[calc(100vh-4rem)] md:overflow-hidden md:py-0">
 				<SideNav persist-scroll class="hidden w-56 shrink-0 md:block md:h-full md:overflow-y-auto md:py-10 md:pr-2" />
 
-				<main ref="detailsPanel" class="min-w-0 flex-1 md:h-full md:overflow-y-auto md:py-10 md:pr-2">
+				<main ref="detailsPanel" class="min-h-0 min-w-0 flex-1 md:h-full md:overflow-y-auto md:py-10 md:pr-2">
 					<div class="mx-auto w-full max-w-4xl">
 						<slot />
 					</div>

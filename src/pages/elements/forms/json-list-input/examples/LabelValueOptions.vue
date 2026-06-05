@@ -8,10 +8,25 @@ const items = ref([
 	{ label: 'Cherry', value: 'cherry' },
 ]);
 
-const schema = [
-	{ key: 'label', label: 'Label', placeholder: 'Item label', default: (index) => `Item ${index + 1}` },
-	{ key: 'value', label: 'Value', placeholder: 'item-value', default: (index) => `item-${index + 1}` },
-];
+const schema = {
+	type: 'array',
+	label: 'Dropdown items',
+	items: {
+		type: 'ElForm',
+		properties: {
+			label: {
+				type: 'string',
+				label: 'Label',
+				placeholder: 'Item label',
+			},
+			value: {
+				type: 'string',
+				label: 'Value',
+				placeholder: 'item-value',
+			},
+		},
+	},
+};
 </script>
 
 <template>

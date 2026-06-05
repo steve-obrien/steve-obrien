@@ -15,6 +15,8 @@ import Navigation from './examples/Navigation.vue';
 import NavigationSrc from './examples/Navigation.vue?raw';
 import Filters from './examples/Filters.vue';
 import FiltersSrc from './examples/Filters.vue?raw';
+import BottomSheet from './examples/BottomSheet.vue';
+import BottomSheetSrc from './examples/BottomSheet.vue?raw';
 import Programmatic from './examples/Programmatic.vue';
 import ProgrammaticSrc from './examples/Programmatic.vue?raw';
 
@@ -52,6 +54,16 @@ const doc = ElDrawer.__doc;
 					description="Set side=&quot;left&quot; for filter panels, detail views, or any secondary surface anchored to the opposite edge."
 				>
 					<Filters />
+				</Example>
+			</DocSection>
+
+			<DocSection eyebrow="Demo" title="Bottom edge">
+				<Example
+					:source="BottomSheetSrc"
+					filename="BottomSheet.vue"
+					description="Set side=&quot;bottom&quot; for sheet-style drawers. The small pill handle can be dragged down to close on desktop or mobile."
+				>
+					<BottomSheet />
 				</Example>
 			</DocSection>
 

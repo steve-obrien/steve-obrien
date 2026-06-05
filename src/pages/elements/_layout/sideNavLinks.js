@@ -6,7 +6,7 @@ import {
 } from './componentManager.js';
 import { inspectComponentRecord } from './componentInspector.js';
 
-const sidebarComponentSectionOrder = ['components', 'forms', 'visual'];
+const sidebarComponentSectionOrder = ['components', 'forms', 'mobile', 'visual'];
 
 const staticIconPaths = {
 	'AI builders': 'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Zm6 9 .9 2.6 2.6.9-2.6.9L18 20l-.9-2.6-2.6-.9 2.6-.9L18 12Z',
@@ -15,6 +15,7 @@ const staticIconPaths = {
 	'Form schema': 'M6 4h8l4 4v12H6V4Zm8 0v5h5M9 12h6M9 16h8',
 	Studio: 'M4 5h16v14H4V5Zm4 4h8M8 13h5',
 	Playground: 'M8 4l8 8-8 8',
+	Mobile: 'M8 3h8a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm3 15h4',
 	Dashboard: 'M4 5h7v7H4V5Zm9 0h7v5h-7V5ZM4 14h7v5H4v-5Zm9-2h7v7h-7v-7Z',
 	Chat: 'M5 6h14v9H9l-4 4V6Z',
 	Mail: 'M4 6h16v12H4V6Zm0 0 8 7 8-7',
@@ -73,6 +74,7 @@ export const sideNavLinks = [
 			{ to: '/elements/forms/schema', label: 'Form schema' },
 			{ to: '/elements/components/studio', label: 'Studio', tag: 'Pro' },
 			{ to: '/elements/components/playground', label: 'Playground' },
+			{ to: '/elements/mobile', label: 'Mobile', tag: 'New' },
 		],
 	},
 	...componentNavGroups,

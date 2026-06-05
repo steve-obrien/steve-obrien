@@ -1,6 +1,6 @@
 <script setup>
-import { Comment, Fragment, Text, computed, useSlots } from 'vue';
-import CodePanel from './docs/CodePanel.vue';
+import { Comment, Fragment, Text, computed, onMounted, ref, useSlots, watch } from 'vue';
+import { highlight } from './docs/shiki.js';
 
 const props = defineProps({
 	lang: { type: String, default: 'vue' },
@@ -12,6 +12,18 @@ const props = defineProps({
 
 const slots = useSlots();
 const displayCode = computed(() => props.code || serializeNodes(slots.default?.() || []).trim());
+const highlighted = ref(null);
+const codeStyle = computed(() => {
+	if (!props.previewLines) return {};
+	return { maxHeight: `${Math.round((props.previewLines * 20.625) + 32)}px` };
+});
+
+async function refreshHighlight() {
+	highlighted.value = await highlight(displayCode.value, props.lang);
+}
+
+onMounted(refreshHighlight);
+watch(() => [displayCode.value, props.lang], refreshHighlight);
 
 function escapeText(value) {
 	return String(value)
@@ -106,14 +118,11 @@ function serializeNodes(nodes, depth = 0) {
 </script>
 
 <template>
-	<div class="overflow-hidden rounded-2xl border border-border bg-background">
-		<CodePanel
-			:source="displayCode"
-			:lang="lang"
-			:filename="filename"
-			:default-open="defaultOpen"
-			:preview-lines="previewLines"
-			:border-top="false"
-		/>
+	<div
+		class="el-code overflow-auto rounded-2xl border border-border bg-background"
+		:style="codeStyle"
+	>
+		<div v-if="highlighted" class="el-shiki" v-html="highlighted"></div>
+		<pre v-else class="overflow-auto bg-[#0b1020] p-4 text-[12.5px] leading-relaxed text-white/90"><code>{{ displayCode }}</code></pre>
 	</div>
 </template>

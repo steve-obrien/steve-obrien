@@ -30,7 +30,7 @@ const decoratedCode = `// Returned by inspecting the discovered row and Vue comp
 \t"component": "ElTextInput",
 \t"doc": {
 \t\t"name": "Text input",
-\t\t"tag": "<ElTextInput>",
+\t\t"tag": "${'<' + 'ElTextInput>'}",
 \t\t"description": "A labelled single-line text field."
 \t},
 \t"studio": {
@@ -54,7 +54,7 @@ const componentDocCode = `<script setup>
 defineOptions({
 \t__doc: {
 \t\tname: 'Text input',
-\t\ttag: '<ElTextInput>',
+\t\ttag: '${'<' + 'ElTextInput>'}',
 \t\tdescription: 'A labelled single-line text field.',
 \t\ticon: 'M5 7h14M12 7v10M8 17h8',
 \t\torder: 100,
@@ -78,6 +78,73 @@ defineOptions({
 \t},
 });
 <\/script>`;
+
+const autoDocumenterCode = `// 1. Add or copy a component into a discovered folder.
+src/pages/elements/forms/my-input/ElMyInput.vue
+
+// 2. Give the component lightweight docs metadata.
+defineOptions({
+	__doc: {
+		name: 'My input',
+		tag: '${'<' + 'ElMyInput>'}',
+		description: 'A labelled input for project-specific values.',
+		studio: { group: 'Project forms' },
+	},
+});
+
+// 3. Export it when the app needs package-style imports.
+export { default as ElMyInput } from '../../forms/my-input/ElMyInput.vue';
+
+// 4. The docs route is created automatically if there is no Index.vue.
+/elements/forms/my-input`;
+
+const progressiveDocsCode = `<!-- src/pages/elements/components/status-pill/ElStatusPill.vue -->
+<script setup>
+const props = defineProps({
+	tone: { type: String, default: 'neutral' },
+	label: { type: String, default: 'Draft' },
+});
+<\/script>
+
+<template>
+	<span class="rounded-full border border-border px-2 py-1 text-xs">
+		{{ label }}
+	</span>
+</template>
+
+<!-- Result: /elements/components/status-pill appears automatically.
+The generated page uses the folder/export name, prop definitions, and playground. -->`;
+
+const progressiveOverrideCode = `<!-- Tweak the generated docs without writing a page. -->
+<script setup>
+defineOptions({
+	__doc: {
+		name: 'Status pill',
+		tag: '${'<' + 'ElStatusPill>'}',
+		description: 'A compact status label for workflow state.',
+		order: 40,
+		studio: {
+			group: 'Feedback',
+			icon: 'Circle',
+		},
+	},
+});
+
+const props = defineProps({
+	tone: {
+		type: String,
+		default: 'neutral',
+		_edit: {
+			options: ['neutral', 'success', 'warning', 'danger'],
+			description: 'Visual state shown by the pill.',
+		},
+	},
+	label: { type: String, default: 'Draft' },
+});
+<\/script>
+
+<!-- Override the whole docs page only when needed:
+src/pages/elements/components/status-pill/Index.vue -->`;
 
 const propEditCode = `const props = defineProps({
 \toptions: {
@@ -124,9 +191,50 @@ const currentRules = [
 	['Studio', 'Uses discovered and inspected rows to build the palette. It also infers defaults from props and local sample data.'],
 ];
 
+const autoDocumenterParts = [
+	['Discovery', 'Finds local El*.vue files in configured component folders with Vite glob imports.'],
+	['Inspection', 'Reads __doc, __studio, Vue prop definitions, slots, and events from the component object.'],
+	['Generated page', 'Renders a playground, props table, slots, and events when no bespoke Index.vue exists.'],
+	['Navigation', 'Adds the component to the sidebar unless __doc.hidden or __doc.nav.hidden is set.'],
+	['Studio', 'Makes the component available to visual editing unless __doc.studio.hidden is set.'],
+];
+
+const adoptionSteps = [
+	['Copy the engine', 'Bring componentManager.js, componentInspector.js, GeneratedComponentPage.vue, and the docs helpers used by that page into the app.'],
+	['Point discovery at the app', 'Change the import.meta.glob patterns to match the app component folders that should be documented.'],
+	['Add component metadata', 'Use defineOptions({ __doc }) for name, tag, description, slots, events, nav, and Studio hints.'],
+	['Choose the page style', 'Omit Index.vue for generated docs, or add Index.vue when the component needs authored examples and deeper guidance.'],
+	['Keep examples nearby', 'Store examples beside the component so authored pages and future generated examples can stay close to the source.'],
+];
+
+const progressiveSteps = [
+	['Make the component', 'Build a normal Vue SFC in a discovered folder. No docs ceremony is required for the first pass.'],
+	['It appears in docs', 'The route, sidebar item, generated playground, and props reference are inferred from the folder, export name, and defineProps.'],
+	['Tweak metadata', 'Add __doc when the default label, description, nav order, Studio group, slots, or events need product language.'],
+	['Tune the inspector', 'Add _edit on props when the generated playground should use a richer editor or constrained options.'],
+	['Override the page', 'Add Index.vue beside the component only when the generated docs are no longer enough.'],
+];
+
+const generatedInspectorFields = [
+	{
+		name: 'tone',
+		type: 'String',
+		value: 'neutral',
+		control: 'Text input',
+		note: 'Inferred from defineProps. Add _edit.options later to turn this into a select-style control.',
+	},
+	{
+		name: 'label',
+		type: 'String',
+		value: 'Draft',
+		control: 'Text input',
+		note: 'Seeded from the prop default and bound to the live component preview.',
+	},
+];
+
 const docFields = [
 	['name', 'Human label used by docs and navigation. Falls back to a label from the folder slug.'],
-	['tag', 'Display tag shown at the top of docs, such as <ElTextInput>.'],
+	['tag', 'Display tag shown at the top of docs, such as ' + '<' + 'ElTextInput>.'],
 	['description', 'Short documentation summary. Used by generated docs.'],
 	['icon', 'SVG path data. This is the preferred component icon location.'],
 	['order', 'Numeric sort order inside the inferred group. Defaults to 100.'],
@@ -135,7 +243,7 @@ const docFields = [
 	['nav', 'Navigation-specific decoration: badge, hidden, icon.'],
 	['studio', 'Studio-specific decoration: group, icon, hidden, defaults, accepts, hints.'],
 	['slots', 'Array of slot docs: name, payload, description.'],
-	['events', 'Array of event docs: name, payload, description.'],
+	['events', 'Array of event docs: name, payload, description, and optional details for exact payload shapes or examples.'],
 ];
 
 const editFields = [
@@ -143,6 +251,7 @@ const editFields = [
 	['description', 'Helper copy shown by the inspector field.'],
 	['options', 'Option values passed to the default editor when useful.'],
 	['props', 'Props passed to the editor component. Use this for compact, rows, schema, addLabel, and similar editor-specific props.'],
+	['type comments', 'Use JSDoc @typedef and @type comments near the component props when array/object shapes need richer documentation.'],
 	['label', 'Optional label override when the editor uses a different visible label.'],
 ];
 </script>
@@ -179,6 +288,98 @@ const editFields = [
 							It should appear in the generated docs and Studio automatically unless hidden.
 						</p>
 					</div>
+				</div>
+			</DocSection>
+
+			<DocSection eyebrow="Auto-documenter" title="Take the docs engine with the components">
+				<div class="grid gap-4 lg:grid-cols-[1fr_1fr]">
+					<div class="space-y-4">
+						<div class="rounded-3xl border border-border bg-card p-6 text-card-foreground">
+							<h3 class="font-semibold tracking-tight text-foreground">Optional when adopting Elements</h3>
+							<p class="mt-2 text-sm leading-6 text-muted-foreground">
+								When someone copies, vendors, or builds on the components, they can also bring the auto-documenter. It turns local Vue component metadata into living docs inside their own app, so the component library does not need a separate Storybook-style setup to stay inspectable.
+							</p>
+						</div>
+						<div class="overflow-hidden rounded-2xl border border-border">
+							<table class="w-full text-left text-sm">
+								<tbody class="divide-y divide-border bg-background">
+									<tr v-for="row in autoDocumenterParts" :key="row[0]">
+										<td class="px-4 py-3 font-medium text-foreground">{{ row[0] }}</td>
+										<td class="px-4 py-3 text-muted-foreground">{{ row[1] }}</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+					<CodeBlock lang="js" :code="autoDocumenterCode" />
+				</div>
+			</DocSection>
+
+			<DocSection eyebrow="Progressive docs" title="Start plain, then refine">
+				<div class="grid gap-4 lg:grid-cols-[1fr_1fr]">
+					<div class="space-y-4">
+						<div class="rounded-3xl border border-border bg-card p-6 text-card-foreground">
+							<h3 class="font-semibold tracking-tight text-foreground">The happy path</h3>
+							<p class="mt-2 text-sm leading-6 text-muted-foreground">
+								The core workflow is deliberately light. Focus on making the component first. Once it lands in a discovered folder, it shows up in the docs automatically. Later, when the generated page reveals what needs better naming, examples, or inspector controls, add only the metadata or custom page you actually need.
+							</p>
+						</div>
+						<div class="overflow-hidden rounded-2xl border border-border">
+							<table class="w-full text-left text-sm">
+								<tbody class="divide-y divide-border bg-background">
+									<tr v-for="row in progressiveSteps" :key="row[0]">
+										<td class="px-4 py-3 font-medium text-foreground">{{ row[0] }}</td>
+										<td class="px-4 py-3 text-muted-foreground">{{ row[1] }}</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+						<div class="overflow-hidden rounded-2xl border border-border bg-background">
+							<div class="border-b border-border bg-secondary/50 px-4 py-3">
+								<p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Generated inspector</p>
+								<div class="mt-1 flex items-center justify-between gap-3">
+									<h3 class="text-sm font-semibold text-foreground">Status pill</h3>
+									<span class="rounded-full border border-border bg-background px-2 py-0.5 text-[11px] text-muted-foreground">Auto</span>
+								</div>
+							</div>
+							<div class="space-y-4 p-4">
+								<div v-for="field in generatedInspectorFields" :key="field.name" class="space-y-2">
+									<div class="flex items-start justify-between gap-3">
+										<div>
+											<label class="block text-sm font-medium text-foreground">{{ field.name }}</label>
+											<p class="mt-0.5 text-xs text-muted-foreground">{{ field.type }} / {{ field.control }}</p>
+										</div>
+										<code class="rounded bg-secondary px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">default</code>
+									</div>
+									<div class="rounded-lg border border-input bg-card px-3 py-2 font-mono text-sm text-foreground">{{ field.value }}</div>
+									<p class="text-xs leading-5 text-muted-foreground">{{ field.note }}</p>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="space-y-4">
+						<CodeBlock lang="vue" :code="progressiveDocsCode" />
+						<CodeBlock lang="vue" :code="progressiveOverrideCode" />
+					</div>
+				</div>
+			</DocSection>
+
+			<DocSection eyebrow="Adoption" title="What a consuming app chooses">
+				<div class="overflow-hidden rounded-2xl border border-border">
+					<table class="w-full text-left text-sm">
+						<thead class="bg-secondary text-xs uppercase tracking-[0.14em] text-muted-foreground">
+							<tr>
+								<th class="px-4 py-3 font-semibold">Step</th>
+								<th class="px-4 py-3 font-semibold">Why it matters</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-border bg-background">
+							<tr v-for="row in adoptionSteps" :key="row[0]">
+								<td class="px-4 py-3 font-medium text-foreground">{{ row[0] }}</td>
+								<td class="px-4 py-3 text-muted-foreground">{{ row[1] }}</td>
+							</tr>
+						</tbody>
+					</table>
 				</div>
 			</DocSection>
 
