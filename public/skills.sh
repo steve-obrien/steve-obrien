@@ -1,16 +1,19 @@
 #!/usr/bin/env sh
 cat <<'EOF'
-Elements AI instructions
+DOM Studio AI instructions
+
+The Elements framework has moved out of this website.
 
 Canonical sources:
-- /llms.txt for the public AI guide.
-- SKILL.md in the repository root for the OpenAI-style Codex skill.
+- https://getdom.studio/llms.txt for the public AI guide.
+- SKILL.md in the getdom.studio repository for Codex workflow notes.
 
 Core rules:
-- Prefer Elements blocks and components before custom markup.
-- Import Vue components from @elements/vue.
-- Import @elements/headless to register headless custom elements.
+- Prefer DOM Studio blocks and components before custom markup.
+- Import Vue components from @getdom/studio/vue.
+- Import @getdom/studio/headless to register headless custom elements.
+- Import @getdom/studio/style.css when consuming the styled Vue layer.
 - Use semantic theme utilities, not raw colors.
-- Let Elements handle overlay, focus, keyboard, selection, toast, and form behavior.
+- Let DOM Studio handle overlay, focus, keyboard, selection, toast, and form behavior.
 - Return Studio specs with stable ids and labels when generated UI should remain editable.
 EOF

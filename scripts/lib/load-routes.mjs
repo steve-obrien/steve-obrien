@@ -59,6 +59,27 @@ const loadRoutesFromNestedPageVue = async () => {
 	return [...new Set(routePaths)];
 };
 
+const loadRoutesFromNestedIndexVue = async () => {
+	const routePaths = [];
+
+	const walk = async (dir, relSegments) => {
+		const entries = await readdir(dir, { withFileTypes: true });
+		for (const ent of entries) {
+			if (ent.name.startsWith('.')) continue;
+			const full = path.join(dir, ent.name);
+			if (ent.isDirectory()) {
+				await walk(full, [...relSegments, ent.name]);
+			} else if (ent.name === 'Index.vue' && relSegments.length > 0) {
+				const inner = relSegments.join('/');
+				routePaths.push(inner === 'index' ? '/' : `/${inner}`);
+			}
+		}
+	};
+
+	await walk(pagesDirPath, []);
+	return [...new Set(routePaths)];
+};
+
 const loadArticleRoutes = async () => {
 	const articleContentDir = path.join(pagesDirPath, 'articles', 'content');
 	const routePaths = ['/articles'];
@@ -111,7 +132,8 @@ export const loadStaticRoutes = async () => {
 	}
 
 	const fromNestedPages = await loadRoutesFromNestedPageVue();
+	const fromNestedIndexPages = await loadRoutesFromNestedIndexVue();
 	const fromArticles = await loadArticleRoutes();
 	const fromNews = await loadNewsRoutes();
-	return [...new Set([...fromRoutesFile, ...fromNestedPages, ...fromArticles, ...fromNews])];
+	return [...new Set([...fromRoutesFile, ...fromNestedPages, ...fromNestedIndexPages, ...fromArticles, ...fromNews])];
 };

@@ -1,131 +1,49 @@
-# Elements
+# DOM Studio
 
-Elements is a component framework for building application UI with LLMs and humans working together. It provides Vue components, headless custom elements, reusable app blocks, Studio-editable specs, and semantic theme tokens.
+The Elements framework has moved out of this site and now lives at https://getdom.studio.
+
+Use DOM Studio when building app screens, forms, dashboards, chat tools, mail clients, login flows, settings screens, internal tools, or generated UI that should stay editable.
 
 Primary docs:
-- Overview: /elements
-- AI builders: /elements/ai
-- Theming: /elements/theming
-- Component spec: /elements/component-spec
-- Studio: /elements/components/studio
-- Mobile: /elements/mobile
-- Blocks: /elements/blocks/dashboard, /elements/blocks/chat, /elements/blocks/mail, /elements/blocks/forms, /elements/blocks/login, /elements/blocks/application-layout
-- Components: /elements/components/button, /elements/forms/text-input, /elements/visual/card
-- Headless: /elements/headless
-
-Use Elements when building app screens, forms, dashboards, chat tools, mail clients, login flows, settings screens, internal tools, or generated UI that should stay editable.
+- Overview: https://getdom.studio
+- AI builders: https://getdom.studio/ai
+- Theming: https://getdom.studio/theming
+- Component spec: https://getdom.studio/component-spec
+- Studio: https://getdom.studio/components/studio
+- Mobile: https://getdom.studio/mobile
+- Blocks: https://getdom.studio/blocks/dashboard, https://getdom.studio/blocks/chat, https://getdom.studio/blocks/mail, https://getdom.studio/blocks/forms, https://getdom.studio/blocks/login, https://getdom.studio/blocks/application-layout
+- Components: https://getdom.studio/components/button, https://getdom.studio/forms/text-input, https://getdom.studio/visual/card
+- Headless: https://getdom.studio/headless
 
 ## Core Rules
 
-1. Prefer existing Elements blocks and components before custom markup.
+1. Prefer existing DOM Studio blocks and components before custom markup.
 2. Use component props for behavior; use classes for layout, spacing, and small visual adjustments.
 3. Use semantic theme utilities, not raw colors, unless defining a theme.
 4. Keep generated UI dense, practical, and product-like unless asked for marketing UI.
-5. Let Elements components handle accessibility, focus, keyboard navigation, overlays, and selection behavior.
+5. Let DOM Studio components handle accessibility, focus, keyboard navigation, overlays, and selection behavior.
 6. Return a Studio spec when the user may want to visually edit or inspect generated UI later.
 7. Give Studio spec nodes stable ids and human labels.
 
 ## Vue Usage
 
-Import public Vue components from `@elements/vue`.
+Import public Vue components from `@getdom/studio/vue`.
 
 ```js
 import {
-	ElButton,
-	ElCard,
-	ElCombobox,
-	ElForm,
-	ElTextInput,
-} from '@elements/vue';
+	DomButton,
+	DomCard,
+	DomCombobox,
+	DomForm,
+	DomTextInput,
+} from '@getdom/studio/vue';
 ```
 
-Common families:
-- Components: `ElButton`, `ElDropdown`, `ElDialog`, `ElDrawer`, `ElPopover`, `ElTabs`, `ElTooltip`, `ElAccordion`, `ElMenu`, `ElTreeView`, `ElContextMenu`, `ElCommandPalette`, `ElToastStack`.
-- Forms: `ElForm`, `ElField`, `ElTextInput`, `ElEmailInput`, `ElUrlInput`, `ElTextareaInput`, `ElNumberInput`, `ElRangeInput`, `ElNativeSelect`, `ElSelectInput`, `ElListbox`, `ElCombobox`, `ElAutocomplete`, `ElCheckbox`, `ElRadioGroup`, `ElToggle`, `ElToggleButton`, `ElToggleButtonGroup`, `ElCalendar`, `ElDatePicker`, `ElPasswordInput`, `ElCodeInput`, `ElJsonInput`, `ElJsonListInput`, `ElColorInput`.
-- Mobile: `ElAppShell`, `ElAppTopBar`, `ElAppBottomNav`, `ElAppListItem`, `ElSafeArea`, `ElActionSheet`. Use shared form primitives such as `ElTextInput` for mobile search fields.
-- Visual: `ElCard`.
-- Utilities: `useToasts`, `fieldProps`, `useField`, validators, form registry helpers, tree utilities, `ElRenderer`.
+Use `@getdom/studio/headless` to register headless custom elements such as dropdown, dialog, drawer, popover, tabs, toggle, tooltip, accordion, menu, listbox, combobox, autocomplete, checkbox, radio group, and toast.
 
-Use `@elements/headless` to register headless custom elements such as dropdown, dialog, drawer, popover, tabs, toggle, tooltip, accordion, menu, listbox, combobox, autocomplete, checkbox, radio group, and toast.
-
-## Choosing Components
-
-- Start with blocks for dashboard, chat, mail, forms, login, and application layout screens.
-- Use `ElCard` for app surfaces and grouped content.
-- Use `ElButton` for actions.
-- Use `ElDialog`, `ElDrawer`, `ElPopover`, `ElDropdown`, `ElMenu`, `ElContextMenu`, and `ElCommandPalette` for overlays and menus.
-- Use `ElNativeSelect` for small native option lists.
-- Use `ElListbox` for custom single-choice lists.
-- Use `ElCombobox` when the user searches and commits an option.
-- Use `ElAutocomplete` when text remains freeform but suggestions help.
-- Use `ElCalendar` for month-grid date selection and `ElDatePicker` for typed date entry with a calendar popover.
-- Use `ElCodeInput` for prompts, snippets, templates, and structured text.
-- Use `ElJsonInput` for parsed JSON data.
-- Use `ElJsonListInput` for schema-aware arrays such as options, commands, menu items, toast payloads, and inspector rows.
-
-## Forms
-
-Form-capable controls share a field contract. Prefer `fieldProps`, `useField`, `ElField`, and parent `ElForm` instead of duplicating label, description, id, validation, errors, touched, dirty, or path logic.
-
-Fields use local names. Parent forms derive nested dot paths, native HTML names, ids, validation state, and submit payloads.
-
-Use `chrome="field"` for standard labelled controls and `:chrome="false"` when another `ElField` owns the visual layout.
-
-## Studio Specs
-
-Studio specs are editable UI trees:
-
-```json
-{
-	"id": "settings-form",
-	"label": "Settings form",
-	"component": "ElCard",
-	"props": {
-		"padding": "lg",
-		"class": "w-full max-w-2xl"
-	},
-	"children": [
-		{
-			"id": "email",
-			"label": "Email input",
-			"component": "ElTextInput",
-			"props": {
-				"label": "Email address",
-				"placeholder": "you@example.com"
-			}
-		}
-	]
-}
+```js
+import '@getdom/studio/headless';
+import '@getdom/studio/style.css';
 ```
 
-Specs are not component discovery rows. Use component export names such as `ElTextInput` or HTML tags such as `section`, `h2`, and `p`.
-
-## Theme Tokens
-
-Use these utility names:
-- Surfaces: `bg-background`, `bg-card`, `bg-popover`, `bg-primary`, `bg-secondary`, `bg-muted`, `bg-accent`, `bg-success`, `bg-warning`, `bg-destructive`.
-- Text: `text-foreground`, `text-card-foreground`, `text-popover-foreground`, `text-primary-foreground`, `text-secondary-foreground`, `text-muted-foreground`, `text-accent-foreground`, `text-success-foreground`, `text-warning-foreground`, `text-destructive-foreground`.
-- Edges and focus: `border-border`, `border-input`, `divide-border`, `ring-ring`, `focus-visible:ring-ring`.
-
-Do not invent theme token names. Do not use raw hex, RGB, or OKLCH values in component markup.
-
-## Component Authoring
-
-Components are discovered from:
-- `src/pages/elements/components/*/El*.vue`
-- `src/pages/elements/forms/*/El*.vue`
-- `src/pages/elements/visual/*/El*.vue`
-
-Add bespoke docs with an `Index.vue` beside the component. If omitted, generated docs use inspected component metadata.
-
-Use `defineOptions({ __doc: ... })` for name, tag, description, icon, order, nav metadata, Studio metadata, slots, and events. Use prop `_edit` metadata for Studio inspector editors, with editor component names in `_edit.component`.
-
-Export public Vue components from `src/pages/elements/lib/vue/index.js`.
-
-## Avoid
-
-- Recreating dropdown, dialog, drawer, popover, combobox, autocomplete, toast, or keyboard navigation behavior manually.
-- Raw colors in component markup.
-- Anonymous Studio layers.
-- Large unstructured HTML blobs when a Studio spec would preserve intent.
-- Custom form plumbing where the shared field contract already applies.
+This site only links to DOM Studio. Do not add new framework source under `src/pages/elements`; make component-system changes in the `getdom.studio` repository instead.

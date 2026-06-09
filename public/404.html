@@ -4,6 +4,15 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Page not found | Steve O'Brien</title>
+		<script>
+			(function () {
+				var path = window.location.pathname;
+				if (path === '/elements' || path.indexOf('/elements/') === 0) {
+					var suffix = path.replace(/^\/elements/, '');
+					window.location.replace('https://getdom.studio' + suffix + window.location.search + window.location.hash);
+				}
+			}());
+		</script>
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link

@@ -71,7 +71,6 @@ export const createApp = ViteSSG(
 		routes,
 		scrollBehavior(to, from, savedPosition) {
 			if (savedPosition) return savedPosition;
-			if (to.path.startsWith('/elements') && from.path.startsWith('/elements')) return false;
 			return { top: 0 };
 		},
 	},

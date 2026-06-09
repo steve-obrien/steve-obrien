@@ -166,7 +166,7 @@ body {
 	}
 }
 
-/* Elements custom-elements: hide pre-upgrade light-DOM children so SSR'd
+/* Custom elements: hide pre-upgrade light-DOM children so SSR'd
  * dialog / popover content doesn't render in flow before the JS module
  * loads and the shadow DOM takes over. Trigger slots stay visible. */
 element-dialog:not(:defined) > *:not([slot="trigger"]),

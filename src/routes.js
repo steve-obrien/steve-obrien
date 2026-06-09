@@ -4,10 +4,10 @@ import { articles } from './pages/articles/articles.js';
 import IdeasPage from './pages/IdeasPage.vue';
 import { dailyNewsFeeds } from './pages/news/dailyNews.js';
 import NotFoundPage from './NotFoundPage.vue';
-import { getFormRedirectRecords, getLazyComponentRecords } from './pages/elements/_layout/componentManager.js';
 
+const externalRedirectPage = () => import('./pages/ExternalRedirectPage.vue');
 const pageRouteModules = import.meta.glob('./pages/**/Index.vue');
-const generatedComponentPage = () => import('./pages/elements/_layout/GeneratedComponentPage.vue');
+const domStudioOrigin = 'https://getdom.studio';
 
 function filePathToRoutePath(globKey) {
 	const m = globKey.match(/^\.\/pages\/(.+)\/Index\.vue$/);
@@ -27,6 +27,12 @@ function titleFromRoutePath(path) {
 		.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function getDomStudioUrl(path) {
+	const suffix = path.replace(/^\/elements\/?/, '/');
+	if (!suffix || suffix === '/') return domStudioOrigin;
+	return `${domStudioOrigin}${suffix}`;
+}
+
 const fileBasedRoutes = Object.entries(pageRouteModules)
 	.map(([key, loader]) => {
 		const path = filePathToRoutePath(key);
@@ -43,32 +49,24 @@ const manualRoutes = [
 	{ path: '/', component: AboutPage, meta: { title: 'About' } },
 	{ path: '/ideas', component: IdeasPage, meta: { title: 'Ideas' } },
 	{ path: '/news', component: () => import('./pages/news/Index.vue'), meta: { title: 'News' } },
+	{
+		path: '/elements',
+		component: externalRedirectPage,
+		props: { to: domStudioOrigin, label: 'Open DOM Studio' },
+		meta: { title: 'DOM Studio' },
+	},
+	{
+		path: '/elements/:pathMatch(.*)*',
+		component: externalRedirectPage,
+		props: (route) => ({
+			to: getDomStudioUrl(route.path),
+			label: 'Open DOM Studio',
+		}),
+		meta: { title: 'DOM Studio' },
+	},
 ];
 
 const manualPaths = new Set(manualRoutes.map((r) => r.path));
-const fileBasedPaths = new Set(fileBasedRoutes.map((r) => r.path));
-
-const generatedComponentRoutes = getLazyComponentRecords()
-	.map((record) => {
-		if (fileBasedPaths.has(record.route)) return null;
-		return {
-			path: record.route,
-			component: generatedComponentPage,
-			props: {
-				componentLoader: record.loader,
-				componentSourceLoader: record.sourceLoader,
-				section: record.section,
-			},
-			meta: { title: titleFromRoutePath(record.route) },
-		};
-	})
-	.filter(Boolean);
-
-const movedFormRedirects = getFormRedirectRecords()
-	.map((record) => ({
-		path: record.from,
-		redirect: record.to,
-	}));
 
 const articleDetailRoutes = articles.map((article) => ({
 	path: `/articles/${article.slug}`,
@@ -101,8 +99,6 @@ const newsSummaryRoutes = dailyNewsFeeds.flatMap((feed) => feed.items.map((item)
 export const routes = [
 	...manualRoutes,
 	...fileBasedRoutes.filter((r) => !manualPaths.has(r.path)),
-	...generatedComponentRoutes,
-	...movedFormRedirects,
 	...articleDetailRoutes,
 	...newsFeedRoutes,
 	...newsSummaryRoutes,

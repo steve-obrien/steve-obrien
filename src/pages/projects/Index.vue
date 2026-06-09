@@ -1,6 +1,6 @@
 <script setup>
 import bookCover from './bookCover.png';
-import elementsLogo from './elements_card.png';
+import domStudioCard from './dom_studio_card.png';
 
 // const cardClass = 'relative block w-full overflow-hidden rounded-3xl bg-card text-card-foreground shadow-xl ring-1 ring-border transition-[box-shadow,transform] duration-300 ease-in-out [backface-visibility:hidden] [-webkit-backface-visibility:hidden] hover:scale-[1.03] hover:shadow-2xl';
 const cardClass = 'shadow-xl break-inside-avoid relative ring-1 ring-border mr-6 block w-full bg-card text-card-foreground rounded-3xl overflow-hidden cursor-pointer transform hover:scale-[1.03] group duration-300 ease-in-out hover:shadow-2xl backface-hidden'
@@ -19,9 +19,9 @@ const cardClass = 'shadow-xl break-inside-avoid relative ring-1 ring-border mr-6
 			<div class="grid gap-8 md:grid-cols-2">
 				<div class="space-y-8">
 
-					<a href="/elements" :class="cardClass">
+					<a href="https://getdom.studio" :class="cardClass">
 						<div class="relative">
-							<img :src="elementsLogo" alt="Elements Ui Framework" class="h-full w-full object-cover" />
+							<img :src="domStudioCard" alt="DOM Studio interface kit" class="h-full w-full object-cover" />
 						</div>
 					</a>
 

@@ -4,7 +4,6 @@ const links = [
 	{ to: '/articles', label: 'Articles' },
 	{ to: '/projects', label: 'Projects' },
 	{ to: '/companies', label: 'Companies' },
-	// { to: '/elements', label: 'Elements' },
 	// { to: '/ideas', label: 'Ideas' },
 	// { to: '/contact', label: 'Contact' },
 
