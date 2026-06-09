@@ -6,7 +6,9 @@
 	"scripts": {
 		"dev": "vite",
 		"build": "vite-ssg build && node scripts/generate-seo-files.mjs",
+		"check:outrank-webhook": "node scripts/check-outrank-webhook.mjs",
 		"check:theme-ai": "node scripts/check-theme-ai-endpoint.mjs",
+		"outrank-webhook-server": "node scripts/outrank-webhook-server.mjs",
 		"theme-ai-server": "node scripts/theme-ai-server.mjs",
 		"preview": "vite preview"
 	},

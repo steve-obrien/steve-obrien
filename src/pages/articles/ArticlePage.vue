@@ -49,6 +49,14 @@ const publishedDate = computed(() => {
 				</div>
 			</header>
 
+			<img
+				v-if="article.imageUrl"
+				:src="article.imageUrl"
+				:alt="article.title"
+				class="mx-auto mb-12 aspect-[16/9] w-full max-w-5xl rounded-lg border border-border bg-muted object-cover"
+				decoding="async"
+			>
+
 			<MarkdownArticle :content="article.body" />
 		</article>
 

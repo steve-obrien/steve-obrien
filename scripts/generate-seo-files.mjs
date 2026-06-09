@@ -83,11 +83,16 @@ const loadArticleMeta = async () => {
 				|| meta.meta_keywords
 				|| meta['meta-keywords']
 				|| meta.keywords;
+			const image = meta.imageUrl
+				|| meta.image_url
+				|| meta['image-url']
+				|| meta.image;
 
 			metaByRoute.set(`/articles/${slug}`, {
 				title: `${title} | ${siteName}`,
 				description,
 				keywords: normaliseStringList(keywords),
+				image,
 			});
 		}
 	} catch {
@@ -140,6 +145,14 @@ const buildRobots = (siteUrl) => {
 		'',
 		`Sitemap: ${siteUrl}/sitemap.xml`,
 	].join('\n');
+};
+
+const toAbsoluteUrl = (siteUrl, value) => {
+	if (!value) return '';
+	const text = String(value).trim();
+	if (/^https?:\/\//i.test(text)) return text;
+	if (text.startsWith('/')) return `${siteUrl}${text}`;
+	return `${siteUrl}/${text}`;
 };
 
 const getPageMeta = (routePath) => {
@@ -207,8 +220,9 @@ const injectMetaIntoPage = async (siteUrl, routePath) => {
 	const fileName = routePath === '/' ? 'index.html' : `${routePath.replace(/^\//, '')}.html`;
 	const filePath = path.join(distDir, fileName);
 	const canonicalUrl = routePath === '/' ? siteUrl : `${siteUrl}${routePath}`;
-	const { title, description, keywords } = getPageMeta(routePath);
+	const { title, description, keywords, image } = getPageMeta(routePath);
 	const keywordContent = normaliseStringList(keywords).join(', ');
+	const imageUrl = toAbsoluteUrl(siteUrl, image);
 
 	let html;
 	try {
@@ -232,9 +246,11 @@ const injectMetaIntoPage = async (siteUrl, routePath) => {
 		`<meta property="og:title" content="${escapeHtml(title)}">`,
 		`<meta property="og:description" content="${escapeHtml(description)}">`,
 		`<meta property="og:url" content="${escapeHtml(canonicalUrl)}">`,
-		'<meta name="twitter:card" content="summary">',
+		imageUrl ? `<meta property="og:image" content="${escapeHtml(imageUrl)}">` : '',
+		`<meta name="twitter:card" content="${imageUrl ? 'summary_large_image' : 'summary'}">`,
 		`<meta name="twitter:title" content="${escapeHtml(title)}">`,
 		`<meta name="twitter:description" content="${escapeHtml(description)}">`,
+		imageUrl ? `<meta name="twitter:image" content="${escapeHtml(imageUrl)}">` : '',
 	].filter(Boolean).join('\n\t\t');
 
 	html = html.replace('</head>', `\t\t${metaBlock}\n\t</head>`);

@@ -150,6 +150,7 @@ function calculateReadingTime(body) {
  * 	description: string,
  * 	metaDescription: string,
  * 	metaKeywords: string[],
+ * 	imageUrl: string,
  * 	date: string,
  * 	readingTime: string,
  * 	tags: string[],
@@ -168,6 +169,10 @@ function normaliseArticle(path, raw) {
 		|| meta.meta_keywords
 		|| meta['meta-keywords']
 		|| meta.keywords;
+	const imageUrl = meta.imageUrl
+		|| meta.image_url
+		|| meta['image-url']
+		|| meta.image;
 
 	return {
 		slug,
@@ -175,6 +180,7 @@ function normaliseArticle(path, raw) {
 		description,
 		metaDescription,
 		metaKeywords: normaliseStringList(metaKeywords),
+		imageUrl: imageUrl || '',
 		date: meta.date || '',
 		readingTime: calculateReadingTime(body),
 		tags: Array.isArray(meta.tags) ? meta.tags : [],
