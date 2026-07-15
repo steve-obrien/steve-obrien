@@ -7,6 +7,7 @@ import NotFoundPage from './NotFoundPage.vue';
 
 const externalRedirectPage = () => import('./pages/ExternalRedirectPage.vue');
 const pageRouteModules = import.meta.glob('./pages/**/Index.vue');
+const cvPage = pageRouteModules['./pages/cv/Index.vue'];
 const domStudioOrigin = 'https://getdom.studio';
 
 function filePathToRoutePath(globKey) {
@@ -46,7 +47,24 @@ const fileBasedRoutes = Object.entries(pageRouteModules)
 	.filter(Boolean);
 
 const manualRoutes = [
-	{ path: '/', component: AboutPage, meta: { title: 'About' } },
+	{
+		path: '/',
+		component: AboutPage,
+		meta: {
+			title: '',
+			description: 'Steve O’Brien is a technical founder, fractional CTO, and AI systems architect who turns ambitious ideas into practical software systems and products.',
+			keywords: 'Steve O’Brien, fractional CTO, technical founder, AI systems architect, product builder, Bristol',
+		},
+	},
+	{
+		path: '/cv',
+		component: cvPage,
+		meta: {
+			title: 'Executive CV',
+			description: 'Steve O’Brien is a fractional CTO, AI systems architect, technical founder, and product builder with more than two decades of engineering experience.',
+			keywords: 'Steve O’Brien, fractional CTO, executive CV, AI systems architect, technology advisor, Bristol',
+		},
+	},
 	{ path: '/ideas', component: IdeasPage, meta: { title: 'Ideas' } },
 	{ path: '/news', component: () => import('./pages/news/Index.vue'), meta: { title: 'News' } },
 	{
