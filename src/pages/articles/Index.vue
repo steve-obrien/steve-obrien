@@ -1,6 +1,6 @@
 <script setup>
 import { RouterLink } from 'vue-router';
-import { articles } from './articles';
+import { listedArticles } from './articles';
 
 const formatter = new Intl.DateTimeFormat('en-GB', {
 	day: 'numeric',
@@ -8,6 +8,12 @@ const formatter = new Intl.DateTimeFormat('en-GB', {
 	year: 'numeric',
 });
 
+/**
+ * Format an ISO calendar date without applying a timezone shift.
+ *
+ * @param {string} date - Date in YYYY-MM-DD form.
+ * @returns {string} Human-readable British date label.
+ */
 function formatDate(date) {
 	if (!date) return '';
 	const [year, month, day] = date.split('-').map(Number);
@@ -30,7 +36,7 @@ function formatDate(date) {
 
 			<div class="divide-y divide-border border-y border-border">
 				<article
-					v-for="article in articles"
+					v-for="article in listedArticles"
 					:key="article.slug"
 					class="grid gap-4 py-8 md:grid-cols-[10rem_1fr]"
 				>

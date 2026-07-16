@@ -77,11 +77,6 @@ const selectedWriting = [
 		text: 'Why most teams should start with hosted models, owned evaluation data, and open-weight experiments before training from scratch.',
 		href: '/articles/building-llms-from-scratch',
 	},
-	{
-		title: 'Markdown with Vue escape hatches',
-		text: 'A working approach to calm long-form writing that can still make room for code, live demos, and real components.',
-		href: '/articles/markdown-with-vue-components',
-	},
 ];
 </script>
 

@@ -1,6 +1,11 @@
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import {
+	articleFrontmatterValue,
+	articleSlugFromRelativePath,
+	listArticleFiles,
+} from './article-files.mjs';
 
 const rootDir = process.cwd();
 const routesFilePath = path.join(rootDir, 'src', 'routes.js');
@@ -85,13 +90,12 @@ const loadArticleRoutes = async () => {
 	const routePaths = ['/articles'];
 
 	try {
-		const files = await readdir(articleContentDir);
+		const files = await listArticleFiles(articleContentDir);
 		for (const file of files) {
-			if (!file.endsWith('.md')) continue;
 			const filePath = path.join(articleContentDir, file);
 			const raw = await readFile(filePath, 'utf8');
-			const slugMatch = raw.match(/^---[\s\S]*?\nslug:\s*([^\n]+)\n[\s\S]*?\n---/);
-			const slug = slugMatch?.[1]?.trim().replace(/^['"]|['"]$/g, '') || file.replace(/\.md$/i, '');
+			if (articleFrontmatterValue(raw, 'status') !== 'published') continue;
+			const slug = articleFrontmatterValue(raw, 'slug') || articleSlugFromRelativePath(file);
 			routePaths.push(`/articles/${slug}`);
 		}
 	} catch {

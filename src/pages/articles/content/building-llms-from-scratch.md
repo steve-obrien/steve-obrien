@@ -2,6 +2,7 @@
 title: Should you build an LLM from scratch?
 description: Why most teams should begin with hosted models, owned telemetry and open-weight experiments before considering pretraining from scratch.
 date: 2026-05-26
+status: published
 tags: [LLMs, AI, Systems]
 metaDescription: A practical guide to adopting LLMs: start with hosted APIs and owned evaluation data, route work to cheaper models, test open weights and only pretrain when the evidence supports it.
 metaKeywords: [LLM, large language model, model routing, open-weight models, LLM evaluation, LLM observability, pretraining, self-hosted AI]

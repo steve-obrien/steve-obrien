@@ -1,7 +1,8 @@
 // This is a crappy AI gen script - ideally replace with something better.
-import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { loadStaticRoutes } from './lib/load-routes.mjs';
+import { articleSlugFromRelativePath, listArticleFiles } from './lib/article-files.mjs';
 
 const rootDir = process.cwd();
 const distDir = path.join(rootDir, 'dist');
@@ -66,13 +67,13 @@ const loadArticleMeta = async () => {
 	const metaByRoute = new Map();
 
 	try {
-		const files = await readdir(articleContentDir);
+		const files = await listArticleFiles(articleContentDir);
 		for (const file of files) {
-			if (!file.endsWith('.md')) continue;
 			const filePath = path.join(articleContentDir, file);
 			const raw = await readFile(filePath, 'utf8');
 			const meta = parseFrontmatter(raw);
-			const slug = meta.slug || file.replace(/\.md$/i, '');
+			if (meta.status !== 'published') continue;
+			const slug = meta.slug || articleSlugFromRelativePath(file);
 			const title = meta.title || String(slug).replace(/-/g, ' ');
 			const description = meta.metaDescription
 				|| meta.meta_description

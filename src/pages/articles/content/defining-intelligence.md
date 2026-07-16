@@ -2,6 +2,7 @@
 title: Defining intelligence
 description: In an era where we all talk about, and have our feeds full of intelligence, why can we still not define it?
 date: 2026-05-27
+status: published
 readingTime: 4 min read
 tags: [Intelligence, AI, Systems]
 ---

@@ -1,4 +1,4 @@
-const articleModules = import.meta.glob('./content/*.md', {
+const articleModules = import.meta.glob('./content/**/*.md', {
 	query: '?raw',
 	import: 'default',
 	eager: true,
@@ -17,8 +17,7 @@ const WORDS_PER_MINUTE = 220;
  */
 function slugFromPath(path) {
 	return path
-		.split('/')
-		.pop()
+		.replace(/^\.\/content\//, '')
 		.replace(/\.md$/i, '');
 }
 
@@ -47,6 +46,12 @@ function parseValue(value) {
 	return trimmed.replace(/^['"]|['"]$/g, '');
 }
 
+/**
+ * Convert supported frontmatter list shapes into trimmed strings.
+ *
+ * @param {unknown} value - Parsed frontmatter value.
+ * @returns {string[]} Normalised non-empty strings.
+ */
 function normaliseStringList(value) {
 	if (Array.isArray(value)) {
 		return value.map((item) => String(item).trim()).filter(Boolean);
@@ -152,6 +157,10 @@ function calculateReadingTime(body) {
  * 	metaKeywords: string[],
  * 	imageUrl: string,
  * 	date: string,
+ * 	status: string,
+ * 	parent: string,
+ * 	order: number,
+ * 	listed: boolean,
  * 	readingTime: string,
  * 	tags: string[],
  * 	body: string
@@ -182,6 +191,10 @@ function normaliseArticle(path, raw) {
 		metaKeywords: normaliseStringList(metaKeywords),
 		imageUrl: imageUrl || '',
 		date: meta.date || '',
+		status: meta.status || 'draft',
+		parent: meta.parent || '',
+		order: Number(meta.order) || 0,
+		listed: meta.listed !== false,
 		readingTime: calculateReadingTime(body),
 		tags: Array.isArray(meta.tags) ? meta.tags : [],
 		body,
@@ -197,7 +210,13 @@ function normaliseArticle(path, raw) {
  */
 export const articles = Object.entries(articleModules)
 	.map(([path, raw]) => normaliseArticle(path, raw))
+	.filter((article) => article.status === 'published')
 	.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+
+/**
+ * Published articles that should appear on the top-level article index.
+ */
+export const listedArticles = articles.filter((article) => article.listed && !article.parent);
 
 /**
  * Find an article for the current route slug.
@@ -207,4 +226,16 @@ export const articles = Object.entries(articleModules)
  */
 export function getArticle(slug) {
 	return articles.find((article) => article.slug === slug);
+}
+
+/**
+ * Return the ordered child pages belonging to one parent article.
+ *
+ * @param {string} parentSlug - Slug of the parent overview article.
+ * @returns {ReturnType<typeof normaliseArticle>[]} Child articles in course order.
+ */
+export function getChildArticles(parentSlug) {
+	return articles
+		.filter((article) => article.parent === parentSlug)
+		.sort((a, b) => a.order - b.order || a.title.localeCompare(b.title));
 }

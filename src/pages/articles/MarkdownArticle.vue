@@ -16,10 +16,58 @@ const markdown = new MarkdownIt({
 	typographer: true,
 });
 
+const defaultFenceRenderer = markdown.renderer.rules.fence;
+const labeledFenceNames = {
+	prompt: 'Prompt',
+	'model-output': 'Model output',
+};
+
+/**
+ * Render prompt and model-output fences as labelled, accessible figures.
+ *
+ * Other fenced code blocks retain MarkdownIt's default rendering so technical
+ * examples and shell commands are unaffected.
+ *
+ * @param {import('markdown-it/lib/token.mjs').default[]} tokens - Parsed Markdown tokens.
+ * @param {number} index - Index of the fence token being rendered.
+ * @param {Record<string, unknown>} options - Active MarkdownIt rendering options.
+ * @param {Record<string, unknown>} environment - Per-render environment object.
+ * @param {import('markdown-it/lib/renderer.mjs').default} self - Active renderer.
+ * @returns {string} Rendered HTML for the fenced block.
+ */
+function renderFence(tokens, index, options, environment, self) {
+	const fenceName = tokens[index].info.trim().split(/\s+/)[0];
+	const label = labeledFenceNames[fenceName];
+	const renderedFence = defaultFenceRenderer(tokens, index, options, environment, self);
+	if (!label) return renderedFence;
+
+	return [
+		`<figure class="article-io article-io--${fenceName}">`,
+		`<figcaption>${label}</figcaption>`,
+		renderedFence,
+		'</figure>',
+	].join('');
+}
+
+markdown.renderer.rules.fence = renderFence;
+
+/**
+ * Convert kebab-case directive names into Vue prop casing.
+ *
+ * @param {string} value - Attribute name from Markdown.
+ * @returns {string} Camel-cased prop name.
+ */
 function camelise(value) {
 	return value.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
 }
 
+/**
+ * Parse one component-directive attribute value.
+ *
+ * @param {string | undefined} value - Raw attribute value.
+ * @param {boolean} isBound - Whether the attribute used Vue binding syntax.
+ * @returns {unknown} Parsed primitive, JSON value, or original string.
+ */
 function parseAttributeValue(value, isBound) {
 	if (value === undefined) return true;
 	const trimmed = value.trim();
@@ -38,6 +86,12 @@ function parseAttributeValue(value, isBound) {
 	return trimmed;
 }
 
+/**
+ * Parse component-directive attributes into Vue props.
+ *
+ * @param {string} source - Attribute text inside directive braces.
+ * @returns {Record<string, unknown>} Parsed component props.
+ */
 function parseAttributes(source = '') {
 	const attrs = {};
 	const attrPattern = /(:?[\w-]+)(?:=(?:"([^"]*)"|'([^']*)'|([^\s}]+)))?/g;
@@ -54,6 +108,12 @@ function parseAttributes(source = '') {
 	return attrs;
 }
 
+/**
+ * Recognise a supported component directive on a standalone Markdown line.
+ *
+ * @param {string} line - Trimmed Markdown source line.
+ * @returns {{ name: string, props: Record<string, unknown> } | null} Parsed directive.
+ */
 function parseComponentDirective(line) {
 	const namedMatch = line.match(/^::([A-Z][\w]*)\s*(?:\{([^}]*)\})?\s*$/);
 	if (namedMatch) {
@@ -79,11 +139,18 @@ function parseComponentDirective(line) {
 	};
 }
 
+/**
+ * Split Markdown into rendered prose and registered Vue component segments.
+ *
+ * @param {string} content - Raw Markdown article body.
+ * @returns {Array<Record<string, unknown>>} Ordered render segments.
+ */
 function buildSegments(content) {
 	const segments = [];
 	const buffer = [];
 	let fenceMarker = '';
 
+	/** Render and clear Markdown accumulated since the previous component. */
 	const flushMarkdown = () => {
 		const source = buffer.join('\n').trim();
 		buffer.length = 0;
@@ -373,6 +440,38 @@ const segments = computed(() => buildSegments(props.content));
 	font-size: 0.85rem;
 	line-height: 1.7;
 	padding: 0;
+}
+
+.article-prose :deep(.article-io) {
+	border: 1px solid var(--border);
+	border-radius: 0.6rem;
+	margin: 1.5rem 0;
+	overflow: hidden;
+}
+
+.article-prose :deep(.article-io figcaption) {
+	background: color-mix(in oklch, var(--secondary) 75%, var(--background));
+	border-bottom: 1px solid var(--border);
+	color: var(--muted-foreground);
+	font-size: 0.72rem;
+	font-weight: 700;
+	letter-spacing: 0.14em;
+	padding: 0.65rem 1rem;
+	text-transform: uppercase;
+}
+
+.article-prose :deep(.article-io pre) {
+	border: 0;
+	border-radius: 0;
+	margin: 0;
+}
+
+.article-prose :deep(.article-io--prompt) {
+	border-left: 0.25rem solid var(--muted-foreground);
+}
+
+.article-prose :deep(.article-io--model-output) {
+	border-left: 0.25rem solid var(--foreground);
 }
 
 .article-prose :deep(hr) {
