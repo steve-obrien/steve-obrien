@@ -11,9 +11,9 @@ metaDescription: Assemble embeddings, Transformer blocks, and a vocabulary proje
 metaKeywords: [decoder-only Transformer, language model architecture, weight tying]
 ---
 
-The complete forward path now becomes straightforward because every operation has already been tested:
+We have reached one of my favourite points in this sort of build: the complete forward path is now straightforward because every operation has already been examined and tested on its own.
 
-```text
+```diagram
 token IDs
   → token embeddings + sinusoidal positions
   → embedding dropout
@@ -63,5 +63,11 @@ The complete-model tests verify more than shape:
 - the default architecture remains below one million parameters.
 
 This is the point at which a collection of understandable operations becomes a language model. It still contains no learned language knowledge until the optimiser updates its random parameters.
+
+## Follow the complete forward pass
+
+Open [`TinyTransformerLanguageModel`](https://github.com/steve-obrien/tiny-transformer-course/blob/main/tiny_transformer/language_model.py) and begin at `forward()`. It validates token IDs, calls `_hidden_states()`, projects every final representation to 65 logits, and optionally calculates cross-entropy against the targets.
+
+Do not begin by reading every class. Put a breakpoint in `forward()`, pass one tiny batch through the model, and step down only when you want to understand the next transformation. That follows the same outside-in route we used across the lessons.
 
 [Next: train from random weights](/articles/building-a-tiny-language-model-from-scratch/15-training)

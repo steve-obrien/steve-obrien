@@ -130,7 +130,7 @@ The phrase covers projects with radically different ambitions.
 | Specialist | Own a model for a narrow language or domain | Curated data, repeated experiments and multi-GPU training |
 | Frontier | Compete with the largest general-purpose models | Large research teams, thousands of accelerators and industrial-scale infrastructure |
 
-Costs vary enormously with ambition. An educational model can be built and trained on modest hardware. At frontier-lab scale, the economics are entirely different: one 2026 estimate puts architecture experiments alone at **$1–5 million—roughly £780,000–£3.9 million—before the main training run**. These are frontier-scale figures, not a typical budget for a small specialist model.
+Costs vary enormously with ambition. An educational model can be built and trained on modest hardware. At frontier-lab scale, the economics are entirely different: one 2026 estimate puts architecture experiments alone at **$1–5 million (roughly £780,000–£3.9 million) before the main training run**. These are frontier-scale figures, not a typical budget for a small specialist model.
 
 Training from scratch can still be justified. You might need a tokenizer for an under-served language, a compact model for unusual hardware, complete control of the training corpus, or an architecture that existing models do not provide. It can also be an excellent way to learn how language models work.
 
@@ -164,7 +164,7 @@ Weight tying can share the input embedding and output projection to reduce param
 
 ### 4. Train and recover safely
 
-PyTorch is the common foundation. For distributed training, Fully Sharded Data Parallel, DeepSpeed ZeRO and other parallel strategies can divide parameters, gradients and optimiser state across accelerators. The correct choice depends on model shape, hardware memory, interconnects and cluster topology—not a fixed parameter threshold.
+PyTorch is the common foundation. For distributed training, Fully Sharded Data Parallel, DeepSpeed ZeRO and other parallel strategies can divide parameters, gradients and optimiser state across accelerators. The correct choice depends on model shape, hardware memory, interconnects and cluster topology, rather than a fixed parameter threshold.
 
 Start with small pipeline and scaling experiments. Verify that data loading, loss, evaluation and checkpoint restoration all work before committing to a long run. Save the optimiser, scheduler and random-number state as well as the model weights so interrupted training can resume accurately.
 
@@ -214,13 +214,13 @@ The strategic asset is not initially the model. It is the system that captures w
 
 ## References and further reading
 
-1. [Vaswani et al., _Attention Is All You Need_](https://arxiv.org/abs/1706.03762) — the original Transformer architecture.
-2. [Press and Wolf, _Using the Output Embedding to Improve Language Models_](https://arxiv.org/abs/1608.05859) — the earlier weight-tying paper.
-3. [Hoffmann et al., _Training Compute-Optimal Large Language Models_](https://arxiv.org/abs/2203.15556) — the Chinchilla scaling work.
-4. [Meta, _The Llama 3 Herd of Models_](https://arxiv.org/abs/2407.21783) — a detailed public account of large-scale model development and evaluation.
-5. [DeepSeek-AI, _DeepSeek-V3 Technical Report_](https://arxiv.org/abs/2412.19437) — architecture, training infrastructure and inference efficiency at scale.
-6. [Sebastian Raschka, _Build a Large Language Model From Scratch_](https://github.com/rasbt/LLMs-from-scratch) — a practical educational implementation with code.
-7. [PyTorch, _Fully Sharded Data Parallel_](https://docs.pytorch.org/docs/stable/fsdp.html) — current distributed-training documentation.
-8. [Hugging Face, _Tokenization algorithms_](https://huggingface.co/docs/transformers/tokenizer_summary) and [quantisation](https://huggingface.co/docs/transformers/quantization/overview) — practical implementation guidance.
-9. [Apple, _Mac Studio with M4 Max and M3 Ultra_](https://www.apple.com/uk/newsroom/2025/03/apple-unveils-new-mac-studio-the-most-powerful-mac-ever/) and the [current UK store](https://www.apple.com/uk/shop/buy-mac/mac-studio) — unified-memory specifications and current entry pricing checked in July 2026.
-10. [Kanishk Patel, _The Pipeline: A Language Model from Scratch in Twelve Steps_](https://learnagentic.substack.com/p/the-pipeline-a-language-model-from) — the source of the quoted frontier architecture-experiment estimate.
+1. [Vaswani et al., _Attention Is All You Need_](https://arxiv.org/abs/1706.03762): the original Transformer architecture.
+2. [Press and Wolf, _Using the Output Embedding to Improve Language Models_](https://arxiv.org/abs/1608.05859): the earlier weight-tying paper.
+3. [Hoffmann et al., _Training Compute-Optimal Large Language Models_](https://arxiv.org/abs/2203.15556): the Chinchilla scaling work.
+4. [Meta, _The Llama 3 Herd of Models_](https://arxiv.org/abs/2407.21783): a detailed public account of large-scale model development and evaluation.
+5. [DeepSeek-AI, _DeepSeek-V3 Technical Report_](https://arxiv.org/abs/2412.19437): architecture, training infrastructure and inference efficiency at scale.
+6. [Sebastian Raschka, _Build a Large Language Model From Scratch_](https://github.com/rasbt/LLMs-from-scratch): a practical educational implementation with code.
+7. [PyTorch, _Fully Sharded Data Parallel_](https://docs.pytorch.org/docs/stable/fsdp.html): current distributed-training documentation.
+8. [Hugging Face, _Tokenization algorithms_](https://huggingface.co/docs/transformers/tokenizer_summary) and [quantisation](https://huggingface.co/docs/transformers/quantization/overview): practical implementation guidance.
+9. [Apple, _Mac Studio with M4 Max and M3 Ultra_](https://www.apple.com/uk/newsroom/2025/03/apple-unveils-new-mac-studio-the-most-powerful-mac-ever/) and the [current UK store](https://www.apple.com/uk/shop/buy-mac/mac-studio): unified-memory specifications and current entry pricing checked in July 2026.
+10. [Kanishk Patel, _The Pipeline: A Language Model from Scratch in Twelve Steps_](https://learnagentic.substack.com/p/the-pipeline-a-language-model-from): the source of the quoted frontier architecture-experiment estimate.

@@ -11,13 +11,19 @@ metaDescription: Understand residual connections, post-LayerNorm, and dropout in
 metaKeywords: [Transformer residual connection, LayerNorm, dropout, post-norm]
 ---
 
-Attention and feed-forward layers do not stand alone. Each sits inside a residual path with dropout and LayerNorm.
+We now have the two main transformations, but neither stands alone. Each sits inside a residual path with dropout and LayerNorm. These supporting parts are less famous than attention, yet they determine whether a deeper stack is practical to train.
 
 The original paper uses **post-norm** ordering:
 
 ```text
 x = LayerNorm(x + Dropout(MaskedMultiHeadAttention(x)))
 x = LayerNorm(x + Dropout(FeedForward(x)))
+```
+
+```diagram
+x -> sublayer -> dropout -> add x -> LayerNorm -> next sublayer
+|                              ^
++---------- residual ----------+
 ```
 
 ## Residual connections
@@ -48,5 +54,11 @@ Run the example to contrast both modes:
 ```
 
 Many modern decoder models use pre-norm ordering, applying LayerNorm before each sublayer. This implementation begins with the paper's post-norm form so the code corresponds directly to the original equation. Pre-norm is a worthwhile later comparison, not an invisible substitution.
+
+## Under the hood
+
+[`TransformerBlock.forward()`](https://github.com/steve-obrien/tiny-transformer-course/blob/main/tiny_transformer/transformer.py) spells out the two residual paths. Follow the names `inputs`, `attention_output`, `after_attention`, and `feed_forward_output`; they describe the route through the diagram.
+
+A good fork experiment is to set dropout to zero and compare repeated calls in training mode. Then restore it and switch to evaluation mode. You will see why generation code must call `model.eval()` even though no parameters are being updated.
 
 [Next: assemble the complete decoder](/articles/building-a-tiny-language-model-from-scratch/14-assembling-the-model)

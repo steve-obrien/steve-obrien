@@ -11,9 +11,14 @@ metaDescription: Map Attention Is All You Need onto a small decoder-only languag
 metaKeywords: [Attention Is All You Need, Transformer decoder, self-attention, causal language model]
 ---
 
-[*Attention Is All You Need*](https://arxiv.org/abs/1706.03762) describes an encoder-decoder model for translation. The source sentence passes through an encoder; the decoder generates a target sentence while attending both to its earlier target tokens and to encoder output.
+Research papers can feel as if they expect you to understand the system before they explain it. Let's read [*Attention Is All You Need*](https://arxiv.org/abs/1706.03762) as implementers instead. The paper describes an encoder-decoder model for translation: the source sentence passes through an encoder, while the decoder generates a target sentence using both its earlier target tokens and the encoder output.
 
 A base autoregressive language model needs a narrower path. It predicts the next token from earlier tokens in the same sequence, so this course removes the encoder and the encoder-decoder attention sublayer.
+
+```diagram
+original paper: source -> encoder -> cross-attention -> decoder -> translation
+our model:      earlier characters -> causal decoder -> next character
+```
 
 ## Paper-to-code map
 
@@ -40,5 +45,11 @@ It does not mean taking the paper's decoder unchanged. The original decoder has 
 The result is a stack that transforms one token sequence while enforcing a simple information boundary: position `t` may use positions `0…t`, never `t+1` or later.
 
 Read the paper with tensor shapes beside every equation. The next articles implement each retained operation in isolation before composing them. That is far easier to debug than writing a `Transformer` class first and hoping the internals match the diagram.
+
+## Follow the code
+
+Keep [`transformer.py`](https://github.com/steve-obrien/tiny-transformer-course/blob/main/tiny_transformer/transformer.py) and [`language_model.py`](https://github.com/steve-obrien/tiny-transformer-course/blob/main/tiny_transformer/language_model.py) open beside the paper. The first defines one decoder block; the second stacks those blocks between embeddings and the vocabulary projection.
+
+As you read, mark each paper component as retained, reduced, replaced, or omitted. That habit is far more useful than saying a model is “based on the Transformer” without knowing which Transformer it means.
 
 [Next: embeddings and positional information](/articles/building-a-tiny-language-model-from-scratch/07-embeddings-and-position)

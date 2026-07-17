@@ -11,11 +11,11 @@ metaDescription: Implement and test a causal attention mask that prevents future
 metaKeywords: [causal mask, masked self-attention, future leakage, autoregressive Transformer]
 ---
 
-The entire training sequence is present in memory, including the characters each position is meant to predict. Unmasked self-attention would let the model read those future answers.
+Here is a subtle trap. The entire training sequence is already in memory, including the characters each position is meant to predict. Unless we explicitly stop it, self-attention can read those future answers and appear to learn a task it has actually cheated at.
 
 A causal mask permits only the lower triangle of the attention matrix:
 
-```text
+```diagram
 allowed =
 1 0 0 0
 1 1 0 0
@@ -51,5 +51,11 @@ In the retained example, two future vectors were changed by `+100`:
 The unmasked number belongs only to that seeded example. The invariant that matters is the masked result: future changes caused exactly zero earlier change.
 
 The complete model repeats this test after embeddings, four attention blocks, feed-forward layers, residual connections, and output projection. Causality must survive composition, not merely one helper function.
+
+## Follow the code
+
+[`causal_attention_mask()`](https://github.com/steve-obrien/tiny-transformer-course/blob/main/tiny_transformer/attention.py) builds the triangle, while `scaled_dot_product_attention()` applies it before softmax. The stronger proof lives in [`test_attention.py`](https://github.com/steve-obrien/tiny-transformer-course/blob/main/tests/test_attention.py), where future inputs are changed and earlier outputs must remain identical.
+
+Try removing the mask in a disposable fork and run the test. Watching a deliberately broken implementation fail is one of the quickest ways to understand what the mask guarantees.
 
 [Next: multi-head attention](/articles/building-a-tiny-language-model-from-scratch/11-multi-head-attention)

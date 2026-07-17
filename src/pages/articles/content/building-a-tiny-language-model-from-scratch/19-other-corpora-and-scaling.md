@@ -11,7 +11,7 @@ metaDescription: Retrain a tiny Transformer on other corpora and understand the 
 metaKeywords: [language model datasets, public domain corpus, TinyStories, LLM scaling]
 ---
 
-Tiny Shakespeare leaves a visible fingerprint on the output: uppercase speakers, colons, short dramatic lines, and invented names. Training the same architecture on a different corpus is one of the clearest ways to see that the model learns statistical structure from data rather than receiving a built-in writing style.
+Once your fork can reproduce the Shakespeare run, changing the text is a wonderfully direct next experiment. Tiny Shakespeare leaves a visible fingerprint on the output: uppercase speakers, colons, short dramatic lines, and invented names. Train the same architecture on a different corpus and you can see that its style comes from data rather than a collection of rules hidden in the code.
 
 Good next corpora include:
 
@@ -51,5 +51,11 @@ The conceptual objective remains next-token prediction, but engineering scale ch
 - serving must manage batching, caches, latency, memory, and safety.
 
 Do not let those systems obscure the foundation. The 799,360-parameter model and a frontier model still turn token IDs into representations, use attention to combine context, produce next-token logits, and learn by reducing prediction error. Building the tiny version gives you a concrete mental model for questioning the larger one.
+
+## Continue with your own fork
+
+[Fork the repository](https://github.com/steve-obrien/tiny-transformer-course/fork) and begin by replacing the corpus preparation path, not the model. Preserve the source, licence, checksum, split, configuration, and unedited output for your new run.
+
+The interesting question is not simply whether the generated text looks better. Ask what changed in its local spelling, formatting, validation loss, memorisation, and training time. By this point you have enough of the system in your head to design that experiment and explain its limitations.
 
 [Return to the series overview](/articles/building-a-tiny-language-model-from-scratch)

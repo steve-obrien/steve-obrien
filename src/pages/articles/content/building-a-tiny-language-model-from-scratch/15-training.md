@@ -11,7 +11,7 @@ metaDescription: Train a 799,360-parameter Transformer from random weights on an
 metaKeywords: [train Transformer on Mac, Apple M1 PyTorch, MPS, language model training]
 ---
 
-Training starts with small seeded random values in every learned matrix. The untrained model has the right architecture but no knowledge copied from another model and no statistical understanding of Shakespeare.
+Now we can run the experiment. Training starts with small seeded random values in every learned matrix. The untrained model has the right architecture, but it has no knowledge copied from another model and no statistical understanding of Shakespeare.
 
 Each update performs the same sequence:
 
@@ -22,6 +22,12 @@ Each update performs the same sequence:
 5. clip the total gradient norm;
 6. update parameters with AdamW;
 7. periodically estimate loss on fixed training and validation batches.
+
+```diagram
+sample batch -> forward pass -> loss -> backpropagation -> parameter update
+      ^                                                        |
+      +---------------------- repeat ---------------------------+
+```
 
 ## The laptop configuration
 
@@ -46,7 +52,7 @@ The retained run used:
 
 The measured loop took **84.46 seconds** on the M1 and included scheduled loss evaluations. Sample generation, checkpoint writing, and process startup were outside that timer.
 
-I find that result genuinely exciting. There is no discrete NVIDIA GPU, hosted training service, or pretrained checkpoint involved—just an Apple laptop, roughly 1.1 MB of Shakespeare text, and code small enough to take apart. The output is not useful prose, but recognisable structure emerges from a surprisingly modest experiment.
+I find that result genuinely exciting. There is no discrete NVIDIA GPU, hosted training service, or pretrained checkpoint involved: just an Apple laptop, roughly 1.1 MB of Shakespeare text, and code small enough to take apart. The output is not useful prose, but recognisable structure emerges from a surprisingly modest experiment.
 
 ## Loss and validation
 
@@ -65,5 +71,11 @@ The 3,299,509-byte checkpoint stores:
 - training configuration.
 
 It deliberately does not commit the downloaded corpus or checkpoint to git. The repository retains the source checksum, checkpoint checksum, metrics, configuration, environment, and samples needed to audit the published result.
+
+## Follow the training code
+
+The [training command](https://github.com/steve-obrien/tiny-transformer-course/blob/main/lessons/11-language-model-training/train.py) assembles the configuration, while [`training.py`](https://github.com/steve-obrien/tiny-transformer-course/blob/main/tiny_transformer/training.py) owns the reusable update and evaluation mechanics. Start with the documented 10-step CPU smoke run before committing to the full configuration.
+
+Once that works, change one thing. Halve the model width, reduce the number of blocks, or train for fewer steps. Record the configuration and output beside the original. The purpose of a fork is not necessarily to obtain better prose; it is to build an intuition for which changes affect speed, loss, and visible structure.
 
 [Next: inspect learning in the outputs](/articles/building-a-tiny-language-model-from-scratch/16-watching-learning)

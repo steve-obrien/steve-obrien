@@ -11,7 +11,7 @@ metaDescription: Implement deterministic character tokenisation for a tiny langu
 metaKeywords: [character tokenizer, token IDs, vocabulary, subword tokenization]
 ---
 
-Neural networks consume numbers, not strings. A tokenizer defines the reversible mapping between text and integer token IDs.
+We have a text file, but a neural network cannot consume strings. The tokenizer is the bridge: it defines a reversible mapping between the characters we can read and the integer IDs the model can process.
 
 For this corpus, sorting the 65 observed characters gives a stable vocabulary. Newline is token `0`, space is token `1`, punctuation and uppercase letters follow, and lowercase letters occupy the final part of the table.
 
@@ -20,6 +20,11 @@ tokenizer = CharacterTokenizer.from_text(corpus)
 token_ids = tokenizer.encode("ROMEO:")
 restored = tokenizer.decode(token_ids)
 assert restored == "ROMEO:"
+```
+
+```diagram
+"ROMEO:" -> [token IDs] -> "ROMEO:"
+              encode        decode
 ```
 
 The vocabulary order is saved alongside checkpoints. If the same weights are loaded with a different mapping, every embedding lookup and output logit acquires the wrong meaning.
@@ -52,5 +57,11 @@ Run the preparation lesson to build and round-trip the saved tokenizer:
 ```bash
 .venv/bin/python lessons/02-corpus-and-tokenisation/prepare.py
 ```
+
+## Follow the code
+
+[`CharacterTokenizer`](https://github.com/steve-obrien/tiny-transformer-course/blob/main/tiny_transformer/tokenizer.py) builds both directions of the mapping and rejects unsupported characters. The preparation lesson saves the ordered vocabulary so a checkpoint can reconstruct exactly what every ID means.
+
+Try encoding your own prompt after preparation. Then include a character that does not occur in Shakespeare. The resulting error is useful: it exposes the boundary that a production byte or subword tokenizer is designed to remove.
 
 [Next: construct training inputs and targets](/articles/building-a-tiny-language-model-from-scratch/04-training-examples)

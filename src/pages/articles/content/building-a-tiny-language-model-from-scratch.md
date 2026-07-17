@@ -8,9 +8,13 @@ metaDescription: A hands-on technical series for implementing a tiny decoder-onl
 metaKeywords: [tiny language model, LLM from scratch, Transformer, self-attention, PyTorch, language model training, text generation]
 ---
 
-You do not need a GPU cluster or a billion parameters to understand how a language model works. You can build the important parts yourself, train the result on a modest laptop, and watch it progress from random characters to recognisable—if still nonsensical—language.
+You do not need a GPU cluster or a billion parameters to understand how a language model works. You can build the important parts yourself, train the result on a modest laptop, and watch it progress from random characters to recognisable, if still nonsensical, language.
 
-This series is for developers who want to get below the API layer. You will implement a decoder-only Transformer from ordinary PyTorch tensor operations without using a pretrained model, `nn.Transformer`, `nn.MultiheadAttention`, Hugging Face Trainer, or a hidden attention implementation.
+This series is aimed at developers who are comfortable reading code but are new to language-model concepts. We will begin with the problem each component solves, build the smallest working version, and then look under the hood at how the code produces the behaviour we want.
+
+You can treat it as both a guided build and an experiment of your own. The complete code is public, deliberately small, and designed to be forked. Change the corpus, remove a component, alter the model size, or break an assumption and see what happens.
+
+We will implement a decoder-only Transformer from ordinary PyTorch tensor operations without using a pretrained model, `nn.Transformer`, `nn.MultiheadAttention`, Hugging Face Trainer, or a hidden attention implementation.
 
 PyTorch still provides tensors, automatic differentiation, optimisation, and device access. “From scratch” means building the language model rather than rebuilding the numerical computing stack beneath it.
 
@@ -30,9 +34,20 @@ The finished character-level model is intentionally small enough to inspect:
 
 Every part is introduced separately: tokenisation, shifted training targets, embeddings, positional information, scaled dot-product attention, causal masking, multiple heads, feed-forward layers, residual paths, LayerNorm, training, checkpoints, and autoregressive generation.
 
+Here is the complete mental model we are working towards:
+
+```diagram
+text
+  -> character token IDs
+  -> token embeddings + position information
+  -> [causal attention -> feed-forward network] x 4
+  -> one score for every possible next character
+  -> sample one character, append it, and repeat
+```
+
 ## What the trained model actually produces
 
-The retained run began from seeded random weights and processed 6,144,000 sampled characters in 1,500 optimiser updates. Held-out loss fell from `4.6709` to `2.1298`. The measured loop took 84.46 seconds on an Apple M1 through PyTorch's Metal backend—no discrete GPU or hosted training service.
+The retained run began from seeded random weights and processed 6,144,000 sampled characters in 1,500 optimiser updates. Held-out loss fell from `4.6709` to `2.1298`. The measured loop took 84.46 seconds on an Apple M1 through PyTorch's Metal backend; no discrete GPU or hosted training service was required.
 
 I think that is genuinely exciting. From roughly 1.1 MB of Shakespeare and a model small enough to understand, recognisable dramatic structure emerges on an ordinary laptop. The result is not a useful writer, but it makes the underlying idea feel tangible rather than remote.
 
@@ -57,6 +72,17 @@ LUSENGOLA
 ```
 
 This is not coherent English and it is not a chatbot. It is nevertheless real learned behaviour: the untrained model emitted mostly repetitive arbitrary characters, while the trained model learned spaces, punctuation, speaker labels, line breaks, word-like fragments, and longer-range formatting.
+
+## Get the code and make it yours
+
+The complete experiment lives in the [Tiny Transformer Course repository](https://github.com/steve-obrien/tiny-transformer-course). You can [fork it on GitHub](https://github.com/steve-obrien/tiny-transformer-course/fork), clone it with Git, or [download the source as a ZIP file](https://github.com/steve-obrien/tiny-transformer-course/archive/refs/heads/main.zip).
+
+```bash
+git clone https://github.com/steve-obrien/tiny-transformer-course.git
+cd tiny-transformer-course
+```
+
+Each article links to the matching source and gives you something small to change. I would encourage you to run the original example first, confirm that you can reproduce its behaviour, and only then start experimenting. That makes surprising results far easier to reason about.
 
 ## Follow the complete build
 
@@ -84,7 +110,7 @@ Each part of the implementation has its own focused article. Read them in order 
 
 ## The shortest runnable path
 
-After cloning the companion repository, install the locked environment and prepare the pinned corpus:
+After cloning the repository, install the locked environment and prepare the pinned corpus:
 
 ```bash
 uv sync

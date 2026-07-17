@@ -11,13 +11,21 @@ metaDescription: Implement and trace scaled dot-product attention from Attention
 metaKeywords: [scaled dot-product attention, query key value, softmax attention]
 ---
 
-Attention lets each position retrieve a weighted mixture of information from other positions. The core equation is compact:
+This is the point where the Transformer can start to look mysterious. The good news is that attention is a short sequence of understandable operations: each position scores the available positions, turns those scores into weights, and retrieves a weighted mixture of their information.
 
 ```text
 Attention(Q, K, V) = softmax(QKᵀ / √dₖ)V
 ```
 
 Writing it explicitly keeps every tensor shape visible.
+
+```diagram
+queries x keys transposed
+  -> compatibility scores
+  -> divide by sqrt(head width)
+  -> softmax weights
+  -> weighted sum of values
+```
 
 ## Queries, keys, and values
 
@@ -63,5 +71,11 @@ The lesson uses small explicit matrices so you can see scores, scaled scores, pr
 ```
 
 The executed example verifies finite values, expected shapes, and probability rows summing to one. It still allows every position to attend to every other position. The next step adds the information boundary required for language modelling.
+
+## Under the hood
+
+The complete equation is implemented in [`scaled_dot_product_attention()`](https://github.com/steve-obrien/tiny-transformer-course/blob/main/tiny_transformer/attention.py). Read it from `scores` to `weights @ values`; the code follows the equation in execution order rather than hiding it inside a framework layer.
+
+In your fork, remove the division by the square root and print both weight matrices. With these tiny inputs nothing catastrophic should happen, but you can observe whether the unscaled softmax becomes sharper. That connects the mathematical motivation to a value you can inspect.
 
 [Next: causal masking](/articles/building-a-tiny-language-model-from-scratch/10-causal-masking)

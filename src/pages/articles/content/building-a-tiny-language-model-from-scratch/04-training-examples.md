@@ -11,11 +11,11 @@ metaDescription: Build shifted language-model targets, context windows, and batc
 metaKeywords: [language model batching, shifted targets, context window, teacher forcing]
 ---
 
-A next-token training example is one sequence viewed twice with a one-position offset.
+Now let's turn one long token stream into examples the model can learn from. A next-token training example is simply one sequence viewed twice with a one-position offset.
 
 For a short context:
 
-```text
+```diagram
 input:  First Citizen:\nB
 target: irst Citizen:\nBe
 ```
@@ -51,5 +51,11 @@ During training, the correct earlier characters are present in the input even if
 The target tensor is also in memory, but it must not become visible to the prediction that is being scored. Later, causal masking will prevent an attention query at position `t` from looking at positions after `t`.
 
 Keep data alignment tests separate from attention tests. If the targets are shifted incorrectly, a perfect mask and correct Transformer will still learn the wrong task.
+
+## Follow the code
+
+[`batching.py`](https://github.com/steve-obrien/tiny-transformer-course/blob/main/tiny_transformer/batching.py) samples offsets and constructs the shifted tensors. The [lesson example](https://github.com/steve-obrien/tiny-transformer-course/blob/main/lessons/03-training-examples/example.py) decodes the first pair again so we can inspect meaning as well as tensor shape.
+
+Change the context length from 16 to 4, then to 32. Print the first decoded pair each time. You should see the same one-character shift, but a different amount of history available to each prediction.
 
 [Next: train a bigram baseline](/articles/building-a-tiny-language-model-from-scratch/05-bigram-baseline)

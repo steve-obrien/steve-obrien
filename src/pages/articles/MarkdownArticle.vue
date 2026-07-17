@@ -18,12 +18,13 @@ const markdown = new MarkdownIt({
 
 const defaultFenceRenderer = markdown.renderer.rules.fence;
 const labeledFenceNames = {
+	diagram: 'Mental model',
 	prompt: 'Prompt',
 	'model-output': 'Model output',
 };
 
 /**
- * Render prompt and model-output fences as labelled, accessible figures.
+ * Render diagrams, prompts, and model outputs as labelled, accessible figures.
  *
  * Other fenced code blocks retain MarkdownIt's default rendering so technical
  * examples and shell commands are unaffected.
@@ -472,6 +473,14 @@ const segments = computed(() => buildSegments(props.content));
 
 .article-prose :deep(.article-io--model-output) {
 	border-left: 0.25rem solid var(--foreground);
+}
+
+.article-prose :deep(.article-io--diagram) {
+	border-left: 0.25rem solid var(--primary);
+}
+
+.article-prose :deep(.article-io--diagram pre) {
+	background: color-mix(in oklch, var(--secondary) 70%, var(--background));
 }
 
 .article-prose :deep(hr) {

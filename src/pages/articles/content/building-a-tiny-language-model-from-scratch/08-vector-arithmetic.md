@@ -11,13 +11,13 @@ metaDescription: Explain the king minus man plus woman analogy and how contextua
 metaKeywords: [king man woman queen, embedding arithmetic, Word2Vec, contextual embeddings]
 ---
 
-The expression
+I would love our tiny model to produce the famous result
 
 ```text
 vector("king") - vector("man") + vector("woman") ≈ vector("queen")
 ```
 
-is one of the most memorable demonstrations in machine learning. It is also easy to attach it to the wrong model.
+It is one of the most memorable demonstrations in machine learning. It is also easy to attach it to the wrong model, which makes it a useful test of our mental model rather than merely a party trick.
 
 The classic result is associated with models such as Word2Vec that learn one static vector for every word in a vocabulary. In that setting, `king`, `man`, `woman`, and `queen` each index a single embedding row, so vector arithmetic and nearest-neighbour search are well defined.
 
@@ -47,8 +47,14 @@ If `queen` ranked first, that would be exciting evidence. With 799,360 parameter
 
 If your goal is to reproduce the classic analogy, add a small word-level skip-gram or CBOW model trained on a much larger corpus. That experiment directly teaches static embedding geometry.
 
-If your goal is to understand this Transformer, inspect contextual representations and report what actually happens—even if `queen` is nowhere near the answer. A failed analogy can teach more than a cherry-picked success because it reveals the difference between token embeddings, contextual states, and scale.
+If your goal is to understand this Transformer, inspect contextual representations and report what actually happens, even if `queen` is nowhere near the answer. A failed analogy can teach more than a cherry-picked success because it reveals the difference between token embeddings, contextual states, and scale.
 
 The course does not currently claim this result. The page defines the experiment that would be required before making it.
+
+## Make it a fork experiment
+
+This is deliberately not a completed lesson in the repository because we have not run the required experiment. If it interests you, [fork the course](https://github.com/steve-obrien/tiny-transformer-course/fork) and add a representation-inspection script. Keep every result, not just the nearest neighbour that makes the nicest screenshot.
+
+An equally valuable fork would add a small word-level skip-gram model beside the Transformer. You could then reproduce static word-vector arithmetic and compare it with the Transformer's contextual states using the same codebase.
 
 [Next: implement scaled dot-product attention](/articles/building-a-tiny-language-model-from-scratch/09-scaled-attention)

@@ -11,7 +11,7 @@ metaDescription: Implement the Transformer's position-wise feed-forward network 
 metaKeywords: [position-wise feed-forward network, ReLU, Transformer block]
 ---
 
-Attention communicates across positions. The feed-forward sublayer performs a different job: it transforms each position independently using the same learned function.
+Attention has allowed positions to exchange information. Now each position needs time to process what it retrieved. The feed-forward sublayer performs that different job by transforming every position independently with the same learned function.
 
 The paper uses two linear transformations with a ReLU between them:
 
@@ -29,6 +29,11 @@ self.output_projection = nn.Linear(512, 128)
 
 PyTorch applies a linear layer over the final dimension, so a tensor shaped `batch × time × 128` remains batched and sequential while each position passes through the same network.
 
+```diagram
+attention:    information moves between positions
+feed-forward: each position -> expand -> ReLU -> contract -> same position
+```
+
 ## Proving that positions do not mix
 
 Change one input position and run the feed-forward layer twice. The changed position should produce a different output; every other position should remain bit-for-bit identical.
@@ -44,5 +49,11 @@ The retained example reports exactly zero change at unaffected positions. That p
 The expansion provides more intermediate features in which ReLU can create nonlinear combinations. Without a nonlinear activation, two consecutive linear layers could collapse into one linear transformation and add little expressive power.
 
 The feed-forward network accounts for a substantial share of Transformer parameters. It is easy to overlook because the attention diagram is more visually distinctive, but attention alone would only remix value vectors. The nonlinear per-position computation gives each block additional capacity to transform what it retrieved.
+
+## Follow the code
+
+[`PositionWiseFeedForward`](https://github.com/steve-obrien/tiny-transformer-course/blob/main/tiny_transformer/transformer.py) is only three modules, but the testable contract matters: the shape is preserved and changing one position cannot alter another.
+
+In your fork, remove the ReLU and rerun the focused tests. The shapes will still work, which is a useful reminder that shape tests alone cannot tell us whether two linear layers have collapsed into an effectively linear operation.
 
 [Next: residuals, LayerNorm, and dropout](/articles/building-a-tiny-language-model-from-scratch/13-residuals-normalisation-dropout)

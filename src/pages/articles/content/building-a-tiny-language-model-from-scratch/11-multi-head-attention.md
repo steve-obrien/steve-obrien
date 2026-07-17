@@ -11,7 +11,7 @@ metaDescription: Implement multi-head self-attention from independent query, key
 metaKeywords: [multi-head attention, attention heads, Transformer implementation]
 ---
 
-One attention head produces one weighted retrieval pattern. Multi-head attention gives the layer several independent sets of query, key, and value projections.
+One attention head gives us one way to retrieve information. Rather than asking that single calculation to represent every useful relationship, multi-head attention gives the layer several independent sets of query, key, and value projections.
 
 For model width 128 and four heads, every head produces 32 features:
 
@@ -22,6 +22,14 @@ head dimension = model dimension / number of heads
 ```
 
 Each head sees the complete 128-feature input but projects it into its own 32-feature Q, K, and V spaces. After attention, the four outputs are concatenated back to 128 features and passed through one output projection.
+
+```diagram
+128-feature input
+  -> head 1: 32 features --+
+  -> head 2: 32 features   |
+  -> head 3: 32 features   +-> concatenate -> output projection -> 128 features
+  -> head 4: 32 features --+
+```
 
 ```python
 head_results = [head(inputs, allowed_mask=mask) for head in self.heads]
@@ -49,5 +57,11 @@ It verifies:
 - gradients reach every head and the output projection.
 
 The model dimension must divide exactly by the head count. Failing at configuration time is better than discovering an invalid reshape halfway through training.
+
+## Under the hood
+
+[`MultiHeadSelfAttention`](https://github.com/steve-obrien/tiny-transformer-course/blob/main/tiny_transformer/attention.py) creates independent heads, calls each one with the same input and mask, concatenates their outputs, and applies the shared output projection. Nothing in the code assigns a linguistic job to a head; training has to discover any specialisation.
+
+Try changing the tiny example from two heads to one, keeping the total model width fixed. Compare the output shape and the number of attention matrices. You should lose a retrieval pattern without changing the width passed to the next layer.
 
 [Next: the feed-forward network](/articles/building-a-tiny-language-model-from-scratch/12-feed-forward-network)

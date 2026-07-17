@@ -11,7 +11,7 @@ metaDescription: Implement learned token embeddings and sinusoidal positional en
 metaKeywords: [token embeddings, positional encoding, sinusoidal encoding, Transformer]
 ---
 
-A token ID is an index, not a meaningful numeric quantity. Token `42` is not twice token `21`. An embedding table replaces each ID with a learned vector whose 128 features can participate in neural computation.
+We now have token IDs, but an ID is only an index. Token `42` is not twice token `21`. The model needs a representation it can transform, so an embedding table replaces each ID with a learned vector of 128 features.
 
 ```python
 self.token_embedding = nn.Embedding(vocabulary_size, model_dimension)
@@ -35,6 +35,12 @@ The position table contains no trainable parameters. It is generated once up to 
 representations = token_embeddings + position_encoding[:sequence_length]
 ```
 
+```diagram
+token ID -> learned token vector ----+
+                                      +-> combined representation
+position -> fixed sine/cosine vector +
+```
+
 Run the focused example to inspect the actual vectors:
 
 ```bash
@@ -48,5 +54,11 @@ The two occurrences of `F` in the example select the same learned token vector, 
 Addition preserves the model width, so every later projection remains 128 features wide. The network can learn to combine or separate token and positional signals across dimensions. Concatenation would increase every downstream matrix and change the paper's residual shape contract.
 
 The position signal will later become a controlled experiment. Removing it leaves the parameter count unchanged but raises final validation loss by 7.59% in the retained paired run.
+
+## Follow the code
+
+[`embeddings.py`](https://github.com/steve-obrien/tiny-transformer-course/blob/main/tiny_transformer/embeddings.py) contains the learned lookup table, the sinusoidal table, their scaling, and their addition. The [focused example](https://github.com/steve-obrien/tiny-transformer-course/blob/main/lessons/05-embeddings-and-position/example.py) shows the same character at two positions.
+
+Run it, then disable position encoding and compare those two combined vectors again. You have not yet measured whether training becomes worse, but you can already see exactly what information was removed.
 
 [Next: does king − man + woman equal queen?](/articles/building-a-tiny-language-model-from-scratch/08-vector-arithmetic)

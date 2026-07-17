@@ -11,7 +11,7 @@ metaDescription: Train a character bigram language model as a baseline before im
 metaKeywords: [bigram language model, cross entropy, baseline, checkpoint]
 ---
 
-Before building attention, establish that the surrounding system can already learn something. A bigram model predicts the next character using only the current character.
+Before we build attention, let's prove that the surrounding system can already learn something. A bigram model is ideal for this because it predicts the next character using only the current character.
 
 Its entire parameter set is a `65 × 65` table:
 
@@ -20,6 +20,10 @@ self.token_transition_logits = nn.Embedding(vocabulary_size, vocabulary_size)
 ```
 
 Looking up the current token ID returns 65 next-character logits. Cross-entropy compares those logits with the shifted target, and AdamW updates the table.
+
+```diagram
+current character ID -> one row of 65 logits -> next-character probabilities
+```
 
 ## Why this baseline matters
 
@@ -51,5 +55,11 @@ Reload the checkpoint independently:
 ```
 
 The Transformer must do more than reduce loss. It must beat this baseline by using a longer context. The final model reaches validation loss `2.1298`, showing that attention and deeper computation provide useful information beyond the current character.
+
+## Follow the code
+
+[`bigram.py`](https://github.com/steve-obrien/tiny-transformer-course/blob/main/tiny_transformer/bigram.py) contains the complete model, loss, generation loop, and checkpoint format. That compactness is the point: you can trace the whole learning system before the Transformer adds depth.
+
+After reproducing the result, change the prompt or sampling temperature and reload the same checkpoint. The output will change, but the one-character memory limit will not. This is a useful way to separate decoding choices from model capability.
 
 [Next: map the paper to a decoder-only model](/articles/building-a-tiny-language-model-from-scratch/06-reading-the-paper)

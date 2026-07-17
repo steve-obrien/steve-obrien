@@ -11,11 +11,17 @@ metaDescription: Understand next-token prediction, logits, probabilities, and au
 metaKeywords: [next-token prediction, logits, softmax, autoregressive language model]
 ---
 
-A language model repeatedly answers one question:
+Let's start without a neural network or any Transformer terminology. A language model repeatedly answers one question:
 
 > Given the tokens so far, how likely is each possible next token?
 
 It does not write a paragraph in one operation. It produces one score for every token in its vocabulary, converts those scores into probabilities, chooses one token, appends it to the context, and starts again.
+
+```diagram
+existing text -> scores -> probabilities -> sample one token
+      ^                                      |
+      +------------ append it ---------------+
+```
 
 ## From logits to a token
 
@@ -34,6 +40,8 @@ The first course example avoids a neural network entirely. It uses a known trans
 .venv/bin/python lessons/01-next-token-prediction/example.py
 ```
 
+The executable path is intentionally small. [`next_token.py`](https://github.com/steve-obrien/tiny-transformer-course/blob/main/tiny_transformer/next_token.py) converts logits to probabilities and performs seeded sampling; the [lesson example](https://github.com/steve-obrien/tiny-transformer-course/blob/main/lessons/01-next-token-prediction/example.py) supplies a transition table we can understand without training.
+
 ## Autoregression
 
 Suppose the current text is:
@@ -42,7 +50,7 @@ Suppose the current text is:
 The cat
 ```
 
-The model samples one continuation character—perhaps a space—then evaluates `The cat ` to choose another. A 300-character result requires 300 forward predictions.
+The model samples one continuation character, perhaps a space, then evaluates `The cat ` to choose another. A 300-character result requires 300 forward predictions.
 
 That loop is **autoregressive generation**. It explains three properties that remain true for the finished model:
 
@@ -55,5 +63,9 @@ That loop is **autoregressive generation**. It explains three properties that re
 **Parameters** are the adjustable numbers inside the model. At random initialisation they encode no corpus knowledge. During **training**, cross-entropy measures how poorly the logits predicted known next tokens, and gradient descent changes the parameters to reduce that error. During **inference**, the parameters stop changing and the model uses what it learned to continue new prompts.
 
 Keep that separation clear. Training supplies the right answer and updates weights. Generation supplies only a prompt and samples from the model's predictions.
+
+## Try it yourself
+
+Run the example once unchanged. Then alter one row of logits and predict how the probabilities will move before running it again. If your prediction is wrong, inspect the softmax output. That small feedback loop is the foundation for every later experiment in the course.
 
 [Next: prepare the training corpus](/articles/building-a-tiny-language-model-from-scratch/02-training-corpus)

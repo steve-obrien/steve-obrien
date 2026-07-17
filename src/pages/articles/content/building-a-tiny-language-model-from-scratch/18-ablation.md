@@ -11,7 +11,7 @@ metaDescription: Run a controlled positional-encoding ablation on a tiny Transfo
 metaKeywords: [Transformer ablation, positional encoding experiment, controlled comparison]
 ---
 
-Architecture explanations are hypotheses until changing a component produces measurable evidence. An ablation removes one part while holding the rest of the run fixed.
+It is tempting to explain every architectural component as if its value were self-evident. I prefer to change it and measure what happens. An ablation removes one part while holding the rest of the run fixed.
 
 The course's first ablation disables sinusoidal position vectors. It keeps the same:
 
@@ -28,6 +28,13 @@ The course's first ablation disables sinusoidal position vectors. It keeps the s
 - generation configuration.
 
 The comparison script reads both saved configurations and refuses to compare them if another recorded value differs.
+
+```diagram
+same corpus + same seed + same training settings
+  -> reference: positions enabled
+  -> ablation:  positions disabled
+  -> compare complete validation curves
+```
 
 ```bash
 .venv/bin/python lessons/11-language-model-training/train.py \
@@ -52,5 +59,11 @@ The ablated model was actually ahead at update 100 before the reference moved ah
 The no-position model did not collapse. Causal masking creates nested prefixes: later representations can aggregate contextual states built from more preceding characters. That offers some structural information even without explicit absolute coordinates.
 
 Treat the 7.59% result as evidence about one controlled seed, not a universal estimate of positional encoding's value. Repeating both conditions across several seeds would support a stronger conclusion.
+
+## Follow the experiment
+
+The architecture switch is part of [`TinyTransformerConfig`](https://github.com/steve-obrien/tiny-transformer-course/blob/main/tiny_transformer/language_model.py). The [comparison script](https://github.com/steve-obrien/tiny-transformer-course/blob/main/lessons/13-ablations/compare.py) removes that one controlled field and rejects other mismatches before comparing results.
+
+Fork the repository and choose a second ablation. Dropout, block count, and model width are all interesting, but each changes a different part of the contract. State exactly what you held fixed and resist turning one run into a universal claim.
 
 [Next: change the corpus and consider scale](/articles/building-a-tiny-language-model-from-scratch/19-other-corpora-and-scaling)
