@@ -18,6 +18,24 @@ npm run build
 Build artifacts are generated in `dist/`.
 The build also generates `dist/sitemap.xml` and `dist/robots.txt`.
 
+### Vendored GetDom components
+
+Selected GetDom Studio components are copied into `src/vendor/getdom-studio` and committed with the site, following a source-owned pattern similar to shadcn. The source mapping lives in `getdom.components.json`, and `getdom.components.lock.json` records the upstream Git revision and the hash of every copied file.
+
+Check for upstream changes without writing files:
+
+```bash
+npm run getdom:check
+```
+
+Copy a newer clean version from the sibling GetDom checkout:
+
+```bash
+npm run getdom:sync
+```
+
+The sync refuses to copy uncommitted GetDom source files and refuses to overwrite locally modified vendored files. Use `npm run getdom:sync -- --force` only when intentionally discarding local changes. Set `GETDOM_STUDIO_DIR=/absolute/path/to/getdom.studio` when the source checkout is not available at `../getdom.studio`.
+
 ### Outrank webhook publishing
 
 Outrank can publish and update articles by POSTing to a webhook endpoint with `Authorization: Bearer <token>` as described in the [Outrank webhook docs](https://www.outrank.so/docs/webhook).

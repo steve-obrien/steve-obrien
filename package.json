@@ -6,6 +6,8 @@
 	"scripts": {
 		"dev": "vite",
 		"build": "vite-ssg build && node scripts/generate-seo-files.mjs",
+		"getdom:check": "node scripts/sync-getdom-components.mjs --check",
+		"getdom:sync": "node scripts/sync-getdom-components.mjs",
 		"check:outrank-webhook": "node scripts/check-outrank-webhook.mjs",
 		"check:theme-ai": "node scripts/check-theme-ai-endpoint.mjs",
 		"outrank-webhook-server": "node scripts/outrank-webhook-server.mjs",

@@ -1,0 +1,28 @@
+{
+	"schemaVersion": 1,
+	"source": {
+		"repository": "git@github.com:steve-obrien/dom.studio.git"
+	},
+	"components": {
+		"DomCodeBlock": {
+			"revision": "e1f483b459b54bc369158ea06d2e722197785f4d",
+			"files": [
+				{
+					"source": "src/pages/dev/code-block/DomCodeBlock.vue",
+					"target": "src/vendor/getdom-studio/src/pages/dev/code-block/DomCodeBlock.vue",
+					"sha256": "a6c8a6ed496c1f043bac959523595cca4613aa8237f74172fee696cc562b171c"
+				},
+				{
+					"source": "src/pages/lib/vue/codeHighlighter.js",
+					"target": "src/vendor/getdom-studio/src/pages/lib/vue/codeHighlighter.js",
+					"sha256": "adf4895e20d7aece18bfe27481a9a7f5f503b4282676ab463513847ce68e9133"
+				},
+				{
+					"source": "src/style.css",
+					"target": "src/vendor/getdom-studio/dom-code-block.css",
+					"sha256": "5fd60aaed78ccff437b816d635741875d77e86c42bb1e073a9acfcc32d98cb27"
+				}
+			]
+		}
+	}
+}

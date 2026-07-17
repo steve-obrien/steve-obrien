@@ -1,0 +1,29 @@
+{
+	"schemaVersion": 1,
+	"source": {
+		"defaultDirectory": "../getdom.studio",
+		"repository": "git@github.com:steve-obrien/dom.studio.git"
+	},
+	"components": {
+		"DomCodeBlock": {
+			"files": [
+				{
+					"source": "src/pages/dev/code-block/DomCodeBlock.vue",
+					"target": "src/vendor/getdom-studio/src/pages/dev/code-block/DomCodeBlock.vue"
+				},
+				{
+					"source": "src/pages/lib/vue/codeHighlighter.js",
+					"target": "src/vendor/getdom-studio/src/pages/lib/vue/codeHighlighter.js"
+				},
+				{
+					"source": "src/style.css",
+					"target": "src/vendor/getdom-studio/dom-code-block.css",
+					"extract": {
+						"start": "/* Shiki code blocks.",
+						"end": "@layer components {"
+					}
+				}
+			]
+		}
+	}
+}
