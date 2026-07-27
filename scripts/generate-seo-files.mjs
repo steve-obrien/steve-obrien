@@ -162,8 +162,8 @@ const getPageMeta = (routePath) => {
 
 	if (routePath === '/') {
 		return {
-			title: `About | ${siteName}`,
-			description: 'About Steve O’Brien: engineer, founder, and builder of practical AI and software systems.',
+			title: "Steve O'Brien | Engineer, Founder, Practical AI Systems",
+			description: 'Engineer, founder, and fractional CTO helping founders and technical teams turn ambiguous AI ideas into testable products and scalable software systems.',
 		};
 	}
 

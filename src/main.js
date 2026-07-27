@@ -39,8 +39,22 @@ const removeMetaTag = (selector) => {
 	document.head.querySelector(selector)?.remove();
 };
 
+/**
+ * Updates the browser document metadata for the active route.
+ *
+ * Routes may opt out of the default site-name suffix by setting
+ * `meta.titleIsAbsolute` when their title already contains the full value.
+ *
+ * @param {import('vue-router').RouteLocationNormalizedLoaded} route Active route.
+ * @returns {void}
+ */
 const updateDocumentHead = (route) => {
-	const title = route.meta?.title ? `${route.meta.title} | ${siteName}` : siteName;
+	const routeTitle = route.meta?.title || '';
+	const title = route.meta?.titleIsAbsolute
+		? routeTitle
+		: routeTitle
+			? `${routeTitle} | ${siteName}`
+			: siteName;
 	const description = route.meta?.description || '';
 	const keywords = route.meta?.keywords || '';
 

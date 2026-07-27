@@ -1,4 +1,4 @@
-import AboutPage from './pages/AboutPage.vue';
+import HomePage from './pages/HomePage.vue';
 import ArticlePage from './pages/articles/ArticlePage.vue';
 import { articles } from './pages/articles/articles.js';
 import IdeasPage from './pages/IdeasPage.vue';
@@ -49,10 +49,11 @@ const fileBasedRoutes = Object.entries(pageRouteModules)
 const manualRoutes = [
 	{
 		path: '/',
-		component: AboutPage,
+		component: HomePage,
 		meta: {
-			title: '',
-			description: 'Steve O’Brien is a technical founder, fractional CTO, and AI systems architect who turns ambitious ideas into practical software systems and products.',
+			title: "Steve O'Brien | Engineer, Founder, Practical AI Systems",
+			titleIsAbsolute: true,
+			description: 'Engineer, founder, and fractional CTO helping founders and technical teams turn ambiguous AI ideas into testable products and scalable software systems.',
 			keywords: 'Steve O’Brien, fractional CTO, technical founder, AI systems architect, product builder, Bristol',
 		},
 	},

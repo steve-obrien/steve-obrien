@@ -88,8 +88,13 @@ const selectedWriting = [
 					<p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
 						Steve O'Brien <span aria-hidden="true">·</span> Technical founder <span aria-hidden="true">·</span> Fractional CTO <span aria-hidden="true">·</span> AI systems architect
 					</p>
-					<h1 class="mt-7 font-serif text-4xl font-light leading-[1.1] tracking-tight sm:text-5xl lg:text-[3.45rem]">
-						Building what hasn’t been built yet.
+					<p class="mt-5 flex items-center gap-3 text-muted-foreground">
+						<span aria-hidden="true" class="h-px w-8 bg-foreground/25"></span>
+						<span class="font-serif text-xl italic tracking-tight sm:text-2xl">Build the future</span>
+					</p>
+					<h1 class="mt-5 font-serif text-4xl font-light leading-[1.1] tracking-tight sm:text-5xl lg:text-[3.45rem]">
+						Steve O'Brien: Engineer, Founder, Practical AI Systems Leader
+					
 					</h1>
 					<p class="mt-8 max-w-3xl text-lg leading-8 text-muted-foreground">
 						I've spent two decades building real-world software systems. Today I turn ambitious, ambiguous ideas into practical AI systems—combining rapid prototyping with insights from artificial and biological intelligence, and architecture that can scale when the evidence demands it.
