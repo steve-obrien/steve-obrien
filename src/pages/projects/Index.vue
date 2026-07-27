@@ -1,5 +1,5 @@
 <script setup>
-import bookCover from './bookCover.png';
+import bookCover3 from './bookCover3.png';
 import domStudioCard from './dom_studio_card.png';
 
 // const cardClass = 'relative block w-full overflow-hidden rounded-3xl bg-card text-card-foreground shadow-xl ring-1 ring-border transition-[box-shadow,transform] duration-300 ease-in-out [backface-visibility:hidden] [-webkit-backface-visibility:hidden] hover:scale-[1.03] hover:shadow-2xl';
@@ -47,7 +47,7 @@ const cardClass = 'shadow-xl break-inside-avoid relative ring-1 ring-border mr-6
 
 					<a href="https://steve-98.kit.com/4b5ef441c9" :class="cardClass">
 						<div class="relative">
-							<img :src="bookCover" alt="picture of an app" class="h-full w-full object-cover dark:invert" />
+							<img :src="bookCover3" alt="picture of an app" class="h-full w-full object-cover dark:invert" />
 							<div class="relative p-7">
 								<p class="text-xs font-bold uppercase text-muted-foreground">Book</p>
 								<h3 class="mt-4 text-2xl font-bold md:text-3xl">Human, Artificial and Future Intelligence</h3>
