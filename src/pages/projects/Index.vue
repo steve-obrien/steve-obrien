@@ -43,7 +43,24 @@ const cardClass = 'shadow-xl break-inside-avoid relative ring-1 ring-border mr-6
 				</div>
 
 				<div class="space-y-8">
-					
+					<a href="https://growthscout.io" target="_blank" rel="noopener noreferrer" :class="cardClass">
+						<div class="relative overflow-hidden bg-[#091b2e] p-7 text-slate-100">
+							<div class="absolute -right-16 -top-20 size-64 rounded-full border border-[#fc7b1e]/20"></div>
+							<div class="absolute -right-8 -top-10 size-40 rounded-full border border-slate-100/10"></div>
+							<div class="relative">
+								<div class="flex items-center gap-3">
+									<span class="relative grid size-10 place-items-center rounded-full border-2 border-slate-100" aria-hidden="true">
+										<span class="absolute -top-1.5 size-2.5 rounded-full bg-[#fc7b1e]"></span>
+										<span class="size-3 rounded-full bg-slate-100"></span>
+									</span>
+									<span class="text-2xl font-semibold">Growth<span class="text-[#fc7b1e]">Scout</span></span>
+								</div>
+								<p class="mt-8 text-xs font-bold uppercase tracking-wider text-[#fc7b1e]">AI-powered SEO</p>
+								<h3 class="mt-3 text-2xl font-bold md:text-3xl">Grow organic traffic on autopilot.</h3>
+								<p class="mt-3 mb-0 text-lg text-slate-300">GrowthScout learns your business, uncovers keyword opportunities, and plans, writes and publishes strategic SEO content.</p>
+							</div>
+						</div>
+					</a>
 
 					<a href="https://steve-98.kit.com/4b5ef441c9" :class="cardClass">
 						<div class="relative">

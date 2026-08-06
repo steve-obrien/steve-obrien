@@ -5,7 +5,7 @@ description: Build, edit, or review the Steve O'Brien personal website. The Elem
 
 # Steve O'Brien Site
 
-This repository is Steve O'Brien's personal site. It links to DOM Studio, but no longer owns the Elements framework source.
+This repository is Steve O'Brien's personal site. It links to DOM Studio, growthscout.io
 
 ## Workflow
 

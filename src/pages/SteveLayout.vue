@@ -1,5 +1,4 @@
 <script setup>
-import { RouterLink, useRoute } from 'vue-router';
 import SocialLinks from '../cmp/SocialLinks.vue';
 import { onMounted } from 'vue';
 import { useTheme } from '../composable/useTheme';
@@ -11,9 +10,7 @@ onMounted(() => {
 	initTheme();
 });
 
-const route = useRoute();
-
-const props = defineProps({
+defineProps({
 	bgClass: {
 		type: String,
 		default: 'bg-background',
@@ -25,14 +22,13 @@ const props = defineProps({
 <template>
 	<div class="min-h-screen text-foreground transition-colors duration-200" :class="bgClass">
 		<Navbar></Navbar>
-		<main class="mx-auto w-full max-w-6xl px-6 pb-14 ">
+		<main class="mx-auto w-full max-w-6xl px-6 pb-20">
 			<slot />
 		</main>
-		<footer class="mx-auto w-full max-w-6xl space-y-4 px-6 py-8">
-			<p class="text-sm text-muted-foreground">No AI's were harmed in the making of this site</p>
-			<div class="flex flex-wrap items-center justify-between gap-4">
+		<footer class="mx-auto w-full max-w-6xl border-t border-border px-6 py-10">
+			<div class="flex flex-wrap items-center justify-between gap-5">
 				<p class="text-sm text-muted-foreground">
-					&copy; {{ new Date().getFullYear() }} Steve O'Brien. All rights reserved.
+					&copy; {{ new Date().getFullYear() }} Steve O’Brien · Building useful intelligence from Bristol.
 				</p>
 				<SocialLinks />
 			</div>

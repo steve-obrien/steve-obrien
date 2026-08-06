@@ -51,10 +51,10 @@ const manualRoutes = [
 		path: '/',
 		component: HomePage,
 		meta: {
-			title: "Steve O'Brien | Engineer, Founder, Practical AI Systems",
+			title: "Steve O'Brien | Founder, Engineer & Author",
 			titleIsAbsolute: true,
-			description: 'Engineer, founder, and fractional CTO helping founders and technical teams turn ambiguous AI ideas into testable products and scalable software systems.',
-			keywords: 'Steve O’Brien, fractional CTO, technical founder, AI systems architect, product builder, Bristol',
+			description: 'Steve O’Brien builds AI products, technical systems and companies, and writes about human, artificial and future intelligence.',
+			keywords: 'Steve O’Brien, technical founder, AI systems, intelligence, GrowthScout, DOM Studio, technology companies, Bristol',
 		},
 	},
 	{
