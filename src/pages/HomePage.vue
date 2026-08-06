@@ -1,5 +1,6 @@
 <script setup>
 import { RouterLink } from 'vue-router';
+import HeroOrbs from '../cmp/HeroOrbs.vue';
 import meImage from '../assets/me.jpeg';
 import bookCover from './projects/bookCover3.png';
 import domStudioCard from './projects/dom_studio_card.png';
@@ -26,8 +27,8 @@ const selectedWriting = [
 <template>
 	<SteveLayout bg-class="home-page-background">
 		<article>
-			<header class="hero relative flex min-h-[74vh] items-center overflow-hidden border-b border-border py-24 sm:py-32">
-				<div class="hero-orb" aria-hidden="true"></div>
+			<header class="hero relative flex min-h-[74vh] items-center border-b border-border py-24 sm:py-32">
+				<HeroOrbs />
 				<div class="relative z-10 max-w-5xl">
 					<p class="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
 						<span class="size-1.5 rounded-full bg-emerald-500"></span>
@@ -38,7 +39,7 @@ const selectedWriting = [
 						<span class="hero-gradient block">intelligence.</span>
 					</h1>
 					<p class="mt-10 max-w-2xl text-lg leading-8 text-muted-foreground sm:text-xl sm:leading-9">
-						I build products, companies and technical systems at the edge of AI—turning difficult ideas into things people can actually use.
+						I build products, companies and technical systems at the edge of AI. Turning difficult ideas into things people can actually use.
 					</p>
 					<div class="mt-10 flex flex-wrap gap-3">
 						<RouterLink to="/projects" class="origin-left rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-background transition hover:scale-[1.02]">
@@ -223,28 +224,6 @@ const selectedWriting = [
 		var(--background);
 }
 
-.hero-orb {
-	position: absolute;
-	top: 6%;
-	right: -8%;
-	width: min(52vw, 42rem);
-	aspect-ratio: 1;
-	border-radius: 999px;
-	background:
-		radial-gradient(circle at 35% 35%, rgb(255 255 255 / 70%), transparent 19%),
-		radial-gradient(circle at 55% 55%, rgb(88 101 242 / 22%), transparent 48%),
-		radial-gradient(circle at 70% 35%, rgb(31 190 170 / 18%), transparent 45%);
-	filter: blur(1px);
-	opacity: 0.7;
-}
-
-[data-theme="dark"] .hero-orb {
-	background:
-		radial-gradient(circle at 35% 35%, rgb(255 255 255 / 10%), transparent 19%),
-		radial-gradient(circle at 55% 55%, rgb(112 123 255 / 28%), transparent 48%),
-		radial-gradient(circle at 70% 35%, rgb(31 190 170 / 20%), transparent 45%);
-}
-
 .hero-gradient {
 	background: linear-gradient(105deg, var(--foreground) 5%, color-mix(in oklch, var(--foreground) 42%, #6577ff) 60%, #2a9d8f);
 	background-clip: text;
@@ -309,14 +288,6 @@ const selectedWriting = [
 
 .book-panel:hover .book-cover {
 	transform: perspective(1000px) rotateY(-2deg) rotateX(1deg) translateY(-4px);
-}
-
-@media (max-width: 640px) {
-	.hero-orb {
-		top: 13%;
-		right: -45%;
-		width: 32rem;
-	}
 }
 
 @media (prefers-reduced-motion: reduce) {
