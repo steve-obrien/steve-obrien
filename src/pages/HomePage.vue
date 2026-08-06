@@ -3,7 +3,7 @@ import { RouterLink } from 'vue-router';
 import HeroOrbs from '../cmp/HeroOrbs.vue';
 import RotatingHeroWord from '../cmp/RotatingHeroWord.vue';
 import meImage from '../assets/me.jpeg';
-import bookCover from './projects/bookCover3.png';
+import bookCover from './projects/book-dark-transparent.png';
 import domStudioCard from './projects/dom_studio_card.png';
 
 const heroWords = ['intelligence', 'software products', 'Ai brains', 'nerdy things', 'interpretive dance', 'companies'];

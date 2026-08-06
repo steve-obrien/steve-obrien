@@ -1,5 +1,5 @@
 <script setup>
-import bookCover3 from './bookCover3.png';
+import bookCover3 from './book-dark-transparent.png';
 import domStudioCard from './dom_studio_card.png';
 
 // const cardClass = 'relative block w-full overflow-hidden rounded-3xl bg-card text-card-foreground shadow-xl ring-1 ring-border transition-[box-shadow,transform] duration-300 ease-in-out [backface-visibility:hidden] [-webkit-backface-visibility:hidden] hover:scale-[1.03] hover:shadow-2xl';
