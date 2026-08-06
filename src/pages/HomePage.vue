@@ -1,9 +1,12 @@
 <script setup>
 import { RouterLink } from 'vue-router';
 import HeroOrbs from '../cmp/HeroOrbs.vue';
+import RotatingHeroWord from '../cmp/RotatingHeroWord.vue';
 import meImage from '../assets/me.jpeg';
 import bookCover from './projects/bookCover3.png';
 import domStudioCard from './projects/dom_studio_card.png';
+
+const heroWords = ['intelligence', 'software products', 'Ai brains', 'nerdy things', 'interpretive dance', 'companies'];
 
 const selectedWriting = [
 	{
@@ -36,7 +39,7 @@ const selectedWriting = [
 					</p>
 					<h1 class="mt-8 max-w-5xl text-[clamp(3.5rem,9vw,7.5rem)] font-medium leading-none tracking-[-0.065em]">
 						Building useful
-						<span class="hero-gradient block">intelligence.</span>
+						<RotatingHeroWord :words="heroWords" class="hero-gradient block" />
 					</h1>
 					<p class="mt-10 max-w-2xl text-lg leading-8 text-muted-foreground sm:text-xl sm:leading-9">
 						I build products, companies and technical systems at the edge of AI. Turning difficult ideas into things people can actually use.
