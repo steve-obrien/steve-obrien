@@ -17,9 +17,9 @@ const pointer = {
 };
 
 const orbs = [
-	{ x: 0.72, y: 0.43, radius: 0.34, driftX: 0.11, driftY: 0.07, pointer: 0.045, speed: 0.00022, phase: 0, tone: 'blue' },
-	{ x: 0.32, y: 0.73, radius: 0.24, driftX: 0.13, driftY: 0.08, pointer: 0.065, speed: 0.00016, phase: 2.1, tone: 'violet' },
-	{ x: 0.88, y: 0.7, radius: 0.18, driftX: 0.09, driftY: 0.1, pointer: 0.08, speed: 0.00027, phase: 4.2, tone: 'blue' },
+	{ x: 0.72, y: 0.43, radius: 0.34, driftX: 0.11, driftY: 0.07, pointer: 0.045, speed: 0.00022, pulseSpeed: 0.00035, phase: 0, tone: 'blue' },
+	{ x: 0.32, y: 0.73, radius: 0.24, driftX: 0.13, driftY: 0.08, pointer: 0.065, speed: 0.00016, pulseSpeed: 0.00027, phase: 2.1, tone: 'violet' },
+	{ x: 0.88, y: 0.7, radius: 0.18, driftX: 0.09, driftY: 0.1, pointer: 0.08, speed: 0.00027, pulseSpeed: 0.00042, phase: 4.2, tone: 'blue' },
 ];
 
 const palettes = {
@@ -33,7 +33,7 @@ const palettes = {
 	},
 };
 
-function drawOrb(context, x, y, radius, colours) {
+function drawOrb(context, x, y, radius, colours, pulse) {
 	const gradient = context.createRadialGradient(
 		x - radius * 0.28,
 		y - radius * 0.3,
@@ -48,10 +48,13 @@ function drawOrb(context, x, y, radius, colours) {
 	gradient.addColorStop(0.72, colours[2]);
 	gradient.addColorStop(1, 'rgba(0,0,0,0)');
 
+	context.save();
+	context.globalAlpha = 0.82 + pulse * 0.18;
 	context.fillStyle = gradient;
 	context.beginPath();
 	context.arc(x, y, radius, 0, Math.PI * 2);
 	context.fill();
+	context.restore();
 }
 
 function draw(timestamp = 0) {
@@ -82,15 +85,17 @@ function draw(timestamp = 0) {
 	}
 
 	for (const orb of orbs) {
-		const radius = size * orb.radius;
 		const wave = moving ? elapsed * orb.speed + orb.phase : orb.phase;
+		const pulseWave = moving ? (Math.sin(elapsed * orb.pulseSpeed + orb.phase) + 1) / 2 : 0;
+		const pulse = pulseWave ** 8;
+		const radius = size * orb.radius * (1 + pulse * 0.12);
 		const desiredX = width * (orb.x + Math.sin(wave) * orb.driftX + pointer.currentX * orb.pointer);
 		const desiredY = height * (orb.y + Math.cos(wave * 0.8) * orb.driftY + pointer.currentY * orb.pointer);
 		const edge = radius * 0.92;
 		const x = Math.max(edge, Math.min(width - edge, desiredX));
 		const y = Math.max(edge, Math.min(height - edge, desiredY));
 
-		drawOrb(context, x, y, radius, palettes[theme][orb.tone]);
+		drawOrb(context, x, y, radius, palettes[theme][orb.tone], pulse);
 	}
 
 	if (moving) animationFrame = requestAnimationFrame(draw);
