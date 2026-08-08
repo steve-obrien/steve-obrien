@@ -1,71 +1,123 @@
-## Steve O'Brien Personal Site
+# Steve O'Brien
 
-Static personal website built with Vue 3, Vite SSG, and Tailwind CSS v4.
+**Founder, engineer and author building useful intelligence.**
 
-### Local development
+I'm a technical founder and full-stack software engineer based in Bristol, UK. For more than two decades, I've worked across product, architecture and code—turning difficult ideas into useful software, technical systems and companies.
+
+[Website](https://steve-obrien.com) · [Writing](https://steve-obrien.com/articles) · [Projects](https://steve-obrien.com/projects) · [LinkedIn](https://www.linkedin.com/in/stevenaobrien/)
+
+## What I'm working on
+
+- **[GrowthScout](https://growthscout.io)** — AI-powered search intelligence that turns evidence into practical content strategy and action.
+- **[DOM Studio](https://getdom.studio)** — a code-first UI system that gives people and AI agents a shared contract for dependable interfaces.
+- **Intelligence: Human, Artificial, Future** — a book-in-progress exploring how minds work, how machines think and what neuroscience may reveal about the future of intelligence.
+- **[Writing](https://steve-obrien.com/articles)** — practical explorations of AI, language models, software engineering and intelligence.
+
+I previously founded and led [Newicon](https://newicon.net), a product engineering and digital transformation company, for 18 years.
+
+## About this repository
+
+This repository contains the source for [steve-obrien.com](https://steve-obrien.com), my personal website, project archive and home for long-form writing.
+
+The site is statically generated and includes:
+
+- A project portfolio and professional history
+- Markdown-based articles with generated routes and metadata
+- Light, dark and system themes
+- Generated sitemap, robots file and custom 404 page
+- Optional publishing and AI theme-generation services
+
+## Built with
+
+- [Vue 3](https://vuejs.org/)
+- [Vite](https://vite.dev/) and [Vite SSG](https://github.com/antfu-collective/vite-ssg)
+- [Tailwind CSS v4](https://tailwindcss.com/)
+- [Markdown-It](https://github.com/markdown-it/markdown-it)
+- [GitHub Pages](https://pages.github.com/)
+
+## Local development
+
+### Requirements
+
+- Node.js 22
+- npm
+
+### Setup
 
 ```bash
+git clone https://github.com/steve-obrien/steve-obrien.git
+cd steve-obrien
 npm install
 npm run dev
 ```
 
-### Build static output
+### Useful commands
 
-```bash
-npm run build
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the local development server |
+| `npm run build` | Generate the production site in `dist/` |
+| `npm run preview` | Preview the production build locally |
+| `npm run getdom:check` | Check vendored DOM Studio files for upstream changes |
+| `npm run getdom:sync` | Sync clean component sources from DOM Studio |
+| `npm run check:outrank-webhook` | Validate Outrank payload handling |
+| `npm run theme-ai-server` | Run the optional AI theme service |
+| `npm run check:theme-ai` | Validate the configured AI theme endpoint |
+
+## Article publishing
+
+Articles live in:
+
+```text
+src/pages/articles/content/<slug>.md
 ```
 
-Build artifacts are generated in `dist/`.
-The build also generates `dist/sitemap.xml` and `dist/robots.txt`.
+The production build automatically turns them into article pages and updates the article index, route metadata, sitemap and robots file.
 
-### Vendored GetDom components
+### Outrank webhook
 
-Selected GetDom Studio components are copied into `src/vendor/getdom-studio` and committed with the site, following a source-owned pattern similar to shadcn. The source mapping lives in `getdom.components.json`, and `getdom.components.lock.json` records the upstream Git revision and the hash of every copied file.
-
-Check for upstream changes without writing files:
-
-```bash
-npm run getdom:check
-```
-
-Copy a newer clean version from the sibling GetDom checkout:
-
-```bash
-npm run getdom:sync
-```
-
-The sync refuses to copy uncommitted GetDom source files and refuses to overwrite locally modified vendored files. Use `npm run getdom:sync -- --force` only when intentionally discarding local changes. Set `GETDOM_STUDIO_DIR=/absolute/path/to/getdom.studio` when the source checkout is not available at `../getdom.studio`.
-
-### Outrank webhook publishing
-
-Outrank can publish and update articles by POSTing to a webhook endpoint with `Authorization: Bearer <token>` as described in the [Outrank webhook docs](https://www.outrank.so/docs/webhook).
-
-Run the local receiver:
+The optional webhook receiver accepts authenticated article publishing requests from [Outrank](https://www.outrank.so/docs/webhook):
 
 ```bash
 OUTRANK_WEBHOOK_ACCESS_TOKEN=your-secret-token npm run outrank-webhook-server
 ```
 
-By default it listens on `POST /api/outrank/webhook` and also accepts `POST /webhook`. It writes articles to `src/pages/articles/content/<slug>.md`, so the existing Vite SSG build automatically creates the article index, detail pages, sitemap, and SEO metadata.
+It listens on `POST /api/outrank/webhook` by default and also accepts `POST /webhook`.
 
-Environment variables:
+| Environment variable | Purpose | Default |
+| --- | --- | --- |
+| `OUTRANK_WEBHOOK_ACCESS_TOKEN` | Required Bearer token | — |
+| `OUTRANK_WEBHOOK_PORT` | Local server port | `8790` |
+| `OUTRANK_WEBHOOK_PATH` | Webhook endpoint path | `/api/outrank/webhook` |
+| `OUTRANK_WEBHOOK_MAX_BODY_BYTES` | Maximum request size | `5242880` |
+| `OUTRANK_ARTICLE_CONTENT_DIR` | Markdown output directory | `src/pages/articles/content` |
 
-- `OUTRANK_WEBHOOK_ACCESS_TOKEN`: required Bearer token configured in Outrank.
-- `OUTRANK_WEBHOOK_PORT`: optional local server port, default `8790`.
-- `OUTRANK_WEBHOOK_PATH`: optional endpoint path, default `/api/outrank/webhook`.
-- `OUTRANK_WEBHOOK_MAX_BODY_BYTES`: optional request size limit, default `5242880`.
-- `OUTRANK_ARTICLE_CONTENT_DIR`: optional markdown output directory, default `src/pages/articles/content`.
+GitHub Pages cannot receive webhook requests. In production, the receiver must run on a small Node or serverless service with HTTPS, with generated Markdown committed back to this repository for deployment.
 
-GitHub Pages cannot host POST webhook endpoints. For production, host `scripts/outrank-webhook-server.mjs` on a small Node service or serverless platform with HTTPS, then commit/push the generated markdown files back to this repository so the Pages workflow deploys the updated static site.
+## Vendored DOM Studio components
 
-Validate the payload handling without changing real articles:
+Selected DOM Studio components are committed under `src/vendor/getdom-studio`, following a source-owned model similar to shadcn.
+
+- `getdom.components.json` maps upstream source files to their local destinations.
+- `getdom.components.lock.json` records the upstream Git revision and copied-file hashes.
+- `npm run getdom:check` reports upstream changes without modifying files.
+- `npm run getdom:sync` copies a newer clean version from the sibling DOM Studio checkout.
+
+The sync protects both sides: it refuses to copy uncommitted upstream files or overwrite locally modified vendored files. Use `--force` only when intentionally discarding local changes:
 
 ```bash
-npm run check:outrank-webhook
+npm run getdom:sync -- --force
 ```
 
-### Deploy to GitHub Pages
+If DOM Studio is not available at `../getdom.studio`, set `GETDOM_STUDIO_DIR` to its absolute path.
 
-Push to `main` to trigger `.github/workflows/deploy.yml`.
-The workflow builds the site and deploys the static `dist/` artifacts to GitHub Pages.
-GitHub Pages also serves `public/404.html` as the custom not found page.
+## Deployment
+
+Every push to `main` runs the GitHub Actions workflow in `.github/workflows/deploy.yml`.
+
+The workflow:
+
+1. Installs dependencies with Node.js 22.
+2. builds the static site and SEO files.
+3. uploads the contents of `dist/`.
+4. deploys them to GitHub Pages at [steve-obrien.com](https://steve-obrien.com).
