@@ -6,6 +6,8 @@ I'm a technical founder and full-stack software engineer based in Bristol, UK. F
 
 [Website](https://steve-obrien.com) · [Writing](https://steve-obrien.com/articles) · [Projects](https://steve-obrien.com/projects) · [LinkedIn](https://www.linkedin.com/in/stevenaobrien/)
 
+> I’ve always wanted to know how to build anything—and, beneath that, how everything works. No one person can hold the whole of human knowledge, but we can learn its broad strokes, zoom into the areas that fascinate us, and try to nudge its edges forward.
+
 ## What I'm working on
 
 - **[GrowthScout](https://growthscout.io)** — AI-powered search intelligence that turns evidence into practical content strategy and action.
