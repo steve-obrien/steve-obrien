@@ -6,7 +6,7 @@ I'm a technical founder and full-stack software engineer based in Bristol, UK. F
 
 [Website](https://steve-obrien.com) · [Writing](https://steve-obrien.com/articles) · [Projects](https://steve-obrien.com/projects) · [LinkedIn](https://www.linkedin.com/in/stevenaobrien/)
 
-> I’ve always wanted to know how to build anything—and, beneath that, how everything works. No one person can hold the whole of human knowledge, but we can learn its broad strokes, zoom into the areas that fascinate us, and try to nudge its edges forward.
+> I’ve always wanted to know how to build anything. And, beneath that, how everything works. No one person can hold the whole of human knowledge, but we can learn its broad strokes, zoom into the areas that fascinate us, and try to nudge the edges forward.
 
 ## What I'm working on
 
@@ -75,43 +75,6 @@ src/pages/articles/content/<slug>.md
 ```
 
 The production build automatically turns them into article pages and updates the article index, route metadata, sitemap and robots file.
-
-### Outrank webhook
-
-The optional webhook receiver accepts authenticated article publishing requests from [Outrank](https://www.outrank.so/docs/webhook):
-
-```bash
-OUTRANK_WEBHOOK_ACCESS_TOKEN=your-secret-token npm run outrank-webhook-server
-```
-
-It listens on `POST /api/outrank/webhook` by default and also accepts `POST /webhook`.
-
-| Environment variable | Purpose | Default |
-| --- | --- | --- |
-| `OUTRANK_WEBHOOK_ACCESS_TOKEN` | Required Bearer token | — |
-| `OUTRANK_WEBHOOK_PORT` | Local server port | `8790` |
-| `OUTRANK_WEBHOOK_PATH` | Webhook endpoint path | `/api/outrank/webhook` |
-| `OUTRANK_WEBHOOK_MAX_BODY_BYTES` | Maximum request size | `5242880` |
-| `OUTRANK_ARTICLE_CONTENT_DIR` | Markdown output directory | `src/pages/articles/content` |
-
-GitHub Pages cannot receive webhook requests. In production, the receiver must run on a small Node or serverless service with HTTPS, with generated Markdown committed back to this repository for deployment.
-
-## Vendored DOM Studio components
-
-Selected DOM Studio components are committed under `src/vendor/getdom-studio`, following a source-owned model similar to shadcn.
-
-- `getdom.components.json` maps upstream source files to their local destinations.
-- `getdom.components.lock.json` records the upstream Git revision and copied-file hashes.
-- `npm run getdom:check` reports upstream changes without modifying files.
-- `npm run getdom:sync` copies a newer clean version from the sibling DOM Studio checkout.
-
-The sync protects both sides: it refuses to copy uncommitted upstream files or overwrite locally modified vendored files. Use `--force` only when intentionally discarding local changes:
-
-```bash
-npm run getdom:sync -- --force
-```
-
-If DOM Studio is not available at `../getdom.studio`, set `GETDOM_STUDIO_DIR` to its absolute path.
 
 ## Deployment
 
