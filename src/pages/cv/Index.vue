@@ -86,8 +86,10 @@ const experience = [
 		company: 'Airbus UK, Filton',
 		summary: 'Hired into a full-time engineering role focused on modelling and simulation for Airbus UK.',
 		items: [
-			'Worked as a Systems Engineer for two years and ten months after completing the Airbus Technical Apprenticeship.',
-			'Built an industrial systems-engineering foundation in a complex aerospace environment while developing Newicon as a side venture.',
+			'Designed and built the code interpreter for AutoTR, an automated simulation-testing tool used across landing-gear test rigs—from fully simulated “-1” environments with no physical hardware to hardware-in-the-loop testing.',
+			'AutoTR automated repeatable aircraft landing-gear testing and received an Airbus international Award for Excellence.',
+			'Built LGTest, an internal PHP and MySQL web application that provided global configuration control and immediate access to landing-gear test results in the formats teams required.',
+			'LGTest replaced a labour-intensive process in which test data was manually compiled, burned to DVDs, and posted to colleagues around the world.',
 		],
 	},
 	{
@@ -96,6 +98,7 @@ const experience = [
 		company: 'Airbus UK, Filton',
 		summary: 'Completed Airbus’s four-year Technical Apprenticeship before progressing into a full Systems Engineer position.',
 		items: [
+			'Named Airbus Apprentice of the Year three years in succession.',
 			'Studied Aeronautical Engineering, Manufacturing Engineering, CAD, and computing.',
 			'Completed an HND in Aeronautical Engineering alongside practical engineering training.',
 		],
@@ -119,6 +122,12 @@ const selectedWork = [
 		text: 'Newicon led software development across two phases of an in-ear health-monitoring system that secured £1.2m in investment and was selected for the UK Innovative Devices Access Pathway.',
 	},
 	{
+		eyebrow: 'Computer vision · Aviation maintenance',
+		title: 'Airbus Oleo measurement app',
+		text: 'Led the development of an early iPhone computer-vision application that used the camera, OpenCV edge detection, and object recognition to measure a landing-gear Oleo shock absorber and give engineers an immediate pass/fail result.',
+		url: 'https://newicon.net/work/airbus-oleo-measurement-app',
+	},
+	{
 		eyebrow: 'Current research and development',
 		title: 'Practical AI and adaptive software',
 		text: 'Exploring AI-assisted development, real-time collaboration, adaptive documentation, and systems informed by how biological and artificial intelligence learn.',
@@ -126,6 +135,8 @@ const selectedWork = [
 ];
 
 const recognition = [
+	'Airbus Apprentice of the Year, three consecutive years',
+	'Airbus international Award for Excellence, awarded for AutoTR',
 	'Insider South West 42 under 42, 2022 cohort',
 	'Bristol Technology Festival speaker, including a 2022 talk on the future of IoT',
 	'Podcast guest on technology, leadership, innovation, and company building',
@@ -291,6 +302,15 @@ function printCv() {
 						<p class="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{{ item.eyebrow }}</p>
 						<h3 class="mt-4 text-xl font-semibold leading-snug">{{ item.title }}</h3>
 						<p class="mt-3 text-sm leading-relaxed text-muted-foreground">{{ item.text }}</p>
+						<a
+							v-if="item.url"
+							:href="item.url"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="mt-4 inline-flex text-sm font-semibold underline decoration-border underline-offset-4 hover:decoration-foreground"
+						>
+							Read the case study
+						</a>
 					</article>
 				</div>
 			</section>

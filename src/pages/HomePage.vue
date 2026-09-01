@@ -6,7 +6,7 @@ import meImage from '../assets/me.jpeg';
 import bookCover from './projects/book-dark-transparent.png';
 import domStudioCard from './projects/dom_studio_card.png';
 
-const heroWords = ['intelligence', 'software products', 'Ai brains', 'nerdy things', 'interpretive dance', 'companies'];
+const heroWords = ['intelligence', 'software products', 'Ai brains', 'nerdy things', 'AI apps', 'companies'];
 
 const selectedWriting = [
 	{
