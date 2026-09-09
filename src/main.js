@@ -83,8 +83,17 @@ export const createApp = ViteSSG(
 	App,
 	{
 		routes,
+		/**
+		 * Restore saved positions and anchor mantra detail routes to their expanded entry.
+		 *
+		 * @param {import('vue-router').RouteLocationNormalized} to Destination route.
+		 * @param {import('vue-router').RouteLocationNormalized} from Previous route.
+		 * @param {import('vue-router')._ScrollPositionNormalized | null} savedPosition Browser history position.
+		 * @returns {import('vue-router').RouterScrollBehaviorReturn} Requested scroll position.
+		 */
 		scrollBehavior(to, from, savedPosition) {
 			if (savedPosition) return savedPosition;
+			if (to.hash) return { el: to.hash, top: 24, behavior: 'smooth' };
 			return { top: 0 };
 		},
 	},

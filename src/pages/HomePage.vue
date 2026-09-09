@@ -45,12 +45,12 @@ const selectedWriting = [
 						I build products, companies and technical systems at the edge of AI. Turning difficult ideas into things people can actually use.
 					</p>
 					<div class="mt-10 flex flex-wrap gap-3">
-						<RouterLink to="/projects" class="origin-left rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-background transition hover:scale-[1.02]">
+						<RouterLink to="/ai-development" class="origin-left rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-background transition hover:scale-[1.02]">
+							Explore AI offers
+						</RouterLink>
+						<RouterLink to="/projects" class="rounded-full border border-border bg-background/60 px-6 py-3 text-sm font-semibold backdrop-blur transition hover:border-foreground/30 hover:bg-secondary">
 							Explore the work
 						</RouterLink>
-						<a href="#intelligence" class="rounded-full border border-border bg-background/60 px-6 py-3 text-sm font-semibold backdrop-blur transition hover:border-foreground/30 hover:bg-secondary">
-							The intelligence project
-						</a>
 					</div>
 				</div>
 			</header>

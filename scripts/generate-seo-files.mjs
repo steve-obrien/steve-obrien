@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { loadStaticRoutes } from './lib/load-routes.mjs';
 import { articleSlugFromRelativePath, listArticleFiles } from './lib/article-files.mjs';
+import { mantras } from '../src/pages/mantras/mantras.js';
 
 const rootDir = process.cwd();
 const distDir = path.join(rootDir, 'dist');
@@ -10,6 +11,14 @@ const cnamePath = path.join(rootDir, 'CNAME');
 const articleContentDir = path.join(rootDir, 'src', 'pages', 'articles', 'content');
 const siteName = "Steve O'Brien";
 let articleMetaByRoute = new Map();
+const mantraMetaByRoute = new Map();
+
+for (const mantra of mantras) {
+	mantraMetaByRoute.set(`/mantras/${mantra.slug}`, {
+		title: `${mantra.title} | ${siteName}`,
+		description: `${mantra.title}: one of Steve O’Brien’s hard-won mantras from building companies, working with teams, and pursuing personal projects.`,
+	});
+}
 
 const escapeHtml = (value) => String(value)
 	.replace(/&/g, '&amp;')
@@ -159,6 +168,8 @@ const toAbsoluteUrl = (siteUrl, value) => {
 const getPageMeta = (routePath) => {
 	const articleMeta = articleMetaByRoute.get(routePath);
 	if (articleMeta) return articleMeta;
+	const mantraMeta = mantraMetaByRoute.get(routePath);
+	if (mantraMeta) return mantraMeta;
 
 	if (routePath === '/') {
 		return {
@@ -171,6 +182,20 @@ const getPageMeta = (routePath) => {
 		return {
 			title: `Projects | ${siteName}`,
 			description: 'Selected projects and products by Steve O’Brien, including software, experiments, and open work.',
+		};
+	}
+
+	if (routePath === '/ai-development') {
+		return {
+			title: `AI Development Offers | ${siteName}`,
+			description: 'Founder-led AI development for established companies: implement three revenue-focused AI systems in six weeks or build the foundations of an AI-native company in 90 days.',
+		};
+	}
+
+	if (routePath === '/mantras') {
+		return {
+			title: `Mantras | ${siteName}`,
+			description: 'Thirty-one hard-won mantras shaped through building Newicon, working with teams, and pursuing personal projects.',
 		};
 	}
 

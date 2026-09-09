@@ -3,11 +3,14 @@ import ArticlePage from './pages/articles/ArticlePage.vue';
 import { articles } from './pages/articles/articles.js';
 import IdeasPage from './pages/IdeasPage.vue';
 import { dailyNewsFeeds } from './pages/news/dailyNews.js';
+import { mantras } from './pages/mantras/mantras.js';
 import NotFoundPage from './NotFoundPage.vue';
 
 const externalRedirectPage = () => import('./pages/ExternalRedirectPage.vue');
 const pageRouteModules = import.meta.glob('./pages/**/Index.vue');
 const cvPage = pageRouteModules['./pages/cv/Index.vue'];
+const aiDevelopmentPage = pageRouteModules['./pages/ai-development/Index.vue'];
+const mantrasPage = pageRouteModules['./pages/mantras/Index.vue'];
 const domStudioOrigin = 'https://getdom.studio';
 
 function filePathToRoutePath(globKey) {
@@ -66,6 +69,24 @@ const manualRoutes = [
 			keywords: 'Steve O’Brien, fractional CTO, executive CV, AI systems architect, technology advisor, Bristol',
 		},
 	},
+	{
+		path: '/ai-development',
+		component: aiDevelopmentPage,
+		meta: {
+			title: 'AI Development Offers',
+			description: 'Founder-led AI development for established companies: implement three revenue-focused AI systems in six weeks or build the foundations of an AI-native company in 90 days.',
+			keywords: 'AI development, AI consultant, AI-native company, AI strategy, AI implementation, fractional CTO, Bristol',
+		},
+	},
+	{
+		path: '/mantras',
+		component: mantrasPage,
+		meta: {
+			title: 'Mantras',
+			description: 'Thirty-one hard-won mantras shaped through building Newicon, working with teams, and pursuing personal projects.',
+			keywords: 'Steve O’Brien mantras, working principles, engineering culture, company culture, Newicon values',
+		},
+	},
 	{ path: '/ideas', component: IdeasPage, meta: { title: 'Ideas' } },
 	{ path: '/news', component: () => import('./pages/news/Index.vue'), meta: { title: 'News' } },
 	{
@@ -98,6 +119,21 @@ const articleDetailRoutes = articles.map((article) => ({
 	},
 }));
 
+const mantraDetailRoutes = [];
+
+for (const mantra of mantras) {
+	mantraDetailRoutes.push({
+		path: `/mantras/${mantra.slug}`,
+		component: mantrasPage,
+		props: { slug: mantra.slug },
+		meta: {
+			title: mantra.title,
+			description: `${mantra.title}: one of Steve O’Brien’s hard-won mantras from building companies, working with teams, and pursuing personal projects.`,
+			keywords: `Steve O’Brien mantras, ${mantra.title}, working principles, Newicon culture`,
+		},
+	});
+}
+
 const newsFeedRoutes = dailyNewsFeeds.map((feed) => ({
 	path: `/news/${feed.date}`,
 	component: () => import('./pages/news/Index.vue'),
@@ -119,6 +155,7 @@ export const routes = [
 	...manualRoutes,
 	...fileBasedRoutes.filter((r) => !manualPaths.has(r.path)),
 	...articleDetailRoutes,
+	...mantraDetailRoutes,
 	...newsFeedRoutes,
 	...newsSummaryRoutes,
 	{

@@ -123,6 +123,25 @@ const loadNewsRoutes = async () => {
 	}
 };
 
+/**
+ * Load stable shareable routes for every published mantra.
+ *
+ * @returns {Promise<string[]>} Mantra index and detail route paths.
+ */
+const loadMantraRoutes = async () => {
+	const mantrasDataPath = path.join(pagesDirPath, 'mantras', 'mantras.js');
+
+	try {
+		const mod = await import(pathToFileURL(mantrasDataPath));
+		return [
+			'/mantras',
+			...(mod.mantras || []).map((mantra) => `/mantras/${mantra.slug}`),
+		];
+	} catch {
+		return [];
+	}
+};
+
 export const loadStaticRoutes = async () => {
 	let fromRoutesFile = [];
 	try {
@@ -139,5 +158,6 @@ export const loadStaticRoutes = async () => {
 	const fromNestedIndexPages = await loadRoutesFromNestedIndexVue();
 	const fromArticles = await loadArticleRoutes();
 	const fromNews = await loadNewsRoutes();
-	return [...new Set([...fromRoutesFile, ...fromNestedPages, ...fromNestedIndexPages, ...fromArticles, ...fromNews])];
+	const fromMantras = await loadMantraRoutes();
+	return [...new Set([...fromRoutesFile, ...fromNestedPages, ...fromNestedIndexPages, ...fromArticles, ...fromNews, ...fromMantras])];
 };
