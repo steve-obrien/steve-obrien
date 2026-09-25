@@ -1,6 +1,7 @@
 <script setup>
-import bookCover3 from './book-dark-transparent.png';
+import intelligenceBookCover from './intelligence-book-mockup.webp';
 import domStudioCard from './dom_studio_card.png';
+import { implementationSteps, offerTitle } from '../course/offer.js';
 
 // const cardClass = 'relative block w-full overflow-hidden rounded-3xl bg-card text-card-foreground shadow-xl ring-1 ring-border transition-[box-shadow,transform] duration-300 ease-in-out [backface-visibility:hidden] [-webkit-backface-visibility:hidden] hover:scale-[1.03] hover:shadow-2xl';
 const cardClass = 'shadow-xl break-inside-avoid relative ring-1 ring-border mr-6 block w-full bg-card text-card-foreground rounded-3xl overflow-hidden cursor-pointer transform hover:scale-[1.03] group duration-300 ease-in-out hover:shadow-2xl backface-hidden'
@@ -19,17 +20,36 @@ const cardClass = 'shadow-xl break-inside-avoid relative ring-1 ring-border mr-6
 			<div class="grid gap-8 md:grid-cols-2">
 				<div class="space-y-8">
 
+					<a href="https://db3.ai" target="_blank" rel="noopener noreferrer" :class="cardClass" class="focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground">
+						<div class="relative overflow-hidden bg-[#fdfcfb] p-7 text-[oklch(0.19_0.018_258)] dark:bg-[oklch(0.155_0.028_247)] dark:text-[oklch(0.95_0.012_75)]">
+							<div class="flex items-center justify-between gap-4">
+								<span class="text-5xl font-extrabold tracking-[-0.035em] text-[oklch(0.64_0.208_29)] dark:text-[oklch(0.7_0.19_28)]">db3.ai</span>
+								<span class="text-2xl text-[oklch(0.64_0.208_29)] transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 dark:text-[oklch(0.7_0.19_28)]" aria-hidden="true">↗</span>
+							</div>
+							<p class="mt-8 text-xs font-bold uppercase tracking-wider text-[oklch(0.5_0.018_258)] dark:text-[oklch(0.72_0.022_238)]">Framework <span class="mx-1" aria-hidden="true">|</span> Studio <span class="mx-1" aria-hidden="true">|</span> Cloud</p>
+							<h3 class="mt-3 text-2xl/[1.35] font-semibold tracking-[-0.052em] md:text-3xl/[1.35]">The TypeScript framework for apps with AI.</h3>
+							<p class="mt-3 mb-0 text-lg text-[oklch(0.5_0.018_258)] dark:text-[oklch(0.72_0.022_238)]">Shared foundations for data, users, permissions and AI. The roadmap adds Studio for visual app development and Cloud for publishing and hosting.</p>
+						</div>
+					</a>
+
 					<a href="https://getdom.studio" :class="cardClass">
 						<div class="relative">
 							<img :src="domStudioCard" alt="DOM Studio interface kit" class="h-full w-full object-cover" />
 						</div>
 					</a>
 
-					<a href="/course" :class="cardClass">
+					<a href="/course" :class="cardClass" class="focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground">
 						<div class="relative p-7">
-							<p class="text-xs font-bold uppercase text-muted-foreground">AI</p>
-							<h3 class="mt-4 text-2xl font-bold md:text-3xl">Ai Coder Course</h3>
-							<p class="mt-2 text-lg">Learn to code in weeks not years. Learn to build apps using AI. Learn advanced code and AI tools to make sure you stay ahead in the age of AI.</p>
+							<p class="text-xs font-bold uppercase text-muted-foreground">AI offer</p>
+							<h3 class="mt-4 text-2xl font-bold md:text-3xl">{{ offerTitle }}</h3>
+							<ol class="mt-6 space-y-4">
+								<li v-for="step in implementationSteps" :key="step.number" class="flex gap-4">
+									<span class="pt-1 text-xs font-semibold text-muted-foreground" aria-hidden="true">{{ step.number }}</span>
+									<span class="text-lg leading-7">{{ step.title }}</span>
+								</li>
+							</ol>
+							<p class="mt-6 border-t border-border pt-5 leading-7 text-muted-foreground">Includes three courses and access to the Skool community.</p>
+							<span class="mt-5 inline-flex items-center gap-2 text-sm font-semibold">Explore the offer <span aria-hidden="true">→</span></span>
 						</div>
 					</a>
 
@@ -64,7 +84,15 @@ const cardClass = 'shadow-xl break-inside-avoid relative ring-1 ring-border mr-6
 
 					<a href="https://steve-98.kit.com/4b5ef441c9" :class="cardClass">
 						<div class="relative">
-							<img :src="bookCover3" alt="picture of an app" class="h-full w-full object-cover dark:invert" />
+							<img
+								:src="intelligenceBookCover"
+								alt="Intelligence: Human, Artificial, Future by Steve O’Brien"
+								width="1024"
+								height="1536"
+								loading="lazy"
+								decoding="async"
+								class="block h-auto w-full object-contain"
+							/>
 							<div class="relative p-7">
 								<p class="text-xs font-bold uppercase text-muted-foreground">Book</p>
 								<h3 class="mt-4 text-2xl font-bold md:text-3xl">Human, Artificial and Future Intelligence</h3>

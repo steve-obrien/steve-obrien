@@ -20,20 +20,20 @@ const highlights = [
 
 const capabilities = [
 	{
-		title: 'Fractional CTO leadership',
-		text: 'Hands-on technology strategy, architecture, and rapid prototyping—especially for ideas that have not been built before—combined with delivery leadership and pragmatic decisions that keep today’s build aligned with tomorrow’s scale.',
+		title: 'Engineering and technical leadership',
+		text: 'Hands-on software engineering, system design, and rapid prototyping, backed by experience leading teams and delivering products for founders and larger organisations.',
 	},
 	{
 		title: 'AI systems and strategy',
-		text: 'Practical AI products, intelligent workflows, human–AI collaboration, and the infrastructure and architecture needed to move from experiments to dependable systems.',
+		text: 'Building AI applications with the OpenAI, Anthropic, and OpenRouter APIs, including document search, evidence discovery, and question answering. Connecting technical possibilities to useful business applications.',
 	},
 	{
 		title: 'Product and platform engineering',
-		text: 'Turning ambitious ideas into robust software products across cloud platforms, SaaS, connected systems, and complex digital services.',
+		text: 'Turning founders’ ideas into working technology across healthcare, finance, and aerospace, with experience spanning SaaS, connected devices, computer vision, and application frameworks.',
 	},
 	{
-		title: 'Founder-level perspective',
-		text: 'Balancing product, commercial, operational, and technical priorities with the accountability of someone who has built and sold a company.',
+		title: 'Company leadership and advisory',
+		text: 'Practical experience running a small technology company through acquisition and supporting larger businesses. Helping leaders weigh technology investment, delivery risk, and commercial priorities.',
 	},
 ];
 
@@ -51,19 +51,19 @@ const technicalDepth = [
 		items: ['PostgreSQL', 'MariaDB / MySQL', 'REST APIs', 'Background workers', 'Authentication', 'Stripe'],
 	},
 	{
-		title: 'AI and engineering quality',
-		items: ['LLM applications', 'Agent systems', 'Embeddings', 'Vector search', 'Knowledge graphs', 'Vitest', 'Playwright'],
+		title: 'AI APIs, systems, and testing',
+		items: ['OpenAI API', 'Anthropic API', 'OpenRouter API', 'LLM applications', 'Agent systems', 'Embeddings', 'Vector search', 'Knowledge graphs', 'Vitest', 'Playwright'],
 	},
 ];
 
 const experience = [
 	{
 		period: '2026—present',
-		role: 'Fractional CTO, AI Systems Architect & Product Builder',
+		role: 'Engineer, Fractional CTO & AI Product Builder',
 		company: 'Independent',
 		summary: 'Helping organisations make sound technology decisions and turn AI opportunities into useful, well-engineered products.',
 		items: [
-			'Designing practical AI systems, developer workflows, and collaborative product experiences.',
+			'Designing and building AI applications using the OpenAI, Anthropic, and OpenRouter APIs, alongside developer workflows and collaborative product experiences.',
 			'Advising founders and leadership teams on product direction, architecture, delivery, and AI adoption.',
 			'Researching intelligence across artificial intelligence, neuroscience, and cognitive systems.',
 		],
@@ -72,11 +72,12 @@ const experience = [
 		period: '2009—2026',
 		role: 'Founder, CEO & CTO',
 		company: 'Newicon Ltd',
-		summary: 'Built and led a Bristol software, AI engineering, IoT, cloud, and product studio from its early-stage launch through acquisition.',
+		summary: 'Founded and ran a Bristol technology company whose core business was designing and building products for founders and established organisations, combining hands-on engineering with CEO and CTO responsibilities through to acquisition.',
 		items: [
+			'Built technology for founders across many products and businesses, turning ideas into software, connected systems, and working products.',
 			'Led technology direction, product strategy, solution architecture, client partnerships, and complex project delivery.',
 			'Grew Newicon to £1.5m turnover alongside a £0.5m digital marketing business that became Flex Digital.',
-			'Worked across regulated and technically demanding sectors, with disclosed clients including Airbus, Thales, UWE, and Palladium.',
+			'Delivered work across healthcare, financial services, and aerospace, supporting founders and larger organisations. Disclosed clients included Airbus, Thales, UWE, and Palladium.',
 			'Guided Newicon into its 2025 acquisition by Linebreak and continued as CTO through January 2026.',
 		],
 	},
@@ -84,10 +85,10 @@ const experience = [
 		period: 'Sep 2006—Jun 2009',
 		role: 'Systems Engineer (Modelling & Simulation)',
 		company: 'Airbus UK, Filton',
-		summary: 'Hired into a full-time engineering role focused on modelling and simulation for Airbus UK.',
+		summary: 'Responsible for developing the modelling and simulation platforms used by the Airbus landing gear team.',
 		items: [
-			'Designed and built the code interpreter for AutoTR, an automated simulation-testing tool used across landing-gear test rigs—from fully simulated “-1” environments with no physical hardware to hardware-in-the-loop testing.',
-			'AutoTR automated repeatable aircraft landing-gear testing and received an Airbus international Award for Excellence.',
+			'Designed and built the AutoTR desktop application and its code interpreter, enabling test engineers to write automated tests for landing gear systems.',
+			'AutoTR supported repeatable testing from fully simulated “-1” environments with no physical hardware through to hardware-in-the-loop test rigs, and received an Airbus international Award for Excellence.',
 			'Built LGTest, an internal PHP and MySQL web application that provided global configuration control and immediate access to landing-gear test results in the formats teams required.',
 			'LGTest replaced a labour-intensive process in which test data was manually compiled, burned to DVDs, and posted to colleagues around the world.',
 		],
@@ -106,6 +107,11 @@ const experience = [
 ];
 
 const selectedWork = [
+	{
+		eyebrow: 'Applied AI · Due diligence',
+		title: 'AI for document search and legal questions',
+		text: 'Designed and built an AI tool to support due diligence: searching large documents, identifying useful evidence, and helping users understand and answer legal questions about the material.',
+	},
 	{
 		eyebrow: 'Framework engineering · Financial services',
 		title: 'Application frameworks from first principles',
@@ -126,11 +132,6 @@ const selectedWork = [
 		title: 'Airbus Oleo measurement app',
 		text: 'Led the development of an early iPhone computer-vision application that used the camera, OpenCV edge detection, and object recognition to measure a landing-gear Oleo shock absorber and give engineers an immediate pass/fail result.',
 		url: 'https://newicon.net/work/airbus-oleo-measurement-app',
-	},
-	{
-		eyebrow: 'Current research and development',
-		title: 'Practical AI and adaptive software',
-		text: 'Exploring AI-assisted development, real-time collaboration, adaptive documentation, and systems informed by how biological and artificial intelligence learn.',
 	},
 ];
 
@@ -158,10 +159,10 @@ function printCv() {
 			<header class="cv-hero border-b border-border pb-12">
 				<div class="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
 					<div class="max-w-3xl">
-						<p class="mb-5 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Executive CV</p>
+						<p class="mb-5 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Curriculum vitae</p>
 						<h1 class="font-serif text-5xl font-light tracking-tight sm:text-6xl">Steve O'Brien</h1>
 						<p class="mt-5 text-xl font-medium leading-relaxed text-muted-foreground sm:text-2xl">
-							CTO <span aria-hidden="true">·</span> AI Systems Architect <span aria-hidden="true">·</span> Technical Founder
+							Engineer <span aria-hidden="true">·</span> Founder <span aria-hidden="true">·</span> CEO & CTO
 						</p>
 					</div>
 					<div class="cv-actions flex flex-wrap gap-3">
@@ -184,7 +185,7 @@ function printCv() {
 				</div>
 
 				<blockquote class="cv-positioning mt-12 max-w-4xl border-l-2 border-foreground pl-6 font-serif text-2xl font-light leading-relaxed sm:text-3xl">
-					I've spent two decades building real-world software systems. Today, I'm focused on understanding intelligence itself, both artificial and biological, and applying those insights to create practical AI systems that solve meaningful problems.
+					I've spent two decades building real-world software and AI systems. I combine hands-on engineering with the experience of building products for founders, running a technology company through acquisition, and helping larger organisations solve technical problems.
 				</blockquote>
 
 				<div class="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
@@ -201,13 +202,13 @@ function printCv() {
 				</div>
 				<div class="space-y-5 text-lg leading-relaxed text-muted-foreground">
 					<p>
-						Founder, CTO, and hands-on systems architect with more than two decades of engineering and software experience. I work at the point where technology strategy, product thinking, and delivery meet.
+						My experience comes from more than two decades of engineering and building technology for other people’s businesses. At Newicon, that was our business: founders and established organisations paid us to turn their ideas and difficult technical problems into working products.
 					</p>
 					<p>
-						After building Newicon over 18 years and guiding the company through a successful acquisition, I now help founders and leadership teams shape technology strategy, de-risk difficult decisions, and create practical AI-enabled products.
+						I worked as founder, CEO, and CTO, running a small company while helping clients across healthcare, finance, and aerospace. That gave me practical experience of commercial decisions, client relationships, delivery, and the work involved in preparing a technology business for acquisition.
 					</p>
 					<p>
-						I’m at my best building and prototyping things that have not been done before. In fractional CTO and technical advisory roles, I roll up my sleeves and rapidly turn ambitious, ambiguous ideas into working prototypes that can be tested today and useful products a team can ship next week. I choose architecture for the stage the business is actually at—starting with the simplest system that works, while preserving a clear path to the resilience, scale, and operational maturity it will need tomorrow.
+						I remain deeply technical: I design systems, write software, and work from the underlying engineering principles. My AI work includes a due diligence tool for searching large documents, finding useful evidence, and exploring legal questions. I bring that engineering experience to advising CEOs and founders on technology, AI, and product investment.
 					</p>
 				</div>
 			</section>

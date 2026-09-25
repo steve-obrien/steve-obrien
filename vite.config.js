@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import tailwindcss from '@tailwindcss/vite';
+import { brainBookEditor } from './scripts/brain-book-editor.mjs';
 
 function themeAiServer() {
 	let apiKey = '';
@@ -203,22 +204,28 @@ function sendJson(response, status, body) {
 
 export default defineConfig({
 	plugins: [
+		brainBookEditor(),
 		themeAiServer(),
 		vue({
 			template: {
 				compilerOptions: {
-					isCustomElement: (tag) => tag.startsWith('element-'),
+					// DOM Studio's Vue wrappers render these native custom elements.
+					isCustomElement: (tag) => tag.startsWith('element-') || tag.startsWith('dom-'),
 				},
 			},
 		}),
 		tailwindcss(),
 	],
 	base: '/',
+	preview: {
+		port: 8202,
+		strictPort: true,
+	},
 	server: {
 		host: true,
-		port: 5173,
+		port: 8200,
 		strictPort: true,
-		allowedHosts: ['steve-obrien.test'],
+		allowedHosts: ['local.steve-obrien.com'],
 		// https: true,
 	}
 });

@@ -39,10 +39,10 @@ const appearanceTokenNames = [
 await loadEnvFile('.env');
 await loadEnvFile('.env.local');
 
-const port = Number(process.env.PORT || 8787);
+const port = Number(process.env.PORT || process.env.THEME_AI_PORT || (process.env.NODE_ENV === 'production' ? 8787 : 8201));
 const apiKey = process.env.OPENAI_API_KEY || process.env.OPEN_AI_API_KEY || process.env.OPEN_AI_API || process.env.OPEN_AI_KEY || '';
 const model = process.env.OPENAI_THEME_MODEL || 'gpt-4.1-mini';
-const allowedOrigins = parseList(process.env.THEME_AI_ALLOWED_ORIGINS || 'http://localhost:5174,http://localhost:5175,https://steve-obrien.com');
+const allowedOrigins = parseList(process.env.THEME_AI_ALLOWED_ORIGINS || 'http://localhost:8200,http://127.0.0.1:8200,http://localhost:8202,https://local.steve-obrien.com,https://steve-obrien.com');
 const publicToken = process.env.THEME_AI_PUBLIC_TOKEN || '';
 
 if (!apiKey) {

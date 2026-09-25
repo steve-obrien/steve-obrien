@@ -53,6 +53,12 @@ npm install
 npm run dev
 ```
 
+This app reserves local ports **8200–8299**: Vite `8200`, optional theme API
+`8201`, preview `8202`, and optional Outrank webhook `8203`. The theme endpoint
+also runs inside Vite during normal development. Caddy serves the frontend at
+`https://local.steve-obrien.com`. Dev and preview fail if their port is occupied.
+See `~/Sites/PORTS.md` for the shared allocation register.
+
 ### Useful commands
 
 | Command | Purpose |
@@ -67,6 +73,8 @@ npm run dev
 | `npm run check:theme-ai` | Validate the configured AI theme endpoint |
 
 ## Article publishing
+
+Use the [tone-of-voice guide](docs/tone-of-voice.md) for website copy, articles, daily work notes and weekly reviews.
 
 Articles live in:
 
@@ -86,3 +94,24 @@ The workflow:
 2. builds the static site and SEO files.
 3. uploads the contents of `dist/`.
 4. deploys them to GitHub Pages at [steve-obrien.com](https://steve-obrien.com).
+
+
+## Brain Book (local development only)
+
+Open <https://local.steve-obrien.com/brain-book> while `npm run dev` is running.
+It shares port **8200** with the personal site. Chapters, contents and the local
+editor use their own book layout within the existing router.
+
+- `brain-book/book.yml`: canonical parts, ordering, headings and planning metadata.
+- `brain-book/chapters/*.md`: canonical manuscript and private guide notes.
+- `brain-book/README.md`: authoring instructions.
+- `src/brain-book/`: book reader and editor UI.
+- `scripts/brain-book-editor.mjs`: development-only file-saving endpoints.
+
+The entire book is excluded from production builds and previews, including
+Markdown, guide notes, editor code, routes and sitemap entries. `npm run build`
+checks this automatically. `npm run test:brain-book` verifies editor saves and
+validation using disposable copies of the manuscript.
+
+The old `~/Sites/brainbook` folder is retained as a backup. Its npm commands now
+use this project; port 8400 and the separate book hostname are retired.

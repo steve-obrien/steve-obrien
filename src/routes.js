@@ -5,6 +5,12 @@ import IdeasPage from './pages/IdeasPage.vue';
 import { dailyNewsFeeds } from './pages/news/dailyNews.js';
 import { mantras } from './pages/mantras/mantras.js';
 import NotFoundPage from './NotFoundPage.vue';
+import { workEntries, workStreamDescription } from './pages/work-stream/entries.js';
+import { offerDescription, offerTitle } from './pages/course/offer.js';
+// Keep the book module out of production's module graph and SSR manifest.
+const developmentRoutes = import.meta.env.DEV
+	? (await import('./brain-book/routes.js')).brainBookRoutes
+	: [];
 
 const externalRedirectPage = () => import('./pages/ExternalRedirectPage.vue');
 const pageRouteModules = import.meta.glob('./pages/**/Index.vue');
@@ -51,6 +57,16 @@ const fileBasedRoutes = Object.entries(pageRouteModules)
 
 const manualRoutes = [
 	{
+		path: '/course',
+		component: pageRouteModules['./pages/course/Index.vue'],
+		meta: { title: offerTitle, description: offerDescription },
+	},
+	{
+		path: '/work-stream',
+		component: pageRouteModules['./pages/work-stream/Index.vue'],
+		meta: { title: 'Work stream', description: workStreamDescription },
+	},
+	{
 		path: '/',
 		component: HomePage,
 		meta: {
@@ -83,7 +99,7 @@ const manualRoutes = [
 		component: mantrasPage,
 		meta: {
 			title: 'Mantras',
-			description: 'Thirty-one hard-won mantras shaped through building Newicon, working with teams, and pursuing personal projects.',
+			description: `${mantras.length} hard-won mantras shaped through building Newicon, working with teams, and pursuing personal projects.`,
 			keywords: 'Steve O’Brien mantras, working principles, engineering culture, company culture, Newicon values',
 		},
 	},
@@ -152,7 +168,14 @@ const newsSummaryRoutes = dailyNewsFeeds.flatMap((feed) => feed.items.map((item)
 })));
 
 export const routes = [
+	...developmentRoutes,
 	...manualRoutes,
+	...workEntries.map((entry) => ({
+		path: `/work-stream/${entry.slug}`,
+		component: () => import('./pages/work-stream/EntryPage.vue'),
+		props: { slug: entry.slug },
+		meta: { title: entry.title, description: entry.summary },
+	})),
 	...fileBasedRoutes.filter((r) => !manualPaths.has(r.path)),
 	...articleDetailRoutes,
 	...mantraDetailRoutes,

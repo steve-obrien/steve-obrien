@@ -1,0 +1,389 @@
+@reference "../style.css";
+@import "@getdom/studio/tailwind.css";
+@tailwind utilities;
+
+/* Match the host site's semantic tokens so loading this local editor does not
+ * change the meaning of shared utilities elsewhere on the personal site. */
+@theme inline {
+	--color-canvas: var(--background);
+	--color-canvas-fg: var(--foreground);
+	--color-primary-fg: var(--primary-foreground);
+	--color-secondary-fg: var(--secondary-foreground);
+	--color-muted-fg: var(--muted-foreground);
+	--color-accent-fg: var(--accent-foreground);
+	--color-destructive-fg: var(--destructive-foreground);
+	--color-success-fg: var(--success-foreground);
+	--color-warning-fg: var(--warning-foreground);
+}
+
+.book-rich-editor {
+	min-width: 0;
+	--background: #fffdf8;
+	--foreground: #24251f;
+	--canvas: var(--background);
+	--canvas-fg: var(--foreground);
+	--primary: #765719;
+	--primary-foreground: #ffffff;
+	--primary-fg: var(--primary-foreground);
+	--secondary: #f1ebdf;
+	--secondary-foreground: #383a30;
+	--secondary-fg: var(--secondary-foreground);
+	--muted: #f1ebdf;
+	--muted-foreground: #6c695e;
+	--muted-fg: var(--muted-foreground);
+	--accent: #eee1be;
+	--accent-foreground: #58441b;
+	--accent-fg: var(--accent-foreground);
+	--border: #d7cfbc;
+	--input: #d7cfbc;
+	--ring: #a67e31;
+}
+
+.brain-book.is-writing .site-shell {
+	width: min(1440px, calc(100% - 48px));
+}
+
+.brain-book .chapter-page.is-editing {
+	max-width: none;
+	padding: 20px 0 64px;
+}
+
+.brain-book .chapter-page.is-editing .chapter-editor {
+	padding: 0;
+}
+
+.brain-book .chapter-page.is-editing .chapter-editor-grid {
+	grid-template-columns: minmax(0, 1fr) 264px;
+	align-items: start;
+	gap: 28px;
+}
+
+.book-rich-editor .dom-document-editor--bare {
+	border: 0;
+	background: transparent;
+}
+
+.book-rich-editor .dom-document-editor__body > div {
+	background: transparent;
+}
+
+.book-rich-editor .dom-document-editor__paper,
+.source-document {
+	margin: 18px 0 0;
+	border: 1px solid #ded8cb;
+	border-radius: 3px;
+	background: var(--background);
+	box-shadow: 0 8px 30px rgb(40 35 20 / 4%);
+}
+
+.book-rich-editor .dom-document-editor__paper:focus-within {
+	border-color: #c9bfaa;
+	box-shadow: 0 8px 30px rgb(40 35 20 / 6%);
+}
+
+.book-rich-editor .dom-document-editor__toolbar,
+.source-toolbar {
+	position: sticky;
+	top: 12px;
+	z-index: 30;
+	padding: 9px;
+	border: 1px solid #d5cebe;
+	border-radius: 8px;
+	background: #f8f5ed;
+	box-shadow: 0 3px 12px rgb(30 26 17 / 8%);
+}
+
+.source-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 52px;
+}
+
+.source-mode-label {
+	font-size: 12px;
+	color: #6c695e;
+}
+
+.workspace-back,
+.workspace-done,
+.workspace-save {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 32px;
+	padding: 6px 11px;
+	border-radius: 5px;
+	font-family: 'Manrope', sans-serif;
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1.4;
+	cursor: pointer;
+}
+
+.workspace-back {
+	min-width: 32px;
+	padding: 4px 8px;
+	font-size: 20px;
+	text-decoration: none;
+}
+
+.workspace-back:hover,
+.workspace-done:hover {
+	background: #e9e2d4;
+}
+
+.workspace-actions {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	margin-left: auto;
+}
+
+.workspace-save {
+	background: #24251f;
+	color: #fffdf8;
+}
+
+.workspace-save:hover {
+	background: #45402f;
+}
+
+.workspace-save:disabled,
+.workspace-done:disabled {
+	opacity: 0.55;
+	cursor: default;
+}
+
+.workspace-save-status {
+	margin-right: 4px;
+	color: #6c695e;
+	font-size: 11px;
+}
+
+.workspace-save-status[data-dirty='true'] {
+	color: #8a6220;
+}
+
+.brain-book .book-rich-editor .dom-document-editor__prosemirror {
+	padding: clamp(28px, 4.5vw, 72px);
+	font-family: 'Lora', serif;
+	font-size: 18px;
+	line-height: 1.8;
+	outline: none;
+}
+
+.brain-book .book-rich-editor h1[data-chapter-title],
+.brain-book .source-title textarea {
+	margin: 0 0 30px;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+	color: var(--foreground);
+	font-family: 'Lora', serif;
+	font-size: clamp(28px, 3vw, 42px);
+	font-weight: 400;
+	letter-spacing: -0.025em;
+	line-height: 1.25;
+}
+
+.brain-book .book-rich-editor h1[data-chapter-title]:empty::before {
+	content: 'Chapter title';
+	color: #a39a86;
+	float: left;
+	pointer-events: none;
+	height: 0;
+}
+
+.source-document {
+	padding: clamp(28px, 4.5vw, 72px);
+}
+
+.source-title,
+.source-title textarea {
+	display: block;
+	width: 100%;
+}
+
+.book-rich-editor .manuscript-source {
+	display: block;
+	width: 100%;
+	min-height: 620px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--foreground);
+	font-family: 'DM Mono', monospace;
+	font-size: 13px;
+	line-height: 1.8;
+	resize: vertical;
+}
+
+.brain-book .writing-sidebar {
+	position: sticky;
+	top: 24px;
+	display: flex;
+	flex-direction: column;
+	gap: 22px;
+	max-height: calc(100dvh - 48px);
+	overflow-y: auto;
+	padding: 12px 3px 20px;
+	color: var(--ink);
+}
+
+.writing-stats .eyebrow {
+	margin-bottom: 10px;
+	font-size: 10px;
+}
+
+.writing-stats h2 {
+	margin: 0 0 22px;
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.writing-word-count {
+	margin: 0 0 14px;
+}
+
+.writing-word-count strong {
+	font-size: 36px;
+	font-weight: 500;
+	letter-spacing: -0.04em;
+	font-variant-numeric: tabular-nums;
+}
+
+.writing-word-count span,
+.writing-target-copy {
+	color: #6c695e;
+	font-size: 12px;
+}
+
+.writing-stats progress {
+	display: block;
+	width: 100%;
+	height: 4px;
+	border: 0;
+	border-radius: 4px;
+	background: #ded6c4;
+	accent-color: #a67e31;
+}
+
+.writing-stats progress::-webkit-progress-bar {
+	border-radius: 4px;
+	background: #ded6c4;
+}
+
+.writing-stats progress::-webkit-progress-value {
+	border-radius: 4px;
+	background: #a67e31;
+}
+
+.writing-stats progress::-moz-progress-bar {
+	border-radius: 4px;
+	background: #a67e31;
+}
+
+.writing-target-copy {
+	margin: 10px 0 0;
+}
+
+.brain-book .writing-sidebar .chapter-edit-meta {
+	grid-template-columns: 1fr 1fr;
+	gap: 10px;
+}
+
+.brain-book .writing-sidebar .editor-field input,
+.brain-book .writing-sidebar .editor-field textarea,
+.brain-book .writing-sidebar .editor-field select {
+	border-color: #d5cebe;
+	border-radius: 5px;
+	background: #f9f6ee;
+	font-family: 'Manrope', sans-serif;
+	font-size: 12px;
+	line-height: 1.6;
+}
+
+.writing-guide-heading {
+	padding-top: 22px;
+	border-top: 1px solid #d5cebe;
+}
+
+.writing-guide-heading h3 {
+	margin: 0 0 6px;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.writing-guide-heading p {
+	margin: 0;
+	color: #6c695e;
+	font-size: 11px;
+	line-height: 1.6;
+}
+
+.editor-mode-switch {
+	display: flex;
+	gap: 3px;
+	align-self: flex-start;
+	padding: 3px;
+	border: 1px solid #d7cfbc;
+	border-radius: 7px;
+}
+
+.editor-mode-switch button {
+	padding: 6px 10px;
+	border-radius: 4px;
+	font-size: 12px;
+	cursor: pointer;
+}
+
+.editor-mode-switch button[aria-pressed='true'] {
+	background: #e4ddce;
+	color: #24251f;
+}
+
+@media (max-width: 1050px) {
+	.brain-book .chapter-page.is-editing .chapter-editor-grid {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.brain-book .writing-sidebar {
+		position: static;
+		max-height: none;
+		overflow: visible;
+		padding: 24px 0;
+	}
+}
+
+@media (max-width: 600px) {
+	.brain-book.is-writing .site-shell {
+		width: calc(100% - 20px);
+	}
+
+	.brain-book .chapter-page.is-editing {
+		padding-top: 8px;
+	}
+
+	.book-rich-editor .dom-document-editor__toolbar,
+	.source-toolbar {
+		top: 0;
+		padding: 5px;
+	}
+
+	.brain-book .book-rich-editor .dom-document-editor__prosemirror,
+	.source-document {
+		padding: 28px 20px;
+		font-size: 16px;
+	}
+
+	.workspace-actions {
+		gap: 4px;
+	}
+
+	.workspace-save-status {
+		font-size: 10px;
+	}
+}

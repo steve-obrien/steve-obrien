@@ -4,6 +4,8 @@ import path from 'node:path';
 import { loadStaticRoutes } from './lib/load-routes.mjs';
 import { articleSlugFromRelativePath, listArticleFiles } from './lib/article-files.mjs';
 import { mantras } from '../src/pages/mantras/mantras.js';
+import { workEntries, workStreamDescription } from '../src/pages/work-stream/entries.js';
+import { offerDescription, offerTitle } from '../src/pages/course/offer.js';
 
 const rootDir = process.cwd();
 const distDir = path.join(rootDir, 'dist');
@@ -165,7 +167,18 @@ const toAbsoluteUrl = (siteUrl, value) => {
 	return `${siteUrl}/${text}`;
 };
 
+/**
+ * Resolve the public metadata for a generated route, including the shared AI offer.
+ *
+ * @param {string} routePath Absolute pathname of the page being generated.
+ * @returns {{ title: string, description: string, keywords?: string[], image?: string }} Page metadata.
+ */
 const getPageMeta = (routePath) => {
+	if (routePath === '/work-stream') {
+		return { title: `Work stream | ${siteName}`, description: workStreamDescription };
+	}
+	const workEntry = workEntries.find((entry) => routePath === `/work-stream/${entry.slug}`);
+	if (workEntry) return { title: `${workEntry.title} | ${siteName}`, description: workEntry.summary };
 	const articleMeta = articleMetaByRoute.get(routePath);
 	if (articleMeta) return articleMeta;
 	const mantraMeta = mantraMetaByRoute.get(routePath);
@@ -185,6 +198,10 @@ const getPageMeta = (routePath) => {
 		};
 	}
 
+	if (routePath === '/course') {
+		return { title: `${offerTitle} | ${siteName}`, description: offerDescription };
+	}
+
 	if (routePath === '/ai-development') {
 		return {
 			title: `AI Development Offers | ${siteName}`,
@@ -195,7 +212,7 @@ const getPageMeta = (routePath) => {
 	if (routePath === '/mantras') {
 		return {
 			title: `Mantras | ${siteName}`,
-			description: 'Thirty-one hard-won mantras shaped through building Newicon, working with teams, and pursuing personal projects.',
+			description: `${mantras.length} hard-won mantras shaped through building Newicon, working with teams, and pursuing personal projects.`,
 		};
 	}
 

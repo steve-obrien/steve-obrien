@@ -1,0 +1,174 @@
+title: Human Brains, Artificial Brains, Future Brains
+shortTitle: Human Brains · Artificial Brains · Future Brains
+subtitle: >-
+  A journey through the machinery of intelligence, from the cells inside our heads to the minds we may build
+  next.
+parts:
+  - number: 0
+    title: Introduction
+    description: Why intelligence is worth looking at again, and why this is not a textbook.
+    chapters:
+      - number: '00'
+        slug: introduction
+        title: The Most Complicated Object in the Known Universe
+        question: What can biological and artificial systems teach us about the machinery of intelligence?
+        status: draft
+        wordTarget: 1400
+  - number: 1
+    title: What Is Intelligence?
+    description: Before comparing minds, we need to ask what we mean when we call something intelligent.
+    chapters:
+      - number: '01'
+        slug: representation
+        title: Perception Is Reality
+        question: If we never experience the world directly, how does the brain construct the reality we live inside?
+        status: outline
+        wordTarget: 1200
+      - number: '02'
+        slug: intelligence-proxies
+        title: Is Intelligence What We Measure?
+        question: Are tests of intelligence measuring the thing itself, or only culturally convenient proxies?
+        status: outline
+        wordTarget: 1200
+      - number: '03'
+        slug: reality-gap
+        title: The Reality Gap
+        question: Why is chess easy for a computer while crossing a messy room remains hard?
+        status: outline
+        wordTarget: 1100
+      - number: '04'
+        slug: thinking-as-movement
+        title: Thinking as Movement
+        question: Could thought be movement through a space of concepts rather than through a physical room?
+        status: seed
+        wordTarget: 1200
+  - number: 2
+    title: Human Brains
+    description: The wet, embodied machinery from which our own intelligence emerges.
+    chapters:
+      - number: '05'
+        slug: biological-neuron
+        title: A Neuron Is Not a Switch
+        question: What is a biological neuron actually doing?
+        status: seed
+        wordTarget: 1300
+      - number: '06'
+        slug: prediction
+        title: The Brain Ahead of Itself
+        question: Is prediction the common work hidden beneath perception and action?
+        status: seed
+        wordTarget: 1200
+      - number: '07'
+        slug: memory
+        title: Memory Is Not a Recording
+        question: What does it mean if remembering is an act of reconstruction?
+        status: seed
+        wordTarget: 1100
+      - number: '08'
+        slug: common-cortical-algorithm
+        title: One Algorithm, Many Senses?
+        question: What does rewiring a ferret's senses suggest about the apparently uniform cortex?
+        status: outline
+        wordTarget: 1400
+      - number: '09'
+        slug: split-brains
+        title: The Divided Mind
+        question: What do split-brain studies reveal about unity, identity, and consciousness?
+        status: seed
+        wordTarget: 1400
+  - number: 3
+    title: Artificial Brains
+    description: How today's learning machines represent patterns, make predictions, and produce surprising behaviour.
+    chapters:
+      - number: '10'
+        slug: artificial-neuron
+        title: The Neuron That Isn't
+        question: How far can the analogy between artificial and biological neurons carry us?
+        status: outline
+        wordTarget: 1200
+      - number: '11'
+        slug: embeddings
+        title: Meaning in Many Dimensions
+        question: What does an embedding represent?
+        status: seed
+        wordTarget: 1200
+      - number: '12'
+        slug: transformers
+        title: Attention Changes the Machine
+        question: What did the transformer make newly possible?
+        status: seed
+        wordTarget: 1300
+      - number: '13'
+        slug: language-models
+        title: A Machine Made of Language
+        question: What is a large language model doing when it appears to understand?
+        status: seed
+        wordTarget: 1500
+      - number: '14'
+        slug: artificial-world-models
+        title: Machines That Imagine What Comes Next
+        question: Does useful intelligence require an internal world model?
+        status: seed
+        wordTarget: 1300
+  - number: 4
+    title: Comparing Minds
+    description: Similar words can conceal profound differences between carbon intelligence and silicon systems.
+    chapters:
+      - number: '15'
+        slug: shared-language
+        title: The Danger of Shared Words
+        question: Do words such as learning, memory, and attention illuminate or mislead?
+        status: seed
+        wordTarget: 1100
+      - number: '16'
+        slug: learning-once-learning-always
+        title: Learning Once, Learning Always
+        question: Why can people continually adapt while most machines stop learning after training?
+        status: seed
+        wordTarget: 1300
+      - number: '17'
+        slug: bodies-and-concepts
+        title: Bodies, Concepts, and the Same Old Problem
+        question: Is moving a body through space fundamentally different from moving an idea through the mind?
+        status: seed
+        wordTarget: 1300
+      - number: '18'
+        slug: understanding
+        title: What Would Count as Understanding?
+        question: How could we distinguish fluent performance from a genuine model of the world?
+        status: seed
+        wordTarget: 1400
+  - number: 5
+    title: Future Brains
+    description: The capabilities, architectures, and moral questions that may shape minds still to come.
+    chapters:
+      - number: '19'
+        slug: embodiment
+        title: Intelligence With Skin in the Game
+        question: Does a mind need a body to understand a world?
+        status: seed
+        wordTarget: 1300
+      - number: '20'
+        slug: continual-learning
+        title: Minds That Never Stop Learning
+        question: What changes when artificial systems learn throughout their existence?
+        status: seed
+        wordTarget: 1200
+      - number: '21'
+        slug: consciousness
+        title: Must Intelligence Be Conscious?
+        question: Could consciousness be necessary, incidental, or entirely separate from intelligence?
+        status: seed
+        wordTarget: 1500
+      - number: '22'
+        slug: alien-representations
+        title: Minds We Cannot Imagine
+        question: Could artificial minds perceive useful realities that humans cannot?
+        status: seed
+        wordTarget: 1200
+      - number: '23'
+        slug: future-brains
+        title: What Kind of Minds Should We Build?
+        question: If intelligence is no longer exclusively biological, what should guide its next forms?
+        status: seed
+        wordTarget: 1400

@@ -1,6 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { workEntries } from '../../src/pages/work-stream/entries.js';
 import {
 	articleFrontmatterValue,
 	articleSlugFromRelativePath,
@@ -159,5 +160,6 @@ export const loadStaticRoutes = async () => {
 	const fromArticles = await loadArticleRoutes();
 	const fromNews = await loadNewsRoutes();
 	const fromMantras = await loadMantraRoutes();
-	return [...new Set([...fromRoutesFile, ...fromNestedPages, ...fromNestedIndexPages, ...fromArticles, ...fromNews, ...fromMantras])];
+	const fromWorkStream = workEntries.map((entry) => `/work-stream/${entry.slug}`);
+	return [...new Set([...fromRoutesFile, ...fromNestedPages, ...fromNestedIndexPages, ...fromArticles, ...fromNews, ...fromMantras, ...fromWorkStream])];
 };

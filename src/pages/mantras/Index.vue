@@ -51,7 +51,7 @@ const nextMantra = computed(() => {
 			>
 				<div>
 					<p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-						{{ String(group.mantras[0].number).padStart(2, '0') }}—{{ String(group.mantras[group.mantras.length - 1].number).padStart(2, '0') }}
+						{{ String(group.mantras[0].number).padStart(2, '0') }}<template v-if="group.mantras.length > 1">—{{ String(group.mantras[group.mantras.length - 1].number).padStart(2, '0') }}</template>
 					</p>
 					<h2 :id="`${group.slug}-heading`" class="mt-3 max-w-48 text-lg font-semibold leading-6 tracking-[-0.02em]">
 						{{ group.title }}
@@ -80,7 +80,10 @@ const nextMantra = computed(() => {
 											<li v-for="point in mantra.points" :key="point" class="pl-2">{{ point }}</li>
 										</ul>
 										<p v-for="link in mantra.links" :key="link.href">
-											<a :href="link.href" target="_blank" rel="noopener noreferrer" class="font-semibold underline decoration-border underline-offset-4 transition hover:decoration-foreground">
+											<RouterLink v-if="link.href.startsWith('/')" :to="link.href" class="font-semibold underline decoration-border underline-offset-4 transition hover:decoration-foreground">
+												{{ link.label }} →
+											</RouterLink>
+											<a v-else :href="link.href" target="_blank" rel="noopener noreferrer" class="font-semibold underline decoration-border underline-offset-4 transition hover:decoration-foreground">
 												{{ link.label }} ↗
 											</a>
 										</p>

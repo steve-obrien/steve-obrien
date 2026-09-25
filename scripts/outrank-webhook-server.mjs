@@ -11,7 +11,7 @@ import {
 await loadEnvFile('.env');
 await loadEnvFile('.env.local');
 
-const port = Number(process.env.PORT || process.env.OUTRANK_WEBHOOK_PORT || 8790);
+const port = Number(process.env.PORT || process.env.OUTRANK_WEBHOOK_PORT || (process.env.NODE_ENV === 'production' ? 8790 : 8203));
 const accessToken = process.env.OUTRANK_WEBHOOK_ACCESS_TOKEN || process.env.OUTRANK_ACCESS_TOKEN || '';
 const configuredPath = normalisePath(process.env.OUTRANK_WEBHOOK_PATH || '/api/outrank/webhook');
 const webhookPaths = [...new Set([configuredPath, '/webhook'])];
