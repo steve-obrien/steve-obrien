@@ -19,7 +19,7 @@ I want people to be able to describe a useful app, build it and check that it wo
 
 I also write about AI, language models, software engineering and intelligence, and I'm working on **Intelligence: Human, Artificial, Future**, a book exploring how minds work, how machines think and what neuroscience may reveal about the future of intelligence.
 
-> I’ve always wanted to know how to build anything. And, beneath that, how everything works.
+> You don't truly understand something until you can build it yourself.
 
 ---
 
