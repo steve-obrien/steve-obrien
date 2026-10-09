@@ -10,8 +10,9 @@ I'm a technical founder and full-stack software engineer based in Bristol, UK. F
 
 ## What I'm working on
 
+- **[db3.ai Framework](https://db3.ai)** — a TypeScript application framework for building apps with AI, bringing models, authentication, queues and storage into one runtime. [Public repository](https://github.com/db3ai/framework).
 - **[GrowthScout](https://growthscout.io)** — AI-powered search intelligence that turns evidence into practical content strategy and action.
-- **[DOM Studio](https://getdom.studio)** — a code-first UI system that gives people and AI agents a shared contract for dependable interfaces.
+- **[DOM Studio](https://getdom.studio)** — a Vue component library for building consistent interfaces, with documentation for developers and AI coding agents.
 - **Intelligence: Human, Artificial, Future** — a book-in-progress exploring how minds work, how machines think and what neuroscience may reveal about the future of intelligence.
 - **[Writing](https://steve-obrien.com/articles)** — practical explorations of AI, language models, software engineering and intelligence.
 
@@ -27,7 +28,7 @@ The site is statically generated and includes:
 - Markdown-based articles with generated routes and metadata
 - Light, dark and system themes
 - Generated sitemap, robots file and custom 404 page
-- Optional publishing and AI theme-generation services
+- Optional AI theme-generation service
 
 ## Built with
 
@@ -54,7 +55,7 @@ npm run dev
 ```
 
 This app reserves local ports **8200–8299**: Vite `8200`, optional theme API
-`8201`, preview `8202`, and optional Outrank webhook `8203`. The theme endpoint
+`8201` and preview `8202`. The theme endpoint
 also runs inside Vite during normal development. Caddy serves the frontend at
 `https://local.steve-obrien.com`. Dev and preview fail if their port is occupied.
 See `~/Sites/PORTS.md` for the shared allocation register.
@@ -68,13 +69,10 @@ See `~/Sites/PORTS.md` for the shared allocation register.
 | `npm run preview` | Preview the production build locally |
 | `npm run getdom:check` | Check vendored DOM Studio files for upstream changes |
 | `npm run getdom:sync` | Sync clean component sources from DOM Studio |
-| `npm run check:outrank-webhook` | Validate Outrank payload handling |
 | `npm run theme-ai-server` | Run the optional AI theme service |
 | `npm run check:theme-ai` | Validate the configured AI theme endpoint |
 
 ## Article publishing
-
-Use the [tone-of-voice guide](docs/tone-of-voice.md) for website copy, articles, daily work notes and weekly reviews.
 
 Articles live in:
 
