@@ -7,6 +7,7 @@ import { mantras } from './pages/mantras/mantras.js';
 import NotFoundPage from './NotFoundPage.vue';
 import { workEntries, workStreamDescription } from './pages/work-stream/entries.js';
 import { offerDescription, offerTitle } from './pages/course/offer.js';
+import { offerDescription as swapDescription, offerTitle as swapTitle } from './pages/subscription-swap/offer.js';
 // Keep the book module out of production's module graph and SSR manifest.
 const developmentRoutes = import.meta.env.DEV
 	? (await import('./brain-book/routes.js')).brainBookRoutes
@@ -60,6 +61,15 @@ const manualRoutes = [
 		path: '/course',
 		component: pageRouteModules['./pages/course/Index.vue'],
 		meta: { title: offerTitle, description: offerDescription },
+	},
+	{
+		path: '/subscription-swap',
+		component: pageRouteModules['./pages/subscription-swap/Index.vue'],
+		meta: {
+			title: swapTitle,
+			description: swapDescription,
+			keywords: 'replace SaaS subscriptions, custom software, reduce software costs, build vs buy, Steve O’Brien, Bristol',
+		},
 	},
 	{
 		path: '/work-stream',

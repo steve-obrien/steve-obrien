@@ -6,6 +6,7 @@ import { articleSlugFromRelativePath, listArticleFiles } from './lib/article-fil
 import { mantras } from '../src/pages/mantras/mantras.js';
 import { workEntries, workStreamDescription } from '../src/pages/work-stream/entries.js';
 import { offerDescription, offerTitle } from '../src/pages/course/offer.js';
+import { offerDescription as swapDescription, offerTitle as swapTitle } from '../src/pages/subscription-swap/offer.js';
 
 const rootDir = process.cwd();
 const distDir = path.join(rootDir, 'dist');
@@ -200,6 +201,10 @@ const getPageMeta = (routePath) => {
 
 	if (routePath === '/course') {
 		return { title: `${offerTitle} | ${siteName}`, description: offerDescription };
+	}
+
+	if (routePath === '/subscription-swap') {
+		return { title: `${swapTitle} | ${siteName}`, description: swapDescription };
 	}
 
 	if (routePath === '/ai-development') {
