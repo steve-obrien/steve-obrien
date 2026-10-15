@@ -27,6 +27,12 @@ I build you your own tools to replace the software subscriptions you pay for. It
 
 **Bonus that works as a lead magnet.** The software audit. Even if nothing is built, the company learns where its money goes.
 
+## Platform and add-ons
+
+- **Built on db3.ai.** Every tool runs in the client's own db3 Cloud workspace, with staging and production managed through the UI: changes go to staging, are approved, then promoted, with rollback.
+- **AI usage is charged on top.** Hosting is deducted when measuring the saving; AI usage is a separate pass-through charge. The page says "at cost", which is an assumption: change it if you want a margin on usage.
+- **Optional training.** Teaching staff how AI-generated software is built and changed, and how to move work from staging to production. Priced separately; no price on the page yet. It could reuse the [/course](../../src/pages/course/offer.js) material.
+
 ## Worked example
 
 | | Per month |
@@ -51,6 +57,9 @@ These are recommendations, written into the page so it reads as a complete offer
 7. **Five pilot places.** "A few" turned into five. Change `pilotPlaces` in offer.js.
 
 ## Things worth thinking about
+
+- **The page promises the db3 Cloud UI.** The work stream still describes db3 Cloud as a proposal. Staging, production, approval and rollback in the UI need to be real before the page goes public, or the copy should soften to "we manage staging and production for you".
+- **AI usage on top dilutes the headline saving.** Keep the replaced tools low on AI where possible, and give an estimate before each build so the client's real saving stays obvious.
 
 - **The £200 minimum is low for pilots.** At £200 saved, Steve earns £100 a month, £2,400 over the term, for a build plus two years of support. The page keeps £200 as asked. For the first pilots, it may be worth choosing companies with £1,000+ a month to replace, so each one pays for the time it takes and makes a stronger case study.
 - **Concentration risk sits with Steve.** Payment depends on clients reporting cancellations. The agreement should give Steve sight of the cancellation confirmation, and invoicing should start automatically from that date.

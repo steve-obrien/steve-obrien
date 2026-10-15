@@ -54,6 +54,7 @@ const steps = [
 const included = [
 	'Custom tools built for your team and your process',
 	'Data moved across from the tools you are leaving',
+	'Your own db3 Cloud workspace, with staging and production',
 	'Hosting, security updates and backups',
 	'Bug fixes, for as long as the agreement runs',
 	'Small improvements as your team asks for them',
@@ -80,7 +81,11 @@ const poorFits = [
 const questions = [
 	{
 		question: 'What does “saving” mean, exactly?',
-		answer: 'The cost of the subscriptions you cancel, minus what the new tools cost to run. If you cancel £4,000 a month of software and hosting costs £150, the saving is £3,850. We agree the baseline in writing before I build anything, so neither of us has to argue about it later.',
+		answer: 'The cost of the subscriptions you cancel, minus what the new tools cost to host. If you cancel £4,000 a month of software and hosting costs £150, the saving is £3,850. We agree the baseline in writing before I build anything, so neither of us has to argue about it later.',
+	},
+	{
+		question: 'What about AI usage?',
+		answer: 'Some tools are better with AI inside them: reading documents, drafting replies, sorting enquiries. That usage is charged on top, at cost, and you can see it in db3 Cloud. Plenty of tools need none at all. I’ll tell you before I build which ones will use it and roughly what it will cost.',
 	},
 	{
 		question: 'What if I don’t like what you build?',
@@ -101,6 +106,10 @@ const questions = [
 	{
 		question: 'What if we grow and need more?',
 		answer: 'Small changes are part of the deal. That is why the minimum is £200 a month: it pays for the time to build and maintain small features. Bigger new work, the kind that would need its own project, I quote separately.',
+	},
+	{
+		question: 'Can my team make changes themselves?',
+		answer: 'Yes, if you want them to. Everything runs in db3 Cloud, so changes go to staging first and reach production only when someone approves them. Add the training and your team can build and change tools themselves, with that safety net in place.',
 	},
 	{
 		question: 'Why would you take this risk?',
@@ -233,9 +242,29 @@ const questions = [
 							</div>
 						</div>
 						<p class="mt-8 text-sm leading-6 text-white/50">
-							<template v-if="meetsMinimum">Build cost to you: £0. Savings are measured after the running costs of the new tools.</template>
+							<template v-if="meetsMinimum">Build cost to you: £0. Savings are measured after hosting. AI usage, where a tool needs it, is charged on top at cost.</template>
 							<template v-else>Below the £{{ offerTerms.minimumMonthlySpend }} a month minimum. Under that, there isn’t enough in it to build and maintain the tools properly.</template>
 						</p>
+					</div>
+				</div>
+			</section>
+
+			<section class="grid gap-10 border-b border-border py-20 sm:py-24 lg:grid-cols-[0.65fr_1.35fr]" aria-labelledby="platform-heading">
+				<div>
+					<p class="swap-kicker">Built on db3.ai</p>
+					<h2 id="platform-heading" class="mt-4 text-3xl font-medium tracking-[-0.04em] sm:text-4xl">Your software, somewhere you can see it.</h2>
+				</div>
+				<div class="max-w-3xl">
+					<div class="space-y-5 text-lg leading-8 text-muted-foreground">
+						<p>I build every tool on <a href="https://db3.ai" target="_blank" rel="noopener noreferrer" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">db3.ai</a>, and it runs in your own db3 Cloud workspace. You are not swapping one black box for another.</p>
+						<p>Every change goes to staging first. You try it, and it only reaches production when you approve it. If something is wrong, it rolls back. All of that happens in a screen your team can use, not a terminal they can’t.</p>
+					</div>
+					<div class="mt-10 rounded-[1.5rem] border border-border bg-card p-7">
+						<div class="flex flex-wrap items-center justify-between gap-3">
+							<h3 class="text-xl font-semibold tracking-[-0.025em]">Optional: train your team</h3>
+							<span class="rounded-full bg-secondary px-3 py-1 text-xs font-semibold">Priced separately</span>
+						</div>
+						<p class="mt-4 leading-7 text-muted-foreground">AI-generated software is only as safe as the people steering it. The training teaches your staff how it is built, how to ask for changes that work, and how to move them from staging to production without breaking anything. It is not required. It is worth it if you want to own the process as well as the code.</p>
 					</div>
 				</div>
 			</section>
