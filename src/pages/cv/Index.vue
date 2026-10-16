@@ -110,7 +110,7 @@ const selectedWork = [
 	{
 		eyebrow: 'Applied AI · Due diligence',
 		title: 'AI for document search and legal questions',
-		text: 'Designed and built an AI tool to support due diligence: searching large documents, identifying useful evidence, and helping users understand and answer legal questions about the material.',
+		text: 'Designed and built an AI tool to support due diligence: searching large documents, identifying useful evidence, and helping users understand and answer legal questions about the material. Implemented retrieval-augmented generation (RAG), indexing company documents and data in a vector database and integrating an OpenAI language model with function-calling APIs to retrieve relevant evidence.',
 	},
 	{
 		eyebrow: 'Framework engineering · Financial services',
