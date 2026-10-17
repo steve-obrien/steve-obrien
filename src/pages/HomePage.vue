@@ -13,6 +13,12 @@ import domStudioCard from './projects/dom_studio_card.png';
 const { siteMode, ready } = useTheme();
 const BlackHole = defineAsyncComponent(loadBlackHole);
 const Planet = defineAsyncComponent(loadPlanet);
+const HeroOrbs = defineAsyncComponent(loadHeroOrbs);
+
+/** @returns {Promise<object>} Restores the original orb backdrop for Professional mode. */
+function loadHeroOrbs() {
+	return import('../cmp/HeroOrbs.vue');
+}
 
 /** @returns {Promise<object>} Loads the animated hero only for Space mode. */
 function loadBlackHole() {
@@ -117,6 +123,7 @@ const selectedWriting = [
 	<SteveLayout>
 		<article>
 			<header class="hero relative flex min-h-[86vh] items-center py-24 sm:py-32">
+				<HeroOrbs v-if="ready && siteMode === 'professional'" class="professional-orbs" />
 				<BlackHole v-if="ready && siteMode === 'space'" />
 				<OverlordCore v-if="siteMode === 'ai-overlord'" />
 				<div class="relative z-10 max-w-4xl">

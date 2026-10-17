@@ -5,7 +5,7 @@ export const SITE_MODE_KEY = 'site-mode';
 export const siteModes = Object.freeze([
 	{ value: 'space', label: 'Space', description: 'Stars, planets and a little wonder.', swatch: 'linear-gradient(135deg, #eebf75, #8961d5, #64bfd3)' },
 	{ value: 'ai-overlord', label: 'AI Overlord', description: 'Falling binary. Terminal green.', swatch: 'linear-gradient(135deg, #081b14, #8af5bb)' },
-	{ value: 'professional', label: 'Professional', description: 'Clean, considered and focused.', swatch: 'linear-gradient(135deg, #f5f4f0, #52647a)' },
+	{ value: 'professional', label: 'Professional', description: 'Clean, considered and focused.', swatch: 'linear-gradient(135deg, #ffffff, #171717)' },
 ]);
 
 const siteMode = ref('professional');
@@ -49,7 +49,7 @@ function applyAppearance() {
 	document.documentElement.dataset.siteMode = siteMode.value;
 	applyThemeMode(effectiveTheme.value);
 	const meta = document.querySelector('meta[name="theme-color"]');
-	if (meta) meta.content = effectiveTheme.value === 'light' ? '#f7f8fa' : siteMode.value === 'ai-overlord' ? '#060e0b' : '#06070f';
+	if (meta) meta.content = effectiveTheme.value === 'light' ? '#ffffff' : siteMode.value === 'professional' ? '#0a0a0a' : siteMode.value === 'ai-overlord' ? '#060e0b' : '#06070f';
 }
 
 /**

@@ -1,7 +1,8 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useOverlordMotion } from '../composable/useOverlordMotion.js';
 
-const paused = ref(false);
+const { paused } = useOverlordMotion();
 const hidden = ref(false);
 const reducedMotion = ref(false);
 const streams = ref(Array.from({ length: 44 }, createStream));
@@ -38,7 +39,6 @@ function createStream(unused, index) {
 /** @returns {void} Toggles decorative motion without affecting the page content. */
 function togglePause() {
 	paused.value = !paused.value;
-	syncDigitAnimation();
 }
 
 /** @returns {void} Suspends background animation while the browser tab is hidden. */
@@ -92,6 +92,7 @@ function unmountBackdrop() {
 
 onMounted(mountBackdrop);
 onBeforeUnmount(unmountBackdrop);
+watch(paused, syncDigitAnimation);
 </script>
 
 <template>
@@ -100,7 +101,7 @@ onBeforeUnmount(unmountBackdrop);
 			<span v-for="stream in streams" :key="stream.id" class="matrix-stream absolute top-0 block whitespace-pre font-mono text-sm leading-6" :style="stream.style">{{ stream.digits }}</span>
 		</div>
 	</div>
-	<button v-if="!reducedMotion" type="button" :aria-pressed="paused" class="matrix-motion-control fixed right-3 bottom-3 z-20 rounded-full border border-border bg-background/95 px-3 py-2 font-mono text-xs text-muted-foreground shadow-sm transition hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring" @click="togglePause">{{ paused ? 'Resume matrix' : 'Pause matrix' }}</button>
+	<button v-if="!reducedMotion" type="button" :aria-pressed="paused" class="matrix-motion-control fixed right-3 bottom-3 z-20 rounded-full border border-border bg-background/95 px-3 py-2 font-mono text-xs text-muted-foreground shadow-sm transition hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring" @click="togglePause">{{ paused ? 'Resume animation' : 'Pause animation' }}</button>
 </template>
 
 <style scoped>
