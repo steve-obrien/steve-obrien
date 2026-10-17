@@ -4,8 +4,10 @@ import { onBeforeUnmount, onMounted, ref } from 'vue';
 const paused = ref(false);
 const hidden = ref(false);
 const reducedMotion = ref(false);
-const streams = Array.from({ length: 44 }, createStream);
+const streams = ref(Array.from({ length: 44 }, createStream));
+const DIGIT_UPDATE_MS = 80;
 let motionQuery;
+let digitTimer;
 
 /**
  * Creates a stable binary trail and staggered motion without hydration randomness.
@@ -36,16 +38,40 @@ function createStream(unused, index) {
 /** @returns {void} Toggles decorative motion without affecting the page content. */
 function togglePause() {
 	paused.value = !paused.value;
+	syncDigitAnimation();
 }
 
 /** @returns {void} Suspends background animation while the browser tab is hidden. */
 function syncVisibility() {
 	hidden.value = document.hidden;
+	syncDigitAnimation();
 }
 
 /** @returns {void} Reflects the OS motion preference in the optional pause control. */
 function syncMotionPreference() {
 	reducedMotion.value = motionQuery.matches;
+	syncDigitAnimation();
+}
+
+/** @returns {'0' | '1'} A fresh binary glyph without changing the trail's brightness. */
+function randomDigit() {
+	return Math.random() < 0.5 ? '0' : '1';
+}
+
+/** @returns {void} Scrambles each trail in place while CSS continues its falling motion. */
+function refreshDigits() {
+	for (const stream of streams.value) {
+		stream.digits = stream.digits.replace(/[01]/g, randomDigit);
+	}
+}
+
+/** @returns {void} Runs one shared timer only while decorative motion is allowed. */
+function syncDigitAnimation() {
+	window.clearInterval(digitTimer);
+	digitTimer = undefined;
+	if (!paused.value && !hidden.value && !reducedMotion.value) {
+		digitTimer = window.setInterval(refreshDigits, DIGIT_UPDATE_MS);
+	}
 }
 
 /** @returns {void} Installs visibility and motion observers for this mounted backdrop. */
@@ -59,6 +85,7 @@ function mountBackdrop() {
 
 /** @returns {void} Releases all observers when leaving AI Overlord mode or the page. */
 function unmountBackdrop() {
+	window.clearInterval(digitTimer);
 	motionQuery?.removeEventListener('change', syncMotionPreference);
 	document.removeEventListener('visibilitychange', syncVisibility);
 }
