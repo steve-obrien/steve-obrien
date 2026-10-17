@@ -1,18 +1,36 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light" data-site-mode="professional">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#f7f8fa" />
+		<script>
+			/** Restores the palette before first paint; Vue takes over after hydration. */
+			(function restoreAppearance() {
+				const modes = ['space', 'ai-overlord', 'professional'];
+				let storedMode;
+				let colourMode = 'system';
+				try {
+					storedMode = localStorage.getItem('site-mode');
+					colourMode = localStorage.getItem('theme-mode') || localStorage.getItem('theme') || 'system';
+				} catch { /* Storage is optional. */ }
+				const requested = new URLSearchParams(location.search).get('mode');
+				const siteMode = modes.includes(requested) ? requested : modes.includes(storedMode) ? storedMode : 'professional';
+				const dark = colourMode === 'dark' || (colourMode !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+				document.documentElement.dataset.siteMode = siteMode;
+				document.documentElement.dataset.theme = siteMode === 'professional' && !dark ? 'light' : 'dark';
+			})();
+		</script>
 		<title>Steve O'Brien</title>
 		<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link
-			href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+			href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Space+Grotesk:wght@300..700&display=swap"
 			rel="stylesheet"
 		/>
 	</head>
-	<body class="bg-zinc-50 dark:bg-zinc-900">
+	<body class="bg-background">
 		<div id="app"></div>
 		<script type="module" src="/src/main.js"></script>
 	</body>

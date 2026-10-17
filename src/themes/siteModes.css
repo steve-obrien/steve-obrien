@@ -1,0 +1,228 @@
+/* Site identities select DOM Studio tokens and skins. Page content stays shared. */
+:root {
+	--skin-card-bg: var(--card);
+	--skin-card-fg: var(--card-foreground);
+	--skin-popover-bg: var(--popover);
+	--skin-popover-fg: var(--popover-foreground);
+	--skin-popover-shadow: var(--shadow-xl);
+	--skin-control-bg: var(--secondary);
+	--skin-control-fg: var(--secondary-foreground);
+	--skin-action-bg: var(--primary);
+	--skin-action-fg: var(--primary-foreground);
+	--skin-action-bg-image: none;
+}
+
+:root[data-site-mode="space"] {
+	--skin-card-bg: color-mix(in oklch, var(--card) 65%, transparent);
+	--skin-card-bg-image: linear-gradient(160deg, rgb(255 255 255 / 9%), rgb(255 255 255 / 2%) 45%, rgb(255 255 255 / 4%));
+	--skin-card-backdrop: blur(18px) saturate(170%);
+	--skin-card-shadow: inset 0 1px 0 rgb(255 255 255 / 18%), 0 10px 40px -12px rgb(0 0 0 / 55%);
+	--skin-action-bg-image: linear-gradient(135deg, #fff3d6, var(--nova) 55%, var(--ember));
+	--skin-action-shadow: 0 10px 40px -10px color-mix(in oklch, var(--ember) 65%, transparent);
+}
+
+:root[data-site-mode="professional"] {
+	--site-font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+	--surface-radius: 1rem;
+	--control-radius: 0.6rem;
+	--skin-card-backdrop: none;
+	--skin-card-bg-image: none;
+	--skin-card-shadow: 0 2px 8px rgb(20 30 50 / 4%);
+	--skin-action-shadow: none;
+}
+
+:root[data-site-mode="professional"][data-theme="light"] {
+	--background: #f7f8fa;
+	--foreground: #182332;
+	--card: #ffffff;
+	--card-foreground: #182332;
+	--popover: #ffffff;
+	--popover-foreground: #182332;
+	--primary: #294b70;
+	--primary-foreground: #ffffff;
+	--secondary: #e9edf2;
+	--secondary-foreground: #293b50;
+	--muted: #e9edf2;
+	--muted-foreground: #566477;
+	--accent: #e4eaf2;
+	--accent-foreground: #294b70;
+	--destructive: #b7283e;
+	--destructive-foreground: #ffffff;
+	--success: #186847;
+	--success-foreground: #ffffff;
+	--warning: #8a570c;
+	--warning-foreground: #ffffff;
+	--border: #dce2e9;
+	--input: #cdd5df;
+	--ring: #557daa;
+	--nova: #294b70;
+	--nebula: #4c6488;
+	--plasma: #28677b;
+	--ember: #6c5265;
+}
+
+:root[data-site-mode="professional"][data-theme="dark"] {
+	--background: #101720;
+	--foreground: #edf1f7;
+	--card: #18222f;
+	--card-foreground: #edf1f7;
+	--popover: #1c2836;
+	--popover-foreground: #edf1f7;
+	--primary: #b6cde7;
+	--primary-foreground: #15263a;
+	--secondary: #253243;
+	--secondary-foreground: #edf1f7;
+	--muted: #253243;
+	--muted-foreground: #b1bdcd;
+	--accent: #2b3d52;
+	--accent-foreground: #edf1f7;
+	--border: #354356;
+	--input: #435269;
+	--ring: #9bbce0;
+	--nova: #b6cde7;
+	--nebula: #acbedb;
+	--plasma: #9dcbd5;
+	--ember: #c7b6c5;
+}
+
+:root[data-site-mode="ai-overlord"] {
+	--background: #060e0b;
+	--foreground: #e0f4e9;
+	--card: #0c1913;
+	--card-foreground: #e0f4e9;
+	--popover: #11231a;
+	--popover-foreground: #e0f4e9;
+	--primary: #8af5bb;
+	--primary-foreground: #06130c;
+	--secondary: #163325;
+	--secondary-foreground: #d6f8e5;
+	--muted: #163325;
+	--muted-foreground: #9fbcac;
+	--accent: #204735;
+	--accent-foreground: #d6f8e5;
+	--border: #2a4938;
+	--input: #395b48;
+	--ring: #8af5bb;
+	--nova: #8af5bb;
+	--nebula: #a1e7c1;
+	--plasma: #8af5bb;
+	--ember: #d0f5aa;
+	--site-font-display: "JetBrains Mono", ui-monospace, monospace;
+	--surface-radius: 0.3rem;
+	--control-radius: 0.3rem;
+	--skin-card-backdrop: none;
+	--skin-card-bg-image: linear-gradient(135deg, rgb(138 245 187 / 3%), transparent);
+	--skin-card-shadow: inset 0 1px 0 rgb(138 245 187 / 7%);
+	--skin-action-shadow: 0 0 20px rgb(138 245 187 / 10%);
+}
+
+/* The mode owns shape and decorative treatment; Tailwind owns normal layout. */
+html[data-site-mode="professional"] :is(.liquid-glass, .product-card, .book-panel),
+html[data-site-mode="ai-overlord"] :is(.liquid-glass, .product-card, .book-panel) {
+	border-radius: var(--surface-radius);
+}
+
+html[data-site-mode="professional"] .launch-button,
+html[data-site-mode="ai-overlord"] .launch-button {
+	border-radius: var(--control-radius);
+}
+
+html[data-site-mode="professional"] .hero {
+	min-height: 0;
+	padding-block: clamp(4rem, 9vw, 7rem);
+}
+
+html[data-site-mode="professional"] .hero h1 {
+	font-size: clamp(3rem, 6vw, 5.5rem);
+	line-height: 1.08;
+	letter-spacing: -0.045em;
+}
+
+html[data-site-mode="professional"] .hero-gradient {
+	background: none;
+	color: var(--primary);
+}
+
+html[data-site-mode="professional"] .signal-dot {
+	animation: none;
+	box-shadow: none;
+}
+
+html[data-site-mode="professional"] .hud-frame::before,
+html[data-site-mode="professional"] .hud-frame::after {
+	display: none;
+}
+
+html[data-site-mode="professional"] .book-panel,
+html[data-site-mode="ai-overlord"] .book-panel {
+	background: var(--card);
+	color: var(--foreground);
+	box-shadow: none;
+}
+
+html[data-site-mode="professional"] .book-panel :is(.text-white\/65, .text-white\/40),
+html[data-site-mode="ai-overlord"] .book-panel :is(.text-white\/65, .text-white\/40) {
+	color: var(--muted-foreground);
+}
+
+html[data-site-mode="professional"] .book-panel .bg-black\/40 {
+	background: var(--secondary);
+}
+
+html[data-site-mode="professional"] .book-cover {
+	transform: none;
+	filter: drop-shadow(0 12px 20px rgb(20 30 50 / 14%));
+}
+
+html[data-site-mode="ai-overlord"] .hero h1 {
+	font-size: clamp(2.25rem, 6vw, 5.5rem);
+	line-height: 1.08;
+	letter-spacing: -0.065em;
+}
+
+html[data-site-mode="ai-overlord"] .hero-gradient {
+	background: none;
+	color: var(--primary);
+	text-shadow: 0 0 30px rgb(138 245 187 / 12%);
+}
+
+html[data-site-mode="ai-overlord"] .growth-visual {
+	background: linear-gradient(145deg, #163325, #060e0b);
+}
+
+html[data-site-mode="professional"] .nav-mark,
+html[data-site-mode="ai-overlord"] .nav-mark {
+	display: inline-block;
+	width: 0.55rem;
+	height: 0.55rem;
+	background: var(--primary);
+	border-radius: 2px;
+	flex-shrink: 0;
+}
+
+/* First-paint guards hide server-rendered decoration when restoring another mode. */
+html:not([data-site-mode="space"]) :is(.space-backdrop, .book-star, .book-orbit) {
+	display: none;
+}
+
+@media (max-width: 359px) {
+	.site-nav-surface { padding-inline: 0.75rem; }
+	.site-nav-surface .nav-mark { display: none; }
+}
+
+@media print {
+	:root[data-site-mode][data-theme] {
+		--background: #fff;
+		--foreground: #111;
+		--card: #fff;
+		--card-foreground: #111;
+		--primary: #111;
+		--primary-foreground: #fff;
+		--muted-foreground: #444;
+		--border: #ddd;
+		color-scheme: light;
+	}
+	.space-backdrop, .matrix-backdrop, .matrix-motion-control, .overlord-core, .site-mode-selector {
+		display: none !important;
+	}
+}

@@ -6,23 +6,6 @@ import { routes } from './routes';
 
 const siteName = "Steve O'Brien";
 
-// Apply the stored theme mode to `<html data-theme>` as early as possible so
-// the first paint matches what useTheme would do on mount. `system` mode
-// resolves against the OS preference. Legacy `theme` key (which only held
-// 'light' or 'dark') is honoured for users who set their preference before
-// the three-mode toggle landed.
-const applyInitialTheme = () => {
-	if (typeof window === 'undefined') return;
-	const stored = window.localStorage.getItem('theme-mode')
-		|| window.localStorage.getItem('theme')
-		|| 'system';
-	let theme = stored;
-	if (stored === 'system' || (stored !== 'light' && stored !== 'dark')) {
-		theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-	}
-	document.documentElement.dataset.theme = theme;
-};
-
 const updateMetaTag = (selector, attributes) => {
 	let tag = document.head.querySelector(selector);
 	if (!tag) {
@@ -104,7 +87,6 @@ export const createApp = ViteSSG(
 			return;
 		}
 
-		applyInitialTheme();
 		router.afterEach((to) => updateDocumentHead(to));
 	},
 );

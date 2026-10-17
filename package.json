@@ -12,6 +12,7 @@
 		"theme-ai-server": "node scripts/theme-ai-server.mjs",
 		"preview": "vite preview",
 		"test:brain-book": "node --test scripts/tests/brain-book.test.mjs",
+		"test:site-modes": "node --test scripts/tests/site-modes.test.mjs",
 		"check:brain-book-build": "node scripts/check-brain-book-build.mjs"
 	},
 	"repository": {

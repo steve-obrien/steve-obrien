@@ -7,13 +7,18 @@ import { mantras } from './pages/mantras/mantras.js';
 import NotFoundPage from './NotFoundPage.vue';
 import { workEntries, workStreamDescription } from './pages/work-stream/entries.js';
 import { offerDescription, offerTitle } from './pages/course/offer.js';
+import { softwareOfferDescription, softwareOfferTitle } from './pages/build-your-software/offer.js';
 // Keep the book module out of production's module graph and SSR manifest.
 const developmentRoutes = import.meta.env.DEV
 	? (await import('./brain-book/routes.js')).brainBookRoutes
 	: [];
 
 const externalRedirectPage = () => import('./pages/ExternalRedirectPage.vue');
-const pageRouteModules = import.meta.glob('./pages/**/Index.vue');
+// The alternative offer still contains unconfirmed terms; retain its local preview only.
+const pageRouteModules = {
+	...import.meta.glob(['./pages/**/Index.vue', '!./pages/subscription-swap/Index.vue']),
+	...(import.meta.env.DEV ? import.meta.glob('./pages/subscription-swap/Index.vue') : {}),
+};
 const cvPage = pageRouteModules['./pages/cv/Index.vue'];
 const aiDevelopmentPage = pageRouteModules['./pages/ai-development/Index.vue'];
 const mantrasPage = pageRouteModules['./pages/mantras/Index.vue'];
@@ -57,6 +62,11 @@ const fileBasedRoutes = Object.entries(pageRouteModules)
 
 const manualRoutes = [
 	{
+		path: '/build-your-software',
+		component: pageRouteModules['./pages/build-your-software/Index.vue'],
+		meta: { title: softwareOfferTitle, description: softwareOfferDescription },
+	},
+	{
 		path: '/course',
 		component: pageRouteModules['./pages/course/Index.vue'],
 		meta: { title: offerTitle, description: offerDescription },
@@ -89,9 +99,9 @@ const manualRoutes = [
 		path: '/ai-development',
 		component: aiDevelopmentPage,
 		meta: {
-			title: 'AI Development Offers',
-			description: 'Founder-led AI development for established companies: implement three revenue-focused AI systems in six weeks or build the foundations of an AI-native company in 90 days.',
-			keywords: 'AI development, AI consultant, AI-native company, AI strategy, AI implementation, fractional CTO, Bristol',
+			title: 'db3 Labs: AI development priced per outcome',
+			description: 'db3 Labs, led by Steve O’Brien, builds working AI systems inside established companies. Outcomes are agreed up front and paid for when delivered.',
+			keywords: 'db3 Labs, db3.ai, outcome-based pricing, AI development, AI consultancy, AI-native company, AI implementation, Bristol',
 		},
 	},
 	{

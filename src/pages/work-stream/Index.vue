@@ -1,4 +1,5 @@
 <script setup>
+import WorkTags from './WorkTags.vue';
 import { computed, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import { workEntries, workStreamDescription, formatWorkDate } from './entries.js';
@@ -48,6 +49,7 @@ const visibleEntries = computed(selectEntries);
 							<p class="text-base leading-7 text-muted-foreground">{{ entry.summary }}</p>
 						</RouterLink>
 						<p class="text-xs leading-6 text-muted-foreground">{{ entry.projects.join(' / ') }}</p>
+						<WorkTags :tags="entry.technicalTags" />
 					</div>
 				</article>
 			</div>

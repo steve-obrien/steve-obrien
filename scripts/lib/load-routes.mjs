@@ -161,5 +161,7 @@ export const loadStaticRoutes = async () => {
 	const fromNews = await loadNewsRoutes();
 	const fromMantras = await loadMantraRoutes();
 	const fromWorkStream = workEntries.map((entry) => `/work-stream/${entry.slug}`);
-	return [...new Set([...fromRoutesFile, ...fromNestedPages, ...fromNestedIndexPages, ...fromArticles, ...fromNews, ...fromMantras, ...fromWorkStream])];
+	// Keep the unconfirmed alternative offer out of public metadata and the sitemap.
+	return [...new Set([...fromRoutesFile, ...fromNestedPages, ...fromNestedIndexPages, ...fromArticles, ...fromNews, ...fromMantras, ...fromWorkStream])]
+		.filter((routePath) => routePath !== '/subscription-swap');
 };

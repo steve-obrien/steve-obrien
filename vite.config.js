@@ -1,7 +1,13 @@
 import { defineConfig, loadEnv } from 'vite';
+import { createRequire } from 'node:module';
+import { dirname, resolve } from 'node:path';
 import vue from '@vitejs/plugin-vue';
 import tailwindcss from '@tailwindcss/vite';
 import { brainBookEditor } from './scripts/brain-book-editor.mjs';
+
+// The installed package exposes its theme controller through the full Vue barrel.
+// Resolve that one maintained module to keep editor and demo styles out of the public site.
+const domStudioRoot = dirname(createRequire(import.meta.url).resolve('@getdom/studio/package.json'));
 
 function themeAiServer() {
 	let apiKey = '';
@@ -203,6 +209,11 @@ function sendJson(response, status, body) {
 }
 
 export default defineConfig({
+	resolve: {
+		alias: {
+			'@dom-studio-theme': resolve(domStudioRoot, 'src/pages/lib/vue/useTheme.js'),
+		},
+	},
 	plugins: [
 		brainBookEditor(),
 		themeAiServer(),

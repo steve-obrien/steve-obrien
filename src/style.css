@@ -1,9 +1,11 @@
 @import "tailwindcss";
+@import "@getdom/studio/tailwind.css";
+@import "./themes/siteModes.css";
 @source inline("transition duration-1000 ease-in ease-out opacity-0 opacity-100 scale-50 scale-100");
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 :root {
-	color-scheme: light;
+	color-scheme: dark;
 	--radius: 0.625rem;
 	--radius-sm: calc(var(--radius) * 0.6);
 	--radius-md: calc(var(--radius) * 0.8);
@@ -22,57 +24,49 @@
 	--shadow-lg: 0 calc(var(--shadow-distance) * 8px) calc(var(--shadow-softness) * 20px) -6px color-mix(in oklch, var(--shadow-color) calc(var(--shadow-strength) * 1.25), transparent);
 	--shadow-xl: 0 calc(var(--shadow-distance) * 14px) calc(var(--shadow-softness) * 34px) -10px color-mix(in oklch, var(--shadow-color) calc(var(--shadow-strength) * 1.35), transparent);
 	--shadow-2xl: 0 calc(var(--shadow-distance) * 24px) calc(var(--shadow-softness) * 60px) -18px color-mix(in oklch, var(--shadow-color) calc(var(--shadow-strength) * 1.6), transparent);
-	--background: oklch(10 0 0);
-	--foreground: oklch(0.145 0 0);
-	--card: oklch(1 0 0);
-	--card-foreground: oklch(0.145 0 0);
-	--popover: oklch(1 0 0);
-	--popover-foreground: oklch(0.145 0 0);
-	--primary: oklch(0.205 0 0);
-	--primary-foreground: oklch(0.985 0 0);
-	--secondary: oklch(0.97 0 0);
-	--secondary-foreground: oklch(0.205 0 0);
-	--muted: oklch(0.97 0 0);
-	--muted-foreground: oklch(0.50 0 0);
-	--accent: oklch(0.97 0 0);
-	--accent-foreground: oklch(0.205 0 0);
-	--destructive: oklch(0.577 0.245 27.325);
-	--destructive-foreground: oklch(0.985 0 0);
-	--success: oklch(0.57 0.794 149.350);
-	--success-foreground: oklch(0.985 0 0);
-	--warning: oklch(0.7 0.2 84);
-	--warning-foreground: oklch(0.28 0.07 46);
-	--border: oklch(0.922 0 0);
-	--input: oklch(0.922 0 0);
-	--ring: oklch(0.708 0 0);
-}
-
-[data-theme="dark"] {
-	color-scheme: dark;
-	--background: oklch(0.145 0 0);
-	--foreground: oklch(0.985 0 0);
-	--card: oklch(0.205 0 0);
-	--card-foreground: oklch(0.985 0 0);
-	--popover: oklch(0.205 0 0);
-	--popover-foreground: oklch(0.985 0 0);
-	--primary: oklch(0.922 0 0);
-	--primary-foreground: oklch(0.205 0 0);
-	--secondary: oklch(0.269 0 0);
-	--secondary-foreground: oklch(0.985 0 0);
-	--muted: oklch(0.269 0 0);
-	--muted-foreground: oklch(0.708 0 0);
-	--accent: oklch(0.269 0 0);
-	--accent-foreground: oklch(0.985 0 0);
+	--background: oklch(0.115 0.022 272);
+	--foreground: oklch(0.96 0.012 260);
+	--card: oklch(0.16 0.03 272);
+	--card-foreground: oklch(0.96 0.012 260);
+	--popover: oklch(0.17 0.03 272);
+	--popover-foreground: oklch(0.96 0.012 260);
+	--primary: oklch(0.86 0.13 80);
+	--primary-foreground: oklch(0.16 0.03 272);
+	--secondary: oklch(0.23 0.035 272);
+	--secondary-foreground: oklch(0.96 0.012 260);
+	--muted: oklch(0.23 0.035 272);
+	--muted-foreground: oklch(0.74 0.03 262);
+	--accent: oklch(0.25 0.05 285);
+	--accent-foreground: oklch(0.96 0.012 260);
 	--destructive: oklch(0.704 0.191 22.216);
 	--destructive-foreground: oklch(0.985 0 0);
-	--success: oklch(0.696 0.17 162.48);
-	--success-foreground: oklch(0.145 0 0);
-	--warning: oklch(0.769 0.188 70.08);
-	--warning-foreground: oklch(0.145 0 0);
-	--border: oklch(1 0 0 / 10%);
-	--input: oklch(1 0 0 / 15%);
-	--ring: oklch(0.556 0 0);
+	--success: oklch(0.78 0.14 175);
+	--success-foreground: oklch(0.16 0.03 272);
+	--warning: oklch(0.82 0.15 75);
+	--warning-foreground: oklch(0.16 0.03 272);
+	--border: oklch(0.85 0.06 275 / 13%);
+	--input: oklch(0.85 0.06 275 / 18%);
+	--ring: oklch(0.72 0.16 295);
+	/* DOM Studio semantic aliases retain compatibility with the existing site utilities. */
+	--canvas: var(--background);
+	--canvas-fg: var(--foreground);
+	--primary-fg: var(--primary-foreground);
+	--secondary-fg: var(--secondary-foreground);
+	--muted-fg: var(--muted-foreground);
+	--accent-fg: var(--accent-foreground);
+	--destructive-fg: var(--destructive-foreground);
+	--success-fg: var(--success-foreground);
+	--warning-fg: var(--warning-foreground);
+	--site-font-display: "Space Grotesk", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+	/* Space palette accents. */
+	--nova: oklch(0.86 0.13 80);
+	--nebula: oklch(0.72 0.17 300);
+	--plasma: oklch(0.8 0.12 200);
+	--ember: oklch(0.7 0.18 40);
 }
+
+[data-theme="dark"] { color-scheme: dark; }
+[data-theme="light"] { color-scheme: light; }
 
 @theme inline {
 	--color-background: var(--background);
@@ -100,6 +94,12 @@
 	--color-border: var(--border);
 	--color-input: var(--input);
 	--color-ring: var(--ring);
+	--color-nova: var(--nova);
+	--color-nebula: var(--nebula);
+	--color-plasma: var(--plasma);
+	--color-ember: var(--ember);
+	--font-display: var(--site-font-display);
+	--font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 	--radius-sm: calc(var(--radius) * 0.6);
 	--radius-md: calc(var(--radius) * 0.8);
 	--radius-lg: var(--radius);
@@ -133,6 +133,17 @@ body {
 	color: var(--foreground);
 	text-rendering: optimizeLegibility;
 	-webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+	font-family: var(--font-display);
+}
+
+::selection {
+	background: color-mix(in oklch, var(--nebula) 45%, transparent);
+	color: var(--foreground);
 }
 
 @layer utilities {
@@ -202,6 +213,45 @@ element-popover:not(:defined) > *:not([slot="trigger"]) {
 }
 
 @layer components {
+	/*
+	 * Liquid glass: a translucent, saturated blur with a bright specular rim
+	 * and a soft highlight that follows the pointer (see SteveLayout). Kept
+	 * deliberately quiet so content stays the focus.
+	 */
+	.liquid-glass {
+		--glass-x: 30%;
+		--glass-y: 0%;
+		position: relative;
+		isolation: isolate;
+	}
+
+	/* Gradient rim: brighter where light catches the top-left and bottom-right edges. */
+	[data-site-mode="space"] .liquid-glass::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		padding: 1px;
+		border-radius: inherit;
+		background: linear-gradient(135deg, rgb(255 255 255 / 32%), rgb(255 255 255 / 6%) 35%, rgb(255 255 255 / 4%) 65%, rgb(255 255 255 / 20%));
+		-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+		-webkit-mask-composite: xor;
+		mask-composite: exclude;
+		pointer-events: none;
+	}
+
+	/* Specular sheen. */
+	[data-site-mode="space"] .liquid-glass::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		border-radius: inherit;
+		background: radial-gradient(28rem circle at var(--glass-x) var(--glass-y), rgb(255 255 255 / 7%), transparent 45%);
+		pointer-events: none;
+		transition: opacity 400ms;
+	}
+
 	.h-stack {
 		@apply flex flex-row items-center;
 	}

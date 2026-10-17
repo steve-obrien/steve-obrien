@@ -6,6 +6,7 @@ import { articleSlugFromRelativePath, listArticleFiles } from './lib/article-fil
 import { mantras } from '../src/pages/mantras/mantras.js';
 import { workEntries, workStreamDescription } from '../src/pages/work-stream/entries.js';
 import { offerDescription, offerTitle } from '../src/pages/course/offer.js';
+import { softwareOfferDescription, softwareOfferTitle } from '../src/pages/build-your-software/offer.js';
 
 const rootDir = process.cwd();
 const distDir = path.join(rootDir, 'dist');
@@ -202,10 +203,14 @@ const getPageMeta = (routePath) => {
 		return { title: `${offerTitle} | ${siteName}`, description: offerDescription };
 	}
 
+	if (routePath === '/build-your-software') {
+		return { title: `${softwareOfferTitle} | ${siteName}`, description: softwareOfferDescription };
+	}
+
 	if (routePath === '/ai-development') {
 		return {
-			title: `AI Development Offers | ${siteName}`,
-			description: 'Founder-led AI development for established companies: implement three revenue-focused AI systems in six weeks or build the foundations of an AI-native company in 90 days.',
+			title: `db3 Labs: AI development priced per outcome | ${siteName}`,
+			description: 'db3 Labs, led by Steve O’Brien, builds working AI systems inside established companies. Outcomes are agreed up front and paid for when delivered.',
 		};
 	}
 

@@ -1,5 +1,5 @@
 <template>
-	<button @click="isOpen = !isOpen" type="button" popovertarget="my-popover" class="rounded-full px-4 py-2 text-sm font-medium transition-colors">
+	<button @click="isOpen = !isOpen" type="button" popovertarget="my-popover" class="rounded-full px-3 py-1.5 text-sm font-medium transition-colors hover:text-foreground">
 		Menu
 	</button>
 	<Teleport to="body">
@@ -10,18 +10,24 @@
 		<Transition enter-active-class="transform transition ease-in-out duration-500 sm:duration-700" enter-from-class="translate-x-full" enter-to-class="translate-x-0" leave-active-class="transform transition ease-in-out duration-500 sm:duration-700" leave-from-class="translate-x-0" leave-to-class="translate-x-full">
 			<div
 				v-if="isOpen"
-				class="fixed top-0 right-0 z-50 ml-auto h-full w-full max-w-sm bg-card/95 text-card-foreground shadow-lg ring-1 ring-border backdrop-blur-sm"
+				class="skin-card liquid-glass fixed top-3 right-3 bottom-3 z-50 ml-auto w-[calc(100%-1.5rem)] max-w-sm overflow-hidden rounded-[2rem] text-card-foreground"
 			>
-				<div class="flex flex-col">
+				<div class="flex flex-col p-3">
+					<div class="flex items-center justify-between px-4 pt-2 pb-4">
+						<span class="font-display text-sm font-semibold text-foreground">Steve O’Brien</span>
+						<button type="button" class="rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-secondary hover:text-foreground" @click="isOpen = false">
+							Close
+						</button>
+					</div>
 					<RouterLink
 						@click="isOpen = false;"
 						v-for="link in links"
 						:key="link.to"
 						:to="link.to"
-						class="border-b border-border px-4 py-5 text-sm font-medium transition-colors"
+						class="rounded-2xl px-4 py-4 text-sm font-medium transition-colors"
 						:class="route.path === link.to 
-							? 'border-l-4 border-l-primary bg-secondary font-bold'
-							: 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'"
+							? 'bg-secondary text-foreground'
+							: 'text-muted-foreground hover:bg-secondary hover:text-foreground'"
 					>
 						{{ link.label }}
 					</RouterLink>
@@ -40,6 +46,7 @@ const route = useRoute();
 
 const isOpen = ref(false);
 
+/** @param {MediaQueryListEvent | MediaQueryList} event Breakpoint state. @returns {void} Closes the mobile drawer on desktop. */
 const closeMenuAtDesktop = (event) => {
 	if (event.matches) {
 		isOpen.value = false;
@@ -50,7 +57,7 @@ let mdBreakpoint = null;
 
 onMounted(() => {
 	// encapsulate browser specific code in onMounted
-	mdBreakpoint = window.matchMedia('(min-width: 768px)');
+	mdBreakpoint = window.matchMedia('(min-width: 1024px)');
 	mdBreakpoint.addEventListener('change', closeMenuAtDesktop);
 	closeMenuAtDesktop(mdBreakpoint);
 });
