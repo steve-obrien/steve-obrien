@@ -250,7 +250,7 @@ function printCv() {
 							Frameworks come and go; the fundamentals do not. I work from first principles across system design, data modelling, APIs, security, real-time communication, testing, deployment, and failure modes.
 						</p>
 						<p>
-							I have designed and built capable application frameworks from scratch, including systems that powered regulated financial services products such as the Hartley pension portal.
+							I have designed and built application frameworks and products from scratch, from regulated pension portals for Curtis Banks and Hartley to a real-time AI recruitment interviewing platform.
 						</p>
 					</div>
 				</div>
