@@ -1,4 +1,6 @@
 <script setup>
+import meImage from '../../assets/me.jpeg';
+
 const highlights = [
 	{
 		value: '18 years',
@@ -40,15 +42,15 @@ const capabilities = [
 const technicalDepth = [
 	{
 		title: 'Preferred stacks today',
-		items: ['TypeScript', 'Vue 3', 'Node.js', 'Fastify', 'Laravel', 'PHP'],
+		items: ['TypeScript', 'Vue 3', 'React', 'Node.js', 'Fastify', 'Laravel', 'PHP'],
 	},
 	{
 		title: 'Frontend and real-time',
-		items: ['React', 'Next.js', 'Web Components', 'WebSockets', 'SSR', 'Pinia'],
+		items: ['Next.js', 'Web Components', 'WebSockets', 'SSR', 'Pinia'],
 	},
 	{
-		title: 'Backend and data',
-		items: ['PostgreSQL', 'MariaDB / MySQL', 'REST APIs', 'Background workers', 'Authentication', 'Stripe'],
+		title: 'Backend, data, and infrastructure',
+		items: ['PostgreSQL', 'MariaDB / MySQL', 'REST APIs', 'Background workers', 'Authentication', 'Stripe', 'Docker', 'Linux'],
 	},
 	{
 		title: 'AI APIs, systems, and testing',
@@ -136,7 +138,6 @@ const selectedWork = [
 ];
 
 const recognition = [
-	'Airbus Apprentice of the Year, three consecutive years',
 	'Airbus international Award for Excellence, awarded for AutoTR',
 	'Insider South West 42 under 42, 2022 cohort',
 	'Bristol Technology Festival speaker, including a 2022 talk on the future of IoT',
@@ -158,12 +159,15 @@ function printCv() {
 		<article class="cv-document mx-auto max-w-5xl">
 			<header class="cv-hero border-b border-border pb-12">
 				<div class="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-					<div class="max-w-3xl">
-						<p class="mb-5 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Curriculum vitae</p>
-						<h1 class="font-serif text-5xl font-light tracking-tight sm:text-6xl">Steve O'Brien</h1>
-						<p class="mt-5 text-xl font-medium leading-relaxed text-muted-foreground sm:text-2xl">
-							Engineer <span aria-hidden="true">·</span> Founder <span aria-hidden="true">·</span> CEO & CTO
-						</p>
+					<div class="cv-identity flex max-w-3xl flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+						<div>
+							<p class="mb-5 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Curriculum vitae</p>
+							<h1 class="font-serif text-5xl font-light tracking-tight sm:text-6xl">Steve O'Brien</h1>
+							<p class="mt-5 text-xl font-medium leading-relaxed text-muted-foreground sm:text-2xl">
+								Engineer <span aria-hidden="true">·</span> Founder <span aria-hidden="true">·</span> CEO & CTO
+							</p>
+						</div>
+						<img :src="meImage" alt="Portrait of Steve O'Brien" class="cv-portrait h-24 w-24 shrink-0 rounded-2xl object-cover sm:h-28 sm:w-28" width="112" height="112" />
 					</div>
 					<div class="cv-actions flex flex-wrap gap-3">
 						<button
@@ -185,7 +189,7 @@ function printCv() {
 				</div>
 
 				<blockquote class="cv-positioning mt-12 max-w-4xl border-l-2 border-foreground pl-6 font-serif text-2xl font-light leading-relaxed sm:text-3xl">
-					I've spent two decades building real-world software and AI systems. I combine hands-on engineering with the experience of building products for founders, running a technology company through acquisition, and helping larger organisations solve technical problems.
+					I've spent two decades building real-world software and AI systems. I combine hands-on engineering with experience building products, solving complex technical problems for larger organisations, and running a technology company through acquisition.
 				</blockquote>
 
 				<div class="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
@@ -214,8 +218,8 @@ function printCv() {
 			</section>
 
 			<section class="cv-section border-y border-border py-10" aria-label="Career highlights">
-				<div class="grid gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
-					<div v-for="highlight in highlights" :key="highlight.label" class="bg-card p-6">
+				<div class="cv-highlights-grid grid gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
+					<div v-for="highlight in highlights" :key="highlight.label" class="cv-print-item bg-card p-6">
 						<strong class="block font-serif text-3xl font-light">{{ highlight.value }}</strong>
 						<span class="mt-2 block text-sm leading-relaxed text-muted-foreground">{{ highlight.label }}</span>
 					</div>
@@ -227,8 +231,8 @@ function printCv() {
 					<p class="cv-kicker">Core capabilities</p>
 					<h2 id="capabilities-heading" class="cv-heading">Where I create the most value</h2>
 				</div>
-				<div class="grid gap-5 sm:grid-cols-2">
-					<article v-for="capability in capabilities" :key="capability.title" class="rounded-2xl border border-border bg-card p-6">
+				<div class="cv-capabilities-grid grid gap-5 sm:grid-cols-2">
+					<article v-for="capability in capabilities" :key="capability.title" class="cv-print-item rounded-2xl border border-border bg-card p-6">
 						<h3 class="text-lg font-semibold">{{ capability.title }}</h3>
 						<p class="mt-3 leading-relaxed text-muted-foreground">{{ capability.text }}</p>
 					</article>
@@ -236,7 +240,7 @@ function printCv() {
 			</section>
 
 			<section class="cv-section border-t border-border py-12" aria-labelledby="technical-depth-heading">
-				<div class="grid gap-10 lg:grid-cols-[0.72fr_1.28fr]">
+				<div class="cv-technical-intro grid gap-10 lg:grid-cols-[0.72fr_1.28fr]">
 					<div>
 						<p class="cv-kicker">Technical depth</p>
 						<h2 id="technical-depth-heading" class="cv-heading">Grounded in fundamentals</h2>
@@ -250,8 +254,8 @@ function printCv() {
 						</p>
 					</div>
 				</div>
-				<div class="mt-9 grid gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-2">
-					<article v-for="area in technicalDepth" :key="area.title" class="bg-card p-6">
+				<div class="cv-technical-grid mt-9 grid gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-2">
+					<article v-for="area in technicalDepth" :key="area.title" class="cv-print-item bg-card p-6">
 						<h3 class="font-semibold">{{ area.title }}</h3>
 						<ul class="mt-4 flex flex-wrap gap-2">
 							<li
@@ -298,7 +302,7 @@ function printCv() {
 					<p class="cv-kicker">Selected work</p>
 					<h2 id="work-heading" class="cv-heading">Evidence of impact</h2>
 				</div>
-				<div class="grid gap-6 sm:grid-cols-2">
+				<div class="cv-work-grid grid gap-6 sm:grid-cols-2">
 					<article v-for="item in selectedWork" :key="item.title" class="cv-work-card border-t-2 border-foreground pt-5">
 						<p class="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{{ item.eyebrow }}</p>
 						<h3 class="mt-4 text-xl font-semibold leading-snug">{{ item.title }}</h3>
@@ -322,7 +326,7 @@ function printCv() {
 					<h2 id="recognition-heading" class="cv-heading">Sharing experience</h2>
 				</div>
 				<ul class="space-y-4 text-muted-foreground">
-					<li v-for="item in recognition" :key="item" class="flex gap-4 border-b border-border pb-4 last:border-0">
+					<li v-for="item in recognition" :key="item" class="cv-print-item flex gap-4 border-b border-border pb-4 last:border-0">
 						<span class="font-serif text-xl text-foreground" aria-hidden="true">↗</span>
 						<span class="leading-relaxed">{{ item }}</span>
 					</li>
@@ -408,32 +412,124 @@ function printCv() {
 		padding: 0;
 	}
 
+	:global(.site-shell main) {
+		max-width: none;
+		padding: 0;
+	}
+
+	.cv-identity {
+		flex-direction: row;
+		align-items: flex-start;
+		justify-content: space-between;
+	}
+
+	.cv-portrait {
+		width: 24mm;
+		height: 24mm;
+	}
+
 	.cv-hero {
-		padding-bottom: 7mm;
+		padding-bottom: 5mm;
 	}
 
 	.cv-positioning {
-		margin-top: 7mm;
-		font-size: 18pt;
+		margin-top: 5mm;
+		font-size: 16pt;
 	}
 
 	.cv-section {
 		break-inside: auto;
-		padding-top: 7mm;
-		padding-bottom: 7mm;
+		padding-top: 5mm;
+		padding-bottom: 5mm;
 	}
 
+	.cv-section[aria-labelledby] > :first-child,
+	.cv-section h2,
+	.cv-experience h3,
+	.cv-work-card h3 {
+		break-after: avoid;
+	}
+
+	.cv-section[aria-labelledby] > :first-child {
+		break-inside: avoid;
+	}
+
+	.cv-kicker {
+		break-after: avoid;
+	}
+
+	.cv-highlights-grid,
+	.cv-capabilities-grid,
+	.cv-technical-grid,
+	.cv-work-grid {
+		break-inside: avoid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		overflow: visible;
+	}
+
+	.cv-highlights-grid {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+
+	.cv-highlights-grid .cv-print-item {
+		padding: 3mm;
+	}
+
+	.cv-technical-intro {
+		grid-template-columns: 0.72fr 1.28fr;
+		gap: 6mm;
+	}
+
+	.cv-technical-intro .space-y-5 {
+		font-size: 10pt;
+		line-height: 1.4;
+	}
+
+	.cv-technical-grid {
+		margin-top: 5mm;
+	}
+
+	.cv-technical-grid .cv-print-item {
+		padding: 3mm;
+	}
+
+	.cv-technical-grid ul {
+		margin-top: 2mm;
+		gap: 1mm;
+	}
+
+	.cv-technical-grid li {
+		padding: 0.5mm 1.5mm;
+	}
+
+	.cv-section[aria-labelledby="recognition-heading"] {
+		break-inside: avoid;
+	}
+
+	.cv-section[aria-labelledby="technical-depth-heading"] {
+		break-inside: avoid;
+	}
+
+	.cv-print-item,
 	.cv-experience,
 	.cv-work-card,
 	.cv-contact {
 		break-inside: avoid;
 	}
 
+	.cv-experience li,
+	.cv-section p {
+		orphans: 3;
+		widows: 3;
+	}
+
+
 	.cv-contact {
-		background: #111 !important;
-		color: white !important;
-		print-color-adjust: exact;
-		-webkit-print-color-adjust: exact;
+		border-top: 2px solid #111;
+		border-radius: 0;
+		padding: 7mm 0 0;
+		background: transparent !important;
+		color: #111 !important;
 	}
 
 	a {
