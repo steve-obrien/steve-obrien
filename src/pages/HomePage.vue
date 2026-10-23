@@ -300,8 +300,10 @@ const selectedWriting = [
 						<h2 id="companies-heading" class="mt-4 text-4xl font-medium leading-tight tracking-[-0.04em] sm:text-5xl">Built for the long term.</h2>
 					</div>
 					<div class="divide-y divide-border border-y border-border">
-						<a href="https://newicon.net" target="_blank" rel="noopener noreferrer" class="group grid gap-5 py-8 sm:grid-cols-[3.5rem_1fr_auto] sm:items-center">
-							<Planet v-if="ready && siteMode === 'space'" color="oklch(0.55 0.12 160)" glow="oklch(0.88 0.1 150)" moon :orbit="18" class="hidden w-10 sm:block" />
+						<a href="https://newicon.net" target="_blank" rel="noopener noreferrer" class="group grid gap-5 py-8 sm:items-center" :class="ready && siteMode === 'space' ? 'sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]' : 'sm:grid-cols-[minmax(0,1fr)_auto]'">
+							<div v-if="ready && siteMode === 'space'" class="hidden sm:flex sm:justify-center">
+								<Planet color="oklch(0.55 0.12 160)" glow="oklch(0.88 0.1 150)" moon :orbit="18" class="w-10" />
+							</div>
 							<div>
 								<p class="font-display text-2xl font-semibold tracking-[-0.03em]">Newicon</p>
 								<p class="mt-2 leading-7 text-muted-foreground">Founded and led for 18 years. Product engineering, complex software and digital transformation.</p>
@@ -311,8 +313,10 @@ const selectedWriting = [
 								<p class="mt-1 text-sm text-muted-foreground">View company ↗</p>
 							</div>
 						</a>
-						<a href="https://flex-digital.net" target="_blank" rel="noopener noreferrer" class="group grid gap-5 py-8 sm:grid-cols-[3.5rem_1fr_auto] sm:items-center">
-							<Planet v-if="ready && siteMode === 'space'" color="oklch(0.55 0.18 350)" glow="oklch(0.85 0.1 10)" class="hidden w-8 justify-self-center sm:block" />
+						<a href="https://flex-digital.net" target="_blank" rel="noopener noreferrer" class="group grid gap-5 py-8 sm:items-center" :class="ready && siteMode === 'space' ? 'sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]' : 'sm:grid-cols-[minmax(0,1fr)_auto]'">
+							<div v-if="ready && siteMode === 'space'" class="hidden sm:flex sm:justify-center">
+								<Planet color="oklch(0.55 0.18 350)" glow="oklch(0.85 0.1 10)" class="w-8" />
+							</div>
 							<div>
 								<p class="font-display text-2xl font-semibold tracking-[-0.03em]">Flex Digital</p>
 								<p class="mt-2 leading-7 text-muted-foreground">A specialist digital marketing company built alongside Newicon.</p>
