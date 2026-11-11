@@ -1,5 +1,6 @@
 <script setup>
 import meImage from '../../assets/me.jpeg';
+import PrintCv from './PrintCv.vue';
 
 const highlights = [
 	{
@@ -27,7 +28,7 @@ const capabilities = [
 	},
 	{
 		title: 'AI systems and strategy',
-		text: 'Building AI applications with the OpenAI, Anthropic, and OpenRouter APIs, including document search, evidence discovery, and question answering. Connecting technical possibilities to useful business applications.',
+		text: 'Generative AI product development with the OpenAI, Anthropic, and OpenRouter APIs, including document search, evidence discovery, and question answering. Connecting technical possibilities to useful business applications.',
 	},
 	{
 		title: 'Product and platform engineering',
@@ -39,22 +40,35 @@ const capabilities = [
 	},
 ];
 
+const technicalApproach = 'I have deep technical experience across many languages and stacks. I work from fundamental programming concepts and choose the best tool for the job, understanding when Rust, Go, Node.js, or C best suits the problem, performance requirements, and team.';
+const newiconTechnology = 'Built products and platforms primarily with PHP, Node.js, and web technologies.';
+const airbusTechnology = 'Developed modelling, simulation, and test software using C++, MATLAB, and .NET.';
+const frameworkSummary = 'Designed and built my own full-stack frameworks from scratch in PHP and TypeScript, covering data systems, authentication, real-time WebSockets, and operational infrastructure. Applications include regulated financial services products such as the Hartley pension portal.';
+
 const technicalDepth = [
 	{
-		title: 'Preferred stacks today',
-		items: ['TypeScript', 'Vue 3', 'React', 'Node.js', 'Fastify', 'Laravel', 'PHP'],
+		title: 'Languages',
+		items: ['JavaScript', 'TypeScript', 'PHP', 'C++', 'MATLAB', 'Python'],
+	},
+	{
+		title: 'Frameworks and runtimes',
+		items: ['Node.js', '.NET', 'Vue 3', 'React', 'Next.js', 'Fastify', 'Laravel'],
 	},
 	{
 		title: 'Frontend and real-time',
-		items: ['Next.js', 'Web Components', 'WebSockets', 'SSR', 'Pinia'],
+		items: ['Web Components', 'WebSockets', 'SSR', 'Pinia'],
 	},
 	{
-		title: 'Backend, data, and infrastructure',
-		items: ['PostgreSQL', 'MariaDB / MySQL', 'REST APIs', 'Background workers', 'Authentication', 'Stripe', 'Docker', 'Linux'],
+		title: 'Backend and data',
+		items: ['PostgreSQL', 'MariaDB / MySQL', 'REST APIs', 'Background workers', 'Authentication', 'Stripe'],
 	},
 	{
-		title: 'AI APIs, systems, and testing',
-		items: ['OpenAI API', 'Anthropic API', 'OpenRouter API', 'LLM applications', 'Agent systems', 'Embeddings', 'Vector search', 'Knowledge graphs', 'Vitest', 'Playwright'],
+		title: 'AI APIs and systems',
+		items: ['OpenAI API', 'Anthropic API', 'OpenRouter API', 'LLM applications', 'Open-weight LLMs', 'Agent systems', 'Embeddings', 'Vector search', 'Knowledge graphs'],
+	},
+	{
+		title: 'Engineering tools and delivery',
+		items: ['Git', 'Docker', 'Linux', 'CI/CD', 'DevOps', 'Automated testing', 'Vitest', 'Playwright'],
 	},
 ];
 
@@ -63,21 +77,36 @@ const experience = [
 		period: '2026—present',
 		role: 'Engineer, Fractional CTO & AI Product Builder',
 		company: 'Independent',
+		printItems: [
+			'Building db3.ai, a TypeScript framework for AI applications, with model orchestration, agents, provider failover, and usage and cost tracking.',
+			'Developing DOM Studio, a Vue UI system for AI conversations and agent workflows, and GrowthScout, an AI-assisted search intelligence and publishing product.',
+			'Advising founders and leadership teams on product direction, architecture, delivery, and AI adoption.',
+		],
 		summary: 'Helping organisations make sound technology decisions and turn AI opportunities into useful, well-engineered products.',
 		items: [
-			'Designing and building AI applications using the OpenAI, Anthropic, and OpenRouter APIs, alongside developer workflows and collaborative product experiences.',
+			'Building db3.ai, a TypeScript application framework for AI features, including model orchestration, agents, provider failover, and usage and cost tracking.',
+			'Developing and maintaining DOM Studio (getdom.studio), a Vue UI system with components and interaction patterns for AI conversations and agent workflows.',
+			'Leading GrowthScout (growthscout.io), an AI-assisted SaaS product spanning site analysis, AI visibility research, content planning, and publishing.',
 			'Advising founders and leadership teams on product direction, architecture, delivery, and AI adoption.',
-			'Researching intelligence across artificial intelligence, neuroscience, and cognitive systems.',
 		],
 	},
 	{
 		period: '2009—2026',
 		role: 'Founder, CEO & CTO',
 		company: 'Newicon Ltd',
+		printItems: [
+			'Founded and led a Bristol technology company, building products for founders and established organisations across healthcare, finance, and aerospace.',
+			newiconTechnology,
+			'Combined CEO and CTO responsibilities with hands-on architecture, engineering, CI/CD, automated testing, and DevOps. Clients included Airbus, Thales, UWE, and Palladium.',
+			'Grew Newicon to £1.5m turnover alongside a £0.5m digital marketing business that became Flex Digital.',
+			'Led Newicon through its 2025 acquisition by Linebreak; continued as CTO through January 2026.',
+		],
 		summary: 'Founded and ran a Bristol technology company whose core business was designing and building products for founders and established organisations, combining hands-on engineering with CEO and CTO responsibilities through to acquisition.',
 		items: [
 			'Built technology for founders across many products and businesses, turning ideas into software, connected systems, and working products.',
+			newiconTechnology,
 			'Led technology direction, product strategy, solution architecture, client partnerships, and complex project delivery.',
+			'Responsible for software architecture, CI/CD, automated testing, and DevOps across client products while remaining hands-on in design and implementation.',
 			'Grew Newicon to £1.5m turnover alongside a £0.5m digital marketing business that became Flex Digital.',
 			'Delivered work across healthcare, financial services, and aerospace, supporting founders and larger organisations. Disclosed clients included Airbus, Thales, UWE, and Palladium.',
 			'Guided Newicon into its 2025 acquisition by Linebreak and continued as CTO through January 2026.',
@@ -87,8 +116,15 @@ const experience = [
 		period: 'Sep 2006—Jun 2009',
 		role: 'Systems Engineer (Modelling & Simulation)',
 		company: 'Airbus UK, Filton',
+		printRole: 'Systems Engineer, Modelling & Simulation',
+		printItems: [
+			airbusTechnology,
+			'Designed AutoTR and its code interpreter to automate landing-gear testing, from simulation to hardware-in-the-loop rigs. Received an Airbus international Award for Excellence.',
+			'Built LGTest (PHP/MySQL) to give global teams immediate access to controlled test results, replacing manually compiled data sent around the world on DVDs.',
+		],
 		summary: 'Responsible for developing the modelling and simulation platforms used by the Airbus landing gear team.',
 		items: [
+			airbusTechnology,
 			'Designed and built the AutoTR desktop application and its code interpreter, enabling test engineers to write automated tests for landing gear systems.',
 			'AutoTR supported repeatable testing from fully simulated “-1” environments with no physical hardware through to hardware-in-the-loop test rigs, and received an Airbus international Award for Excellence.',
 			'Built LGTest, an internal PHP and MySQL web application that provided global configuration control and immediate access to landing-gear test results in the formats teams required.',
@@ -99,25 +135,30 @@ const experience = [
 		period: 'Sep 2002—Sep 2006',
 		role: 'Technical Apprentice',
 		company: 'Airbus UK, Filton',
+		printItems: [
+			'Completed a four-year Technical Apprenticeship and HND in Aeronautical Engineering. Named Airbus Apprentice of the Year three years in succession.',
+		],
 		summary: 'Completed Airbus’s four-year Technical Apprenticeship before progressing into a full Systems Engineer position.',
 		items: [
-			'Named Airbus Apprentice of the Year three years in succession.',
 			'Studied Aeronautical Engineering, Manufacturing Engineering, CAD, and computing.',
 			'Completed an HND in Aeronautical Engineering alongside practical engineering training.',
+			'Named Airbus Apprentice of the Year three years in succession.',
 		],
 	},
 ];
 
 const selectedWork = [
 	{
-		eyebrow: 'Applied AI · Due diligence',
-		title: 'AI for document search and legal questions',
-		text: 'Designed and built an AI tool to support due diligence: searching large documents, identifying useful evidence, and helping users understand and answer legal questions about the material. Implemented retrieval-augmented generation (RAG), indexing company documents and data in a vector database and integrating an OpenAI language model with function-calling APIs to retrieve relevant evidence.',
+		eyebrow: 'Applied AI · Acquisition due diligence',
+		title: 'Internal due diligence AI agent',
+		printText: 'Built an internal agent for Newicon’s acquisition, using embeddings, vector search, retrieval-augmented generation (RAG), and OpenAI function calling to find evidence across company documents and policies.',
+		text: 'Built an internal AI agent to support due diligence for Newicon’s acquisition. It used embeddings and a vector database to index company data, policies, and documents, then combined retrieval-augmented generation (RAG) with OpenAI function calling to surface evidence for due diligence questions.',
 	},
 	{
 		eyebrow: 'Framework engineering · Financial services',
 		title: 'Application frameworks from first principles',
-		text: 'Designed and built capable application frameworks from scratch that powered complex, regulated financial services products, including the Hartley pension portal, with full-stack architecture, real-time WebSocket communication, data systems, authentication, and operational infrastructure.',
+		printText: frameworkSummary,
+		text: frameworkSummary,
 	},
 	{
 		eyebrow: 'Company building',
@@ -126,14 +167,25 @@ const selectedWork = [
 	},
 	{
 		eyebrow: 'Health technology',
-		title: 'EarSwitch in-ear monitoring platform',
-		text: 'Newicon led software development across two phases of an in-ear health-monitoring system that secured £1.2m in investment and was selected for the UK Innovative Devices Access Pathway.',
+		title: 'EarSwitch assistive communication device',
+		printText: 'Newicon built data capture and OpenCV analysis for Bath University research, then integrated Python software with the in-ear device and a caregiver app. The project secured £1.2m investment and UK Innovative Devices Access Pathway selection.',
+		text: 'Newicon developed data capture and OpenCV-assisted analysis for Bath University research, then integrated Python software with the in-ear device and a caregiver configuration app. The project secured £1.2m in investment and was selected for the UK Innovative Devices Access Pathway.',
+		url: 'https://newicon.net/work/earswitch-software-development',
 	},
 	{
 		eyebrow: 'Computer vision · Aviation maintenance',
 		title: 'Airbus Oleo measurement app',
+		printText: 'Led an early iPhone computer-vision app using OpenCV to measure landing-gear shock absorbers and give engineers an immediate pass/fail result.',
 		text: 'Led the development of an early iPhone computer-vision application that used the camera, OpenCV edge detection, and object recognition to measure a landing-gear Oleo shock absorber and give engineers an immediate pass/fail result.',
 		url: 'https://newicon.net/work/airbus-oleo-measurement-app',
+	},
+	{
+		eyebrow: 'AI product engineering · SaaS',
+		title: 'GrowthScout search intelligence platform',
+		printText: 'Leading product and full-stack TypeScript engineering for AI visibility tracking, keyword research, website audits, and content planning through to writing and publishing.',
+		text: 'Building GrowthScout, an AI-assisted SaaS product that tracks AI visibility, researches keywords, audits websites, and connects a 30-day content plan to article writing and publishing. I lead product direction and work hands-on across full-stack TypeScript engineering, data integrations, background jobs, testing, and deployment.',
+		url: 'https://growthscout.io',
+		linkLabel: 'Explore GrowthScout',
 	},
 ];
 
@@ -144,8 +196,15 @@ const recognition = [
 	'Podcast guest on technology, leadership, innovation, and company building',
 ];
 
+const interests = [
+	'Following the Thousand Brains Project',
+	'Robotics',
+	'Coding for fun',
+	'Playing guitar and piano',
+];
+
 /**
- * Opens the browser print dialog so the web CV can be saved or shared as a PDF.
+ * Opens the browser print dialog using the concise, two-page CV layout.
  *
  * @returns {void}
  */
@@ -212,7 +271,7 @@ function printCv() {
 						I worked as founder, CEO, and CTO, running a small company while helping clients across healthcare, finance, and aerospace. That gave me practical experience of commercial decisions, client relationships, delivery, and the work involved in preparing a technology business for acquisition.
 					</p>
 					<p>
-						I remain deeply technical: I design systems, write software, and work from the underlying engineering principles. My AI work includes a due diligence tool for searching large documents, finding useful evidence, and exploring legal questions. I bring that engineering experience to advising CEOs and founders on technology, AI, and product investment.
+						I remain deeply technical: I design systems, write software, and work from the underlying engineering principles. I bring that engineering experience to advising CEOs and founders on technology, AI, as well as educating team members and customers.
 					</p>
 				</div>
 			</section>
@@ -246,11 +305,9 @@ function printCv() {
 						<h2 id="technical-depth-heading" class="cv-heading">Grounded in fundamentals</h2>
 					</div>
 					<div class="space-y-5 text-lg leading-relaxed text-muted-foreground">
+						<p>{{ technicalApproach }}</p>
 						<p>
-							Frameworks come and go; the fundamentals do not. I work from first principles across system design, data modelling, APIs, security, real-time communication, testing, deployment, and failure modes.
-						</p>
-						<p>
-							I have designed and built application frameworks and products from scratch, from regulated pension portals for Curtis Banks and Hartley to a real-time AI recruitment interviewing platform.
+							I have designed and built my own full-stack frameworks from scratch in PHP and TypeScript, with products ranging from regulated pension portals for Curtis Banks and Hartley to a real-time AI recruitment interviewing platform.
 						</p>
 					</div>
 				</div>
@@ -314,7 +371,7 @@ function printCv() {
 							rel="noopener noreferrer"
 							class="mt-4 inline-flex text-sm font-semibold underline decoration-border underline-offset-4 hover:decoration-foreground"
 						>
-							Read the case study
+							{{ item.linkLabel || 'Read the case study' }}
 						</a>
 					</article>
 				</div>
@@ -330,6 +387,16 @@ function printCv() {
 						<span class="font-serif text-xl text-foreground" aria-hidden="true">↗</span>
 						<span class="leading-relaxed">{{ item }}</span>
 					</li>
+				</ul>
+			</section>
+
+			<section class="cv-section cv-interests grid gap-10 border-t border-border py-10 lg:grid-cols-[0.72fr_1.28fr]" aria-labelledby="interests-heading">
+				<div>
+					<p class="cv-kicker">Interests</p>
+					<h2 id="interests-heading" class="cv-heading">Beyond work</h2>
+				</div>
+				<ul class="grid gap-3 text-muted-foreground sm:grid-cols-2">
+					<li v-for="interest in interests" :key="interest">{{ interest }}</li>
 				</ul>
 			</section>
 
@@ -353,14 +420,21 @@ function printCv() {
 				</div>
 			</section>
 		</article>
+		<PrintCv
+			:portrait="meImage"
+			:experience="experience"
+			:work="selectedWork"
+			:technical-approach="technicalApproach"
+			:technical-depth="technicalDepth"
+			:recognition="recognition"
+			:interests="interests"
+		/>
 	</SteveLayout>
 </template>
 
 <style scoped>
 .cv-page-background {
-	background:
-		radial-gradient(circle at 50% 0%, color-mix(in oklch, var(--foreground) 5%, transparent), transparent 28rem),
-		var(--background);
+	background: var(--background);
 }
 
 .cv-document {
@@ -387,154 +461,28 @@ function printCv() {
 @media print {
 	@page {
 		size: A4;
-		margin: 14mm;
+		margin: 14mm 16mm;
 	}
 
 	:global(html) {
-		font-size: 10pt;
 		color-scheme: light;
 	}
 
-	:global(body) {
+	:global(body),
+	.cv-page-background {
 		background: white !important;
-		color: #111 !important;
+		color: #20252b !important;
 	}
 
-	:global(body > #app > div > header),
-	:global(body > #app > div > footer),
-	.cv-actions,
-	.cv-contact-link {
-		display: none !important;
-	}
-
+	:global(.site-shell > header),
+	:global(.site-shell > footer),
 	.cv-document {
-		max-width: none;
-		padding: 0;
+		display: none !important;
 	}
 
 	:global(.site-shell main) {
 		max-width: none;
 		padding: 0;
-	}
-
-	.cv-identity {
-		flex-direction: row;
-		align-items: flex-start;
-		justify-content: space-between;
-	}
-
-	.cv-portrait {
-		width: 24mm;
-		height: 24mm;
-	}
-
-	.cv-hero {
-		padding-bottom: 5mm;
-	}
-
-	.cv-positioning {
-		margin-top: 5mm;
-		font-size: 16pt;
-	}
-
-	.cv-section {
-		break-inside: auto;
-		padding-top: 5mm;
-		padding-bottom: 5mm;
-	}
-
-	.cv-section[aria-labelledby] > :first-child,
-	.cv-section h2,
-	.cv-experience h3,
-	.cv-work-card h3 {
-		break-after: avoid;
-	}
-
-	.cv-section[aria-labelledby] > :first-child {
-		break-inside: avoid;
-	}
-
-	.cv-kicker {
-		break-after: avoid;
-	}
-
-	.cv-highlights-grid,
-	.cv-capabilities-grid,
-	.cv-technical-grid,
-	.cv-work-grid {
-		break-inside: avoid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		overflow: visible;
-	}
-
-	.cv-highlights-grid {
-		grid-template-columns: repeat(4, minmax(0, 1fr));
-	}
-
-	.cv-highlights-grid .cv-print-item {
-		padding: 3mm;
-	}
-
-	.cv-technical-intro {
-		grid-template-columns: 0.72fr 1.28fr;
-		gap: 6mm;
-	}
-
-	.cv-technical-intro .space-y-5 {
-		font-size: 10pt;
-		line-height: 1.4;
-	}
-
-	.cv-technical-grid {
-		margin-top: 5mm;
-	}
-
-	.cv-technical-grid .cv-print-item {
-		padding: 3mm;
-	}
-
-	.cv-technical-grid ul {
-		margin-top: 2mm;
-		gap: 1mm;
-	}
-
-	.cv-technical-grid li {
-		padding: 0.5mm 1.5mm;
-	}
-
-	.cv-section[aria-labelledby="recognition-heading"] {
-		break-inside: avoid;
-	}
-
-	.cv-section[aria-labelledby="technical-depth-heading"] {
-		break-inside: avoid;
-	}
-
-	.cv-print-item,
-	.cv-experience,
-	.cv-work-card,
-	.cv-contact {
-		break-inside: avoid;
-	}
-
-	.cv-experience li,
-	.cv-section p {
-		orphans: 3;
-		widows: 3;
-	}
-
-
-	.cv-contact {
-		border-top: 2px solid #111;
-		border-radius: 0;
-		padding: 7mm 0 0;
-		background: transparent !important;
-		color: #111 !important;
-	}
-
-	a {
-		color: inherit !important;
-		text-decoration: none !important;
 	}
 }
 </style>
